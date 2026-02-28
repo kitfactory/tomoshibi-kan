@@ -169,7 +169,7 @@ Done：Guide Chatへ完了通知が投稿され、PlanCard.statusが `completed`
 | 設定 > Agent > Gate | profile_name, rule_version | 閲覧のみ | 起動時ロード結果を表示 |
 | 設定 > Agent > Pal | pal_id, persona, skills, constraints | 閲覧のみ | 編集UIはMVP外 |
 | 設定 > Safety | block_mode(`pre_execute`) | 固定表示 | REQ-0007に合わせMVPはON固定 |
-| 設定 > Workspace | task_board_default_filter, event_log_limit(20/50/100) | 保存可 | 表示設定のみを対象 |
+| 設定 > Workspace | event_log_limit(仮:50固定) | 閲覧のみ | Event Logの運用見直しまで暫定固定 |
 
 ### デザインテイスト（MVP）
 - トーン: 「運用の明瞭さ + 親しみあるキャラクター感」。将来の3Dデフォルメ人間Palが同居しても違和感がない、温度感のある業務UIにする。
@@ -184,3 +184,32 @@ Done：Guide Chatへ完了通知が投稿され、PlanCard.statusが `completed`
 - 採用: `Tailwind CSS` + `CSS Variables`（色・角丸・影・透明度のトークン管理）。
 - 非採用: MUI / Bootstrap 等の重量コンポーネントフレームワーク（MVP段階では導入しない）。
 - 理由: 透明感ある白ベースとラウンドUIを崩さず、将来の3DデフォルメPal表示と同居しやすい。
+
+### i18n / UIメッセージID管理（MVP）
+- UI文言は直書きせず、`UI-PPH-xxxx` のIDで管理する。
+- ロケールは `ja-JP` を既定、`en-US` を同時管理する（未翻訳は `ja-JP` フォールバック）。
+- 操作結果/エラー通知は既存の `MSG-PPH-xxxx` を使用し、UIラベルIDと混在させない。
+
+| UI-ID | key | ja-JP | en-US | 用途 |
+|---|---|---|---|---|
+| UI-PPH-0001 | workspace.title | ワークスペース | Workspace | 画面タイトル |
+| UI-PPH-0002 | workspace.guide_chat.title | Guide Chat | Guide Chat | 左ペイン見出し |
+| UI-PPH-0003 | workspace.task_board.title | Task Board | Task Board | 中央ペイン見出し |
+| UI-PPH-0004 | workspace.event_log.title | Event Log | Event Log | 右ペイン見出し |
+| UI-PPH-0005 | task.status.assigned | 割り当て済み | Assigned | Task状態表示 |
+| UI-PPH-0006 | task.status.in_progress | 実行中 | In Progress | Task状態表示 |
+| UI-PPH-0007 | task.status.to_gate | 判定待ち | Awaiting Gate | Task状態表示 |
+| UI-PPH-0008 | task.status.rejected | 差し戻し | Rejected | Task状態表示 |
+| UI-PPH-0009 | task.status.done | 完了 | Done | Task状態表示 |
+| UI-PPH-0010 | settings.title | 設定 | Settings | 設定画面タイトル |
+| UI-PPH-0011 | settings.group.agent | Agent設定 | Agent | 設定グループ名 |
+| UI-PPH-0012 | settings.group.workspace | Workspace設定 | Workspace | 設定グループ名 |
+
+### Task Board方針（MVP）
+- ソート/フィルタ機能は提供しない。
+- 表示順は `updated_at` 降順で固定する。
+- 絞り込み要件は利用実績を踏まえて次フェーズで定義する。
+
+### Event Log方針（暫定）
+- 表示件数は直近 `50` 件固定（MVP暫定）。
+- 検索/ページング/保持期間の調整は実利用後に再定義する。
