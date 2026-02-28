@@ -179,3 +179,8 @@ Done：Guide Chatへ完了通知が投稿され、PlanCard.statusが `completed`
 - 状態バッジ: `assigned=#2563EB`, `in_progress=#4F46E5`, `to_gate=#D97706`, `rejected=#DC2626`, `done=#16A34A`。
 - コンポーネント: ラウンドを基調とし、角丸 `12px`（ボタン/入力は `9999px` のピル形状を許容）。間隔 `8px` グリッド、カードは薄い影（`y=2 blur=10 alpha=10%`）。主要操作ボタンは最大2種類（Primary/Secondary）に制限。
 - モーション: 画面遷移/パネル開閉は `120-180ms ease-out` のみ使用し、透明パネルのフェードを中心に過度なアニメーションは避ける。
+
+### UI実装方針（MVP）
+- 採用: `Tailwind CSS` + `CSS Variables`（色・角丸・影・透明度のトークン管理）。
+- 非採用: MUI / Bootstrap 等の重量コンポーネントフレームワーク（MVP段階では導入しない）。
+- 理由: 透明感ある白ベースとラウンドUIを崩さず、将来の3DデフォルメPal表示と同居しやすい。
