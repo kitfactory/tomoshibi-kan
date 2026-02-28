@@ -3,6 +3,11 @@
 要件とは（レビュー者視点）＋ Given/When/Done ＋ MSG/ERR のID管理  
 ※I/F詳細・API使用は書かない
 
+## 命名整合ルール（Domain/UI）
+- Domainの正規名は `Plan` / `Task` とする。
+- UI表示名は `Plan Card` / `Task Card` とする。
+- 本書ではユーザー向け可読性を優先し、画面文脈では `Plan Card` / `Task Card` を使用する。
+
 # 要件一覧（Requirements）
 | ID | 要件（固定書式・正常系のみ） | 関連UC-ID |
 |---|---|---|

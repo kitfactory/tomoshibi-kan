@@ -95,7 +95,7 @@
 
 | レイヤー | 置くもの | 置かないもの |
 | --- | --- | --- |
-| Domain | `Plan`, `Task`, `Pal`, `CompletionRitual`, `GateResult`, `Event`, `UserMessage`, `GuideMessage`, 各Status型 | DB/IPC呼び出し、LLM接続 |
+| Domain | `Plan`, `Task`, `Pal`, `CompletionRitual`, `GateResult`, `Event`, `UserMessage`, `GuideMessage`, 各Status型（UI表示名: Plan Card / Task Card） | DB/IPC呼び出し、LLM接続 |
 | UseCase | `GuideConversationUseCase`, `GuideDispatchUseCase`, `PalWorkUseCase`, `GateReviewUseCase`, `PalResubmitUseCase`, `GuideCompletionUseCase` | UI制御詳細、SQL文 |
 | Interface Adapter | `AppController`, `WorkspacePresenter` | 業務ルール本体 |
 | Infrastructure | `SqliteWorkflowRepository`, `LlmRuntime`, `PalpalCoreGateJudge`, `ElectronIpcRouter`, `GuideGateProfileLoader` | ドメイン判断の本体 |
