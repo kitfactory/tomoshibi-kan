@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PalPal-Hive Wireframe</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar glass">
+        <div class="brand">
+          <span class="brand-chip">PPH</span>
+          <div>
+            <h1 data-ui-id="UI-PPH-0001">ワークスペース</h1>
+            <p class="subline">Wireframe Prototype</p>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="pal-slot glass-lite">
+            <div class="pal-avatar">P</div>
+            <div class="pal-meta">
+              <div class="pal-title" data-ui-id="UI-PPH-0207">Pal Preview Slot</div>
+              <div class="pal-sub" data-ui-id="UI-PPH-0208">3D Coming Soon</div>
+            </div>
+          </div>
+          <div class="segmented" aria-label="locale">
+            <button id="localeJa" class="btn-pill active">JA</button>
+            <button id="localeEn" class="btn-pill">EN</button>
+          </div>
+          <button id="openSettings" class="btn btn-secondary" data-ui-id="UI-PPH-0010">
+            設定
+          </button>
+        </div>
+      </header>
+
+      <main class="workspace-grid">
+        <section class="panel glass">
+          <div class="panel-head">
+            <h2 data-ui-id="UI-PPH-0002">Guide Chat</h2>
+            <span class="meta-pill">Guide</span>
+          </div>
+          <ul id="guideChat" class="chat-list"></ul>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <h2 data-ui-id="UI-PPH-0003">Task Board</h2>
+            <div class="meta-group">
+              <span class="meta-pill" data-ui-id="UI-PPH-0201">Sort: updated_at desc</span>
+              <span class="meta-pill" data-ui-id="UI-PPH-0202">Filter: none</span>
+            </div>
+          </div>
+          <ul id="taskBoard" class="task-list"></ul>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <h2 data-ui-id="UI-PPH-0004">Event Log</h2>
+            <span class="meta-pill" data-ui-id="UI-PPH-0203">Limit: 50</span>
+          </div>
+          <ul id="eventLog" class="event-list"></ul>
+        </section>
+      </main>
+
+      <aside id="detailDrawer" class="drawer glass hidden" aria-label="task-detail">
+        <div class="drawer-head">
+          <h3 data-ui-id="UI-PPH-0204">Task Detail</h3>
+          <button id="closeDrawer" class="icon-btn">×</button>
+        </div>
+        <div id="detailBody" class="drawer-body"></div>
+      </aside>
+
+      <div id="gatePanel" class="overlay hidden">
+        <div class="modal glass">
+          <div class="modal-head">
+            <h3 data-ui-id="UI-PPH-0205">Gate Panel</h3>
+            <button id="closeGate" class="icon-btn">×</button>
+          </div>
+          <div class="modal-body">
+            <label for="gateReason" data-ui-id="UI-PPH-0206">Reject Reason</label>
+            <textarea id="gateReason" rows="4"></textarea>
+            <div class="btn-row">
+              <button id="rejectTask" class="btn btn-danger" data-ui-id="UI-PPH-0209">
+                Reject
+              </button>
+              <button id="approveTask" class="btn btn-primary" data-ui-id="UI-PPH-0210">
+                Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="settingsPanel" class="overlay hidden">
+        <div class="modal settings glass">
+          <div class="modal-head">
+            <h3 data-ui-id="UI-PPH-0010">設定</h3>
+            <button id="closeSettings" class="icon-btn">×</button>
+          </div>
+          <div class="settings-grid">
+            <nav class="settings-nav">
+              <button class="nav-item active" data-setting="guide" data-ui-id="UI-PPH-0211">
+                Agent / Guide
+              </button>
+              <button class="nav-item" data-setting="gate" data-ui-id="UI-PPH-0212">
+                Agent / Gate
+              </button>
+              <button class="nav-item" data-setting="pal" data-ui-id="UI-PPH-0213">
+                Agent / Pal
+              </button>
+              <button class="nav-item" data-setting="safety" data-ui-id="UI-PPH-0214">
+                Safety
+              </button>
+              <button class="nav-item" data-setting="workspace" data-ui-id="UI-PPH-0215">
+                Workspace
+              </button>
+            </nav>
+            <section class="settings-content">
+              <div class="field">
+                <label id="settingsLabel1">profile_name</label>
+                <input id="settingsValue1" type="text" value="default-guide" readonly />
+              </div>
+              <div class="field">
+                <label id="settingsLabel2">profile_version</label>
+                <input id="settingsValue2" type="text" value="v1.0.0" readonly />
+              </div>
+              <div class="field">
+                <label id="settingsLabel3">event_log_limit</label>
+                <input id="settingsValue3" type="text" value="50 (暫定固定)" readonly />
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <footer id="messageBar" class="message-bar glass">
+        <div class="msg-id">MSG-PPH-0006</div>
+        <div class="msg-text">Workspaceを表示しました。</div>
+      </footer>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

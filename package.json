@@ -1,0 +1,19 @@
+{
+  "name": "palpal-hive-wireframe",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PalPal-Hive wireframe prototype on Electron",
+  "main": "electron-main.js",
+  "bin": {
+    "palpal": "./cli/palpal.js"
+  },
+  "scripts": {
+    "start": "electron .",
+    "palpal": "node ./cli/palpal.js",
+    "palpal:help": "node ./cli/palpal.js --help",
+    "check:main": "node --check electron-main.js"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}
