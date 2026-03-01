@@ -1,6 +1,6 @@
 {
   "name": "palpal-hive-wireframe",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "PalPal-Hive wireframe prototype on Electron",
   "main": "electron-main.js",
@@ -8,12 +8,22 @@
     "palpal": "./cli/palpal.js"
   },
   "scripts": {
+    "build:wireframe-css": "tailwindcss -i ./wireframe/tailwind.css -o ./wireframe/generated.css --minify",
+    "prestart": "npm run build:wireframe-css",
     "start": "electron .",
+    "prepalpal": "npm run build:wireframe-css",
     "palpal": "node ./cli/palpal.js",
     "palpal:help": "node ./cli/palpal.js --help",
-    "check:main": "node --check electron-main.js"
+    "check:main": "node --check electron-main.js",
+    "pretest:e2e": "npm run build:wireframe-css",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium"
   },
   "devDependencies": {
-    "electron": "^30.0.0"
+    "@playwright/test": "^1.56.1",
+    "@tailwindcss/cli": "^4.2.1",
+    "daisyui": "^5.5.19",
+    "electron": "^30.0.0",
+    "tailwindcss": "^4.2.1"
   }
 }

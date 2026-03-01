@@ -1,0 +1,19 @@
+0 verbose cli C:\nvm4w\nodejs\node.exe C:\nvm4w\nodejs\node_modules\npm\bin\npm-cli.js
+1 info using npm@10.9.0
+2 info using node@v22.12.0
+3 silly config load:file:C:\Users\kitad\AppData\Local\nvm\v22.12.0\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\kitad\palpal-hive\.npmrc
+5 silly config load:file:C:\Users\kitad\.npmrc
+6 silly config load:file:C:\nvm4w\nodejs\etc\npmrc
+7 verbose title npm run palpal
+8 verbose argv "run" "palpal" "--devtools"
+9 verbose logfile logs-max:10 dir:C:\Users\kitad\palpal-hive\.codex-appdata\Local\npm-cache\_logs\2026-02-28T05_41_56_963Z-
+10 verbose logfile C:\Users\kitad\palpal-hive\.codex-appdata\Local\npm-cache\_logs\2026-02-28T05_41_56_963Z-debug-0.log
+11 silly logfile done cleaning log files
+12 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with EACCES
+13 verbose cwd C:\Users\kitad\palpal-hive
+14 verbose os Windows_NT 10.0.26200
+15 verbose node v22.12.0
+16 verbose npm  v10.9.0
+17 verbose exit 2147483651
+18 verbose code 2147483651

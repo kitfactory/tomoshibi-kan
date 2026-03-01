@@ -1,0 +1,7 @@
+Start-Process : このコマンドは、次のエラーのため実行できません: 指定されたファイルが見つかりません。。
+発生場所 行:1 文字:1
++ Start-Process -Filepath 'C:\Users\corey\OneDrive\Documents\workspace\ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidOperation: (:) [Start-Process]、InvalidOperationException
+    + FullyQualifiedErrorId : InvalidOperationException,Microsoft.PowerShell.Commands.StartProcessCommand
+ 
