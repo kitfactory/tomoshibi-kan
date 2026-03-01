@@ -7,18 +7,16 @@
 ## 現在地（必ず更新）
 - 現在フェーズ: P0
 - 今回スコープ（1〜5行）:
-  - PalPal-Hive を Guide→Pal→Gate のMVPコアフローに絞って定義する
-  - Guideチャット、Task配布、Pal提出、Gate判定、差し戻し再提出、完了通知を最小要件として確定する
-  - `concept.md` のデータモデルを「フロー成立に必須な属性のみ」に縮約する
-  - `spec.md` をコア要件（REQ-0001〜REQ-0008）へ整理する
-  - `spec.md` に画面情報設計（表示項目/設定メニュー階層/デザインテイスト）のMVP最小基準を追加する
-  - `architecture.md` に UseCase主体・Pal中心（Guide/Gateは役割）方針でレイヤー構造とPortを定義する
-  - `design_assist.md` を汎用設計判断ガイドとして強化し、優先順位・抽象化ゲート・整合性チェックを明文化する
-  - `palpal-core` と `Electron` 前提の技術方針を維持する
+  - ユーザーI/Fは現行プロトタイプ（Tab UI）の見た目・振る舞いを基準に据える
+  - 内部設計は将来実装方針（UseCase中心・レイヤー分離・Port境界）を正として整理する
+  - `spec.md` を Task + Job + Settings + Skill運用（ClawHub擬似Download導線）まで拡張する
+  - `architecture.md` に Jobフロー・設定管理・SkillCatalog Port を追加し、差し替え可能性を明確化する
+  - `concept.md` のデータモデルを Plan/Task/Job/Runtime設定で再整備する
 - 非ゴール（やらないこと）:
   - 3Dキャラクタ演出、背景演出の実装
   - Slack/Discord/Email など外部チャット連携
   - 本物の `palpal-core` 実装（MVPでは差し替え可能IF＋モック）
+  - ClawHubの本ネットワーク配布連携（現段階は擬似Download導線）
 - 重要リンク:
   - concept: `./concept.md`
   - spec: `./spec.md`
