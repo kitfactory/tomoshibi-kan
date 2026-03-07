@@ -661,6 +661,7 @@ type GateReviewInput = {
 - `WorkerRoutingSelector` は `Task/Job requirements + enabled skills + ROLE.md` を入力に取り、候補 Worker と選定理由を返す。
 - `GateRoutingSelector` は `review focus + expected output + RUBRIC.md` を入力に取り、候補 Gate と選定理由を返す。
 - selector は display name の文字列一致ではなく、identity file と構造化 profile 属性を評価する。
+- `runtimeKind="tool"` の Worker は `registeredToolCapabilities[]` を追加入力として持ち、CLI probe から得た capability summaries を `enabled skills` 相当の routing/context signal として評価する。
 
 ### Routing Input
 ```ts
@@ -685,9 +686,15 @@ type GateRoutingInput = {
 
 ### Routing Evaluation
 - `WorkerRoutingSelector` はまず `requiredSkills` と `enabled_skill_ids` の一致で候補を絞り、その後 `ROLE.md` の責務・作業方針・期待アウトプット一致で順位付けする。
+- `runtimeKind="tool"` の場合、`enabled_skill_ids` が空でも `registeredToolCapabilities[].capabilitySummaries` を skill summary と同列に扱い、CLI 内包 command / MCP / feature 情報から一致語彙を拾う。
 - `GateRoutingSelector` はまず `RUBRIC.md` の評価観点・合格条件・reject 条件一致で候補を絞り、その後 `defaultGateId` や Gate status を補助的に使って順位付けする。
 - Worker/Gate ともに、選定理由は audit/event に残せる短い explanation DTO として返す。
 - Renderer は selector explanation DTO を `dispatch` / `to_gate` event summary へ短く埋め込み、Event Log から routing 根拠を追えるようにする。
+
+### CLI Capability Probe
+- Electron main は Settings load/save 時に登録済み CLI ツールへ問い合わせ、`registeredToolCapabilities[]` を補完する。
+- first step では `Codex` を first-class 対象とし、`codex --help`, `codex mcp list`, `codex features list`, `codex --version` の結果から snapshot を生成する。
+- probe 失敗時も Settings save 自体は失敗させず、tool capability status を `unavailable` として保持する。
 
 ### Compaction 適用順
 - 1. 構造化フィールドを固定する。

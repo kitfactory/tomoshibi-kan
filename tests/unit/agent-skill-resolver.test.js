@@ -15,13 +15,30 @@ test("resolveEffectiveSkillIds keeps configured skills that are installed for mo
   assert.deepEqual(result, ["codex-file-search"]);
 });
 
-test("resolveEffectiveSkillIds returns empty for tool runtime", () => {
+test("resolveEffectiveSkillIds returns empty for tool runtime when no capability snapshot exists", () => {
   const result = resolveEffectiveSkillIds({
     runtimeKind: "tool",
     configuredSkillIds: ["codex-file-search"],
     installedSkillIds: ["codex-file-search"],
   });
   assert.deepEqual(result, []);
+});
+
+test("resolveEffectiveSkillIds returns tool capability ids for tool runtime", () => {
+  const result = resolveEffectiveSkillIds({
+    runtimeKind: "tool",
+    selectedToolNames: ["Codex"],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command" },
+          { id: "codex.feature.shell_tool", name: "shell_tool", kind: "feature" },
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(result, ["codex.command.exec", "codex.feature.shell_tool"]);
 });
 
 test("resolveSkillSummariesForContext builds summaries from catalog", () => {
@@ -49,4 +66,28 @@ test("resolveSkillSummariesForContext falls back to id when catalog entry is mis
     catalogItems: [],
   });
   assert.deepEqual(result.skillSummaries, ["unknown-skill"]);
+});
+
+test("resolveSkillSummariesForContext returns tool capability summaries for tool runtime", () => {
+  const result = resolveSkillSummariesForContext({
+    runtimeKind: "tool",
+    selectedToolNames: ["Codex"],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command" },
+        ],
+        capabilitySummaries: [
+          "exec: Run Codex non-interactively",
+          "shell_tool: stable enabled",
+        ],
+      },
+    ],
+  });
+  assert.deepEqual(result.effectiveSkillIds, ["codex.command.exec"]);
+  assert.deepEqual(result.skillSummaries, [
+    "exec: Run Codex non-interactively",
+    "shell_tool: stable enabled",
+  ]);
 });

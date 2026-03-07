@@ -21,6 +21,19 @@ test("buildSettingsSavePayload normalizes locale and model payload", () => {
       },
     ],
     registeredTools: ["Codex", "Codex"],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        status: "available",
+        fetchedAt: "2026-03-07T00:00:00.000Z",
+        commandName: "codex",
+        versionText: "codex-cli 0.111.0",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+        ],
+        capabilitySummaries: ["exec: Run Codex non-interactively"],
+      },
+    ],
     registeredSkills: ["codex-file-search", "codex-file-search"],
   });
 
@@ -31,6 +44,8 @@ test("buildSettingsSavePayload normalizes locale and model payload", () => {
   assert.equal(payload.registeredModels[0].name, "gpt-4.1");
   assert.equal(payload.registeredModels[0].apiKeyInput, "secret-1");
   assert.deepEqual(payload.registeredTools, ["Codex"]);
+  assert.equal(payload.registeredToolCapabilities.length, 1);
+  assert.equal(payload.registeredToolCapabilities[0].toolName, "Codex");
   assert.deepEqual(payload.registeredSkills, ["codex-file-search"]);
 });
 
@@ -47,12 +62,24 @@ test("normalizeSettingsSnapshot does not expose apiKey value", () => {
         apiKey: "should-not-be-shown",
       },
     ],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        status: "available",
+        commandName: "codex",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+        ],
+        capabilitySummaries: ["exec: Run Codex non-interactively"],
+      },
+    ],
   });
 
   assert.equal(snapshot.contextHandoffPolicy, "minimal");
   assert.equal(snapshot.guideControllerAssistEnabled, true);
   assert.equal(snapshot.registeredModels[0].apiKeyConfigured, true);
   assert.equal(snapshot.registeredModels[0].apiKey, "");
+  assert.equal(snapshot.registeredToolCapabilities[0].toolName, "Codex");
 });
 
 test("normalizeSettingsSnapshot defaults guide controller assist to false", () => {
@@ -78,6 +105,17 @@ test("buildLocalStoredSnapshot preserves configured state without storing key", 
       },
     ],
     registeredTools: ["Codex"],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        status: "available",
+        commandName: "codex",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+        ],
+        capabilitySummaries: ["exec: Run Codex non-interactively"],
+      },
+    ],
     registeredSkills: ["codex-file-search"],
   };
   const payload = buildSettingsSavePayload({
@@ -92,6 +130,17 @@ test("buildLocalStoredSnapshot preserves configured state without storing key", 
       },
     ],
     registeredTools: ["Codex"],
+    registeredToolCapabilities: [
+      {
+        toolName: "Codex",
+        status: "available",
+        commandName: "codex",
+        capabilities: [
+          { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+        ],
+        capabilitySummaries: ["exec: Run Codex non-interactively"],
+      },
+    ],
     registeredSkills: ["codex-file-search"],
   });
 
@@ -104,4 +153,5 @@ test("buildLocalStoredSnapshot preserves configured state without storing key", 
   assert.equal(stored.guideControllerAssistEnabled, true);
   assert.equal(stored.registeredModels[0].apiKeyConfigured, true);
   assert.equal(Object.prototype.hasOwnProperty.call(stored.registeredModels[0], "apiKey"), false);
+  assert.equal(stored.registeredToolCapabilities[0].toolName, "Codex");
 });

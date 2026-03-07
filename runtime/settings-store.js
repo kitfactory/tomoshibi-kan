@@ -44,10 +44,44 @@ function normalizeSettingsPayload(payload) {
     const dedupeKey = normalized.name.toLowerCase();
     if (!modelMap.has(dedupeKey)) modelMap.set(dedupeKey, normalized);
   });
+  const toolCapabilities = Array.isArray(payload?.registeredToolCapabilities)
+    ? payload.registeredToolCapabilities
+      .map((entry) => {
+        const toolName = normalizeString(entry?.toolName);
+        if (!toolName) return null;
+        const capabilities = Array.isArray(entry?.capabilities)
+          ? entry.capabilities
+            .map((item) => {
+              const id = normalizeString(item?.id);
+              const name = normalizeString(item?.name);
+              const kind = normalizeString(item?.kind);
+              const description = normalizeString(item?.description);
+              const stage = normalizeString(item?.stage);
+              const enabled = item?.enabled === true;
+              if (!id || !name || !kind) return null;
+              return { id, name, kind, description, stage, enabled };
+            })
+            .filter(Boolean)
+          : [];
+        return {
+          toolName,
+          status: normalizeString(entry?.status) || "unavailable",
+          fetchedAt: normalizeString(entry?.fetchedAt),
+          commandName: normalizeString(entry?.commandName),
+          versionText: normalizeString(entry?.versionText),
+          capabilities,
+          capabilitySummaries: dedupeStrings(entry?.capabilitySummaries),
+          errorText: normalizeString(entry?.errorText),
+        };
+      })
+      .filter(Boolean)
+    : [];
+  const toolCapabilityMap = new Map(toolCapabilities.map((entry) => [entry.toolName.toLowerCase(), entry]));
   return {
     locale: normalizeLocale(payload?.locale),
     registeredModels: [...modelMap.values()],
     registeredTools: dedupeStrings(payload?.registeredTools),
+    registeredToolCapabilities: [...toolCapabilityMap.values()],
     registeredSkills: dedupeStrings(payload?.registeredSkills),
   };
 }
@@ -235,6 +269,13 @@ class SqliteSettingsStore {
       );
     `);
     db.run(`
+      CREATE TABLE IF NOT EXISTS cli_tool_capabilities (
+        tool_name TEXT PRIMARY KEY,
+        snapshot_json TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+    `);
+    db.run(`
       CREATE TABLE IF NOT EXISTS skills (
         skill_id TEXT PRIMARY KEY
       );
@@ -287,7 +328,7 @@ class SqliteSettingsStore {
     fs.writeFileSync(this.dbPath, Buffer.from(bytes));
   }
 
-  mapLoadedSettings(localeValue, models, tools, skills) {
+  mapLoadedSettings(localeValue, models, tools, toolCapabilities, skills) {
     return {
       locale: normalizeLocale(localeValue),
       registeredModels: models.map((row) => ({
@@ -300,6 +341,9 @@ class SqliteSettingsStore {
       registeredTools: tools
         .map((row) => normalizeString(row.tool_name))
         .filter(Boolean),
+      registeredToolCapabilities: toolCapabilities
+        .map((row) => safeJsonParse(row.snapshot_json, {}))
+        .filter((entry) => entry && typeof entry === "object" && normalizeString(entry.toolName)),
       registeredSkills: skills
         .map((row) => normalizeString(row.skill_id))
         .filter(Boolean),
@@ -314,8 +358,12 @@ class SqliteSettingsStore {
       "SELECT name, provider, base_url, endpoint, api_key_ref FROM model_configs ORDER BY updated_at ASC, name ASC"
     );
     const toolRows = queryRows(this.db, "SELECT tool_name FROM cli_tools ORDER BY tool_name ASC");
+    const toolCapabilityRows = queryRows(
+      this.db,
+      "SELECT tool_name, snapshot_json FROM cli_tool_capabilities ORDER BY tool_name ASC"
+    );
     const skillRows = queryRows(this.db, "SELECT skill_id FROM skills ORDER BY skill_id ASC");
-    return this.mapLoadedSettings(localeValue, modelRows, toolRows, skillRows);
+    return this.mapLoadedSettings(localeValue, modelRows, toolRows, toolCapabilityRows, skillRows);
   }
 
   async load() {
@@ -371,6 +419,20 @@ class SqliteSettingsStore {
         normalized.registeredTools.forEach((toolName) => {
           this.db.run("INSERT INTO cli_tools (tool_name) VALUES (?)", [toolName]);
         });
+
+        this.db.run("DELETE FROM cli_tool_capabilities");
+        normalized.registeredToolCapabilities
+          .filter((entry) => normalized.registeredTools.includes(entry.toolName))
+          .forEach((entry) => {
+            this.db.run(
+              `INSERT INTO cli_tool_capabilities (tool_name, snapshot_json, updated_at)
+               VALUES (?, ?, ?)
+               ON CONFLICT(tool_name) DO UPDATE SET
+                 snapshot_json = excluded.snapshot_json,
+                 updated_at = excluded.updated_at`,
+              [entry.toolName, safeJsonStringify(entry, "{}"), now]
+            );
+          });
 
         this.db.run("DELETE FROM skills");
         normalized.registeredSkills.forEach((skillId) => {

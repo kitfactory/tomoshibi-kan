@@ -56,6 +56,35 @@ test("selectWorkerForTask prioritizes matched skills before role text", () => {
   assert.deepEqual(selected.matchedSkills, ["browser-chrome", "codex-file-search"]);
 });
 
+test("selectWorkerForTask can route to tool runtime worker using capability summaries", () => {
+  const selected = selectWorkerForTask({
+    taskDraft: {
+      title: "Run code review against current changes",
+      description: "Use codex review to inspect the diff and summarize findings",
+    },
+    workers: [
+      {
+        id: "pal-fix",
+        roleText: "Apply code changes and small edits",
+        enabledSkillIds: ["codex-file-edit"],
+        skillSummaries: ["File Edit: apply patches"],
+      },
+      {
+        id: "pal-codex",
+        roleText: "CLI automation worker",
+        enabledSkillIds: ["codex.command.review", "codex.command.exec"],
+        skillSummaries: [
+          "review: Run a code review non-interactively",
+          "exec: Run Codex non-interactively",
+        ],
+      },
+    ],
+  });
+
+  assert.equal(selected.workerId, "pal-codex");
+  assert.ok(selected.matchedSkills.includes("codex.command.review"));
+});
+
 test("selectGateForTarget prioritizes rubric match and falls back to default gate on tie", () => {
   const selected = selectGateForTarget({
     target: {

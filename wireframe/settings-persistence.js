@@ -35,6 +35,46 @@
     return value === true;
   }
 
+  function normalizeToolCapabilityEntry(entry) {
+    const toolName = normalizeString(entry?.toolName);
+    if (!toolName) return null;
+    const capabilities = Array.isArray(entry?.capabilities)
+      ? entry.capabilities
+        .map((item) => {
+          const id = normalizeString(item?.id);
+          const name = normalizeString(item?.name);
+          const kind = normalizeString(item?.kind);
+          const description = normalizeString(item?.description);
+          const stage = normalizeString(item?.stage);
+          const enabled = item?.enabled === true;
+          if (!id || !name || !kind) return null;
+          return { id, name, kind, description, stage, enabled };
+        })
+        .filter(Boolean)
+      : [];
+    const capabilitySummaries = dedupeStrings(entry?.capabilitySummaries);
+    return {
+      toolName,
+      status: normalizeString(entry?.status) || "unavailable",
+      fetchedAt: normalizeString(entry?.fetchedAt),
+      commandName: normalizeString(entry?.commandName),
+      versionText: normalizeString(entry?.versionText),
+      capabilities,
+      capabilitySummaries,
+      errorText: normalizeString(entry?.errorText),
+    };
+  }
+
+  function normalizeToolCapabilityEntries(entries) {
+    const map = new Map();
+    (Array.isArray(entries) ? entries : []).forEach((entry) => {
+      const normalized = normalizeToolCapabilityEntry(entry);
+      if (!normalized) return;
+      map.set(normalized.toolName.toLowerCase(), normalized);
+    });
+    return [...map.values()];
+  }
+
   function normalizeModelForPayload(model) {
     const name = normalizeString(model?.name);
     if (!name) return null;
@@ -63,6 +103,7 @@
       guideControllerAssistEnabled: normalizeGuideControllerAssistEnabled(input?.guideControllerAssistEnabled),
       registeredModels: [...modelMap.values()],
       registeredTools: dedupeStrings(input?.registeredTools),
+      registeredToolCapabilities: normalizeToolCapabilityEntries(input?.registeredToolCapabilities),
       registeredSkills: dedupeStrings(input?.registeredSkills),
     };
   }
@@ -91,6 +132,7 @@
       guideControllerAssistEnabled: normalizeGuideControllerAssistEnabled(snapshot?.guideControllerAssistEnabled),
       registeredModels: normalizedModels,
       registeredTools: dedupeStrings(snapshot?.registeredTools),
+      registeredToolCapabilities: normalizeToolCapabilityEntries(snapshot?.registeredToolCapabilities),
       registeredSkills: dedupeStrings(snapshot?.registeredSkills),
     };
   }
@@ -116,6 +158,7 @@
       guideControllerAssistEnabled: payload.guideControllerAssistEnabled,
       registeredModels: nextModels,
       registeredTools: payload.registeredTools,
+      registeredToolCapabilities: payload.registeredToolCapabilities,
       registeredSkills: payload.registeredSkills,
     };
   }

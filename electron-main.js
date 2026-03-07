@@ -3,6 +3,7 @@ const path = require("path");
 const { app, BrowserWindow, ipcMain, safeStorage, dialog, shell } = require("electron");
 const { SqliteSettingsStore } = require("./runtime/settings-store");
 const { AgentIdentityStore } = require("./runtime/agent-identity-store");
+const { probeCliToolCapabilities } = require("./runtime/cli-tool-capability-probe");
 const {
   listCoreProviderModels,
   requestGuideChatCompletion,
@@ -229,11 +230,44 @@ function createAgentIdentityStore() {
 }
 
 function bindIpc(settings, identity) {
+  async function hydrateToolCapabilities(snapshot, options = {}) {
+    const loaded = snapshot && typeof snapshot === "object" ? snapshot : {};
+    const registeredTools = Array.isArray(loaded.registeredTools) ? loaded.registeredTools : [];
+    const existingCapabilities = Array.isArray(loaded.registeredToolCapabilities)
+      ? loaded.registeredToolCapabilities
+      : [];
+    const existingByName = new Map(
+      existingCapabilities.map((entry) => [normalizeString(entry?.toolName).toLowerCase(), entry])
+    );
+    const missingToolNames = registeredTools.filter((toolName) => !existingByName.has(normalizeString(toolName).toLowerCase()));
+    const shouldProbeAll = options.probeAll === true;
+    const probeTargets = shouldProbeAll ? registeredTools : missingToolNames;
+    if (probeTargets.length === 0) {
+      return {
+        ...loaded,
+        registeredToolCapabilities: existingCapabilities,
+      };
+    }
+    const probed = await probeCliToolCapabilities(probeTargets);
+    const mergedByName = new Map(existingCapabilities.map((entry) => [normalizeString(entry?.toolName).toLowerCase(), entry]));
+    probed.forEach((entry) => {
+      mergedByName.set(normalizeString(entry?.toolName).toLowerCase(), entry);
+    });
+    return {
+      ...loaded,
+      registeredToolCapabilities: registeredTools
+        .map((toolName) => mergedByName.get(normalizeString(toolName).toLowerCase()))
+        .filter(Boolean),
+    };
+  }
+
   ipcMain.handle("settings:load", async () => {
-    return settings.load();
+    const loaded = await settings.load();
+    return hydrateToolCapabilities(loaded, { probeAll: false });
   });
   ipcMain.handle("settings:save", async (_event, payload) => {
-    return settings.save(payload);
+    const hydrated = await hydrateToolCapabilities(payload, { probeAll: true });
+    return settings.save(hydrated);
   });
   ipcMain.handle("settings:resolve-model-api-key", async (_event, modelName) => {
     return settings.resolveModelApiKey(modelName);

@@ -20,6 +20,21 @@
     return result;
   }
 
+  function normalizeToolNames(values) {
+    if (!Array.isArray(values)) return [];
+    const seen = new Set();
+    const result = [];
+    values.forEach((value) => {
+      const normalized = normalizeString(value);
+      if (!normalized) return;
+      const key = normalized.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      result.push(normalized);
+    });
+    return result;
+  }
+
   function buildCatalogMap(catalogItems) {
     const map = new Map();
     if (!Array.isArray(catalogItems)) return map;
@@ -38,6 +53,14 @@
 
   function resolveEffectiveSkillIds(input = {}) {
     const runtimeKind = normalizeRuntimeKind(input.runtimeKind);
+    if (runtimeKind === "tool") {
+      const selectedToolNames = new Set(normalizeToolNames(input.selectedToolNames).map((name) => name.toLowerCase()));
+      return (Array.isArray(input.registeredToolCapabilities) ? input.registeredToolCapabilities : [])
+        .filter((entry) => selectedToolNames.has(normalizeString(entry?.toolName).toLowerCase()))
+        .flatMap((entry) => Array.isArray(entry?.capabilities) ? entry.capabilities : [])
+        .map((entry) => normalizeString(entry?.id))
+        .filter(Boolean);
+    }
     if (runtimeKind !== "model") return [];
     const configuredSkillIds = normalizeSkillIds(input.configuredSkillIds);
     const installedSkillIds = new Set(normalizeSkillIds(input.installedSkillIds));
@@ -52,6 +75,18 @@
 
   function resolveSkillSummariesForContext(input = {}) {
     const effectiveSkillIds = resolveEffectiveSkillIds(input);
+    if (normalizeRuntimeKind(input.runtimeKind) === "tool") {
+      const selectedToolNames = new Set(normalizeToolNames(input.selectedToolNames).map((name) => name.toLowerCase()));
+      const toolSummaries = (Array.isArray(input.registeredToolCapabilities) ? input.registeredToolCapabilities : [])
+        .filter((entry) => selectedToolNames.has(normalizeString(entry?.toolName).toLowerCase()))
+        .flatMap((entry) => Array.isArray(entry?.capabilitySummaries) ? entry.capabilitySummaries : [])
+        .map((summary) => normalizeString(summary))
+        .filter(Boolean);
+      return {
+        effectiveSkillIds,
+        skillSummaries: toolSummaries,
+      };
+    }
     const catalogMap = buildCatalogMap(input.catalogItems);
     const skillSummaries = effectiveSkillIds
       .map((skillId) => {

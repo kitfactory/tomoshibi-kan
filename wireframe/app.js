@@ -875,6 +875,7 @@ const settingsState = {
   guideControllerAssistEnabled: DEFAULT_GUIDE_CONTROLLER_ASSIST_ENABLED,
   registeredModels: INITIAL_REGISTERED_MODELS.map((model) => ({ ...model })),
   registeredTools: ["Codex"],
+  registeredToolCapabilities: [],
   registeredSkills: [...STANDARD_SKILL_IDS],
   skillSearchQuery: "",
   skillSearchDraft: "",
@@ -1985,6 +1986,7 @@ function buildSettingsSavePayloadWithFallback() {
       guideControllerAssistEnabled: settingsState.guideControllerAssistEnabled,
       registeredModels: settingsState.registeredModels,
       registeredTools: settingsState.registeredTools,
+      registeredToolCapabilities: settingsState.registeredToolCapabilities,
       registeredSkills: settingsState.registeredSkills,
     });
   }
@@ -2003,6 +2005,20 @@ function buildSettingsSavePayloadWithFallback() {
       }))
       .filter((model) => Boolean(model.name)),
     registeredTools: [...new Set(settingsState.registeredTools.map((tool) => normalizeToolName(tool)))],
+    registeredToolCapabilities: Array.isArray(settingsState.registeredToolCapabilities)
+      ? settingsState.registeredToolCapabilities
+        .map((entry) => ({
+          toolName: normalizeToolName(entry?.toolName),
+          status: normalizeText(entry?.status) || "unavailable",
+          fetchedAt: normalizeText(entry?.fetchedAt),
+          commandName: normalizeText(entry?.commandName),
+          versionText: normalizeText(entry?.versionText),
+          capabilities: Array.isArray(entry?.capabilities) ? entry.capabilities : [],
+          capabilitySummaries: Array.isArray(entry?.capabilitySummaries) ? entry.capabilitySummaries : [],
+          errorText: normalizeText(entry?.errorText),
+        }))
+        .filter((entry) => Boolean(entry.toolName))
+      : [],
     registeredSkills: [...new Set(settingsState.registeredSkills.map((skillId) => normalizeSkillId(skillId)).filter(Boolean))],
   };
 }
@@ -2043,6 +2059,21 @@ function stableSettingsPayloadForSignature(payload = buildSettingsSavePayloadWit
     guideControllerAssistEnabled: input.guideControllerAssistEnabled === true,
     registeredModels: normalizedModels,
     registeredTools: normalizedTools,
+    registeredToolCapabilities: Array.isArray(input.registeredToolCapabilities)
+      ? input.registeredToolCapabilities
+        .map((entry) => ({
+          toolName: normalizeToolName(entry?.toolName),
+          status: normalizeText(entry?.status) || "unavailable",
+          fetchedAt: normalizeText(entry?.fetchedAt),
+          commandName: normalizeText(entry?.commandName),
+          versionText: normalizeText(entry?.versionText),
+          capabilities: Array.isArray(entry?.capabilities) ? entry.capabilities : [],
+          capabilitySummaries: Array.isArray(entry?.capabilitySummaries) ? entry.capabilitySummaries : [],
+          errorText: normalizeText(entry?.errorText),
+        }))
+        .filter((entry) => Boolean(entry.toolName))
+        .sort((left, right) => left.toolName.localeCompare(right.toolName))
+      : [],
     registeredSkills: normalizedSkills,
   };
 }
@@ -2088,6 +2119,20 @@ function normalizeSettingsSnapshotWithFallback(snapshot) {
       : [],
     registeredTools: Array.isArray(input.registeredTools)
       ? input.registeredTools.map((tool) => normalizeToolName(tool))
+      : [],
+    registeredToolCapabilities: Array.isArray(input.registeredToolCapabilities)
+      ? input.registeredToolCapabilities
+        .map((entry) => ({
+          toolName: normalizeToolName(entry?.toolName),
+          status: normalizeText(entry?.status) || "unavailable",
+          fetchedAt: normalizeText(entry?.fetchedAt),
+          commandName: normalizeText(entry?.commandName),
+          versionText: normalizeText(entry?.versionText),
+          capabilities: Array.isArray(entry?.capabilities) ? entry.capabilities : [],
+          capabilitySummaries: Array.isArray(entry?.capabilitySummaries) ? entry.capabilitySummaries : [],
+          errorText: normalizeText(entry?.errorText),
+        }))
+        .filter((entry) => Boolean(entry.toolName))
       : [],
     registeredSkills: Array.isArray(input.registeredSkills)
       ? input.registeredSkills.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
@@ -2141,6 +2186,7 @@ function buildLocalStoredSnapshotWithFallback(existingSnapshot, payload) {
     guideControllerAssistEnabled: normalizedPayload.guideControllerAssistEnabled === true,
     registeredModels: nextModels,
     registeredTools: normalizedPayload.registeredTools,
+    registeredToolCapabilities: normalizedPayload.registeredToolCapabilities,
     registeredSkills: normalizedPayload.registeredSkills,
   };
 }
@@ -2153,6 +2199,9 @@ function applySettingsSnapshot(snapshot) {
   settingsState.guideControllerAssistEnabled = normalized.guideControllerAssistEnabled === true;
   settingsState.registeredModels = normalized.registeredModels.map(normalizeRegisteredModel);
   settingsState.registeredTools = normalized.registeredTools.map((tool) => normalizeToolName(tool));
+  settingsState.registeredToolCapabilities = Array.isArray(normalized.registeredToolCapabilities)
+    ? normalized.registeredToolCapabilities
+    : [];
   settingsState.registeredSkills = normalized.registeredSkills.map((skillId) => normalizeSkillId(skillId)).filter(Boolean);
   syncSettingsModelsFromRegistry();
   syncPalProfilesFromSettings();
@@ -3070,6 +3119,42 @@ function buildFallbackIdentitySystemPrompt(basePrompt, identity) {
   return sections.join("\n\n") || basePrompt;
 }
 
+function normalizeToolCapabilitySnapshots(entries) {
+  if (!Array.isArray(entries)) return [];
+  const seen = new Set();
+  const result = [];
+  entries.forEach((entry) => {
+    const toolName = normalizeToolName(entry?.toolName);
+    if (!toolName) return;
+    const key = toolName.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push({
+      toolName,
+      status: normalizeText(entry?.status) || "unavailable",
+      fetchedAt: normalizeText(entry?.fetchedAt),
+      commandName: normalizeText(entry?.commandName),
+      versionText: normalizeText(entry?.versionText),
+      capabilities: Array.isArray(entry?.capabilities) ? entry.capabilities : [],
+      capabilitySummaries: Array.isArray(entry?.capabilitySummaries)
+        ? entry.capabilitySummaries.map((summary) => normalizeText(summary)).filter(Boolean)
+        : [],
+      errorText: normalizeText(entry?.errorText),
+    });
+  });
+  return result;
+}
+
+function resolveRegisteredToolCapabilitySnapshots(toolNames) {
+  const selected = Array.isArray(toolNames)
+    ? toolNames.map((toolName) => normalizeToolName(toolName)).filter(Boolean)
+    : [];
+  if (selected.length === 0) return [];
+  const selectedSet = new Set(selected.map((toolName) => toolName.toLowerCase()));
+  return normalizeToolCapabilitySnapshots(settingsState.registeredToolCapabilities)
+    .filter((entry) => selectedSet.has(entry.toolName.toLowerCase()));
+}
+
 async function loadAgentIdentityForPal(pal) {
   const identityApi = resolveAgentIdentityApi();
   if (!identityApi || !pal) return null;
@@ -3087,7 +3172,17 @@ async function loadAgentIdentityForPal(pal) {
   }
 }
 
-function fallbackResolveSkillSummaries(runtimeKind, configuredSkillIds, installedSkillIds, catalogItems) {
+function fallbackResolveSkillSummaries(runtimeKind, configuredSkillIds, installedSkillIds, catalogItems, selectedToolNames = [], registeredToolCapabilities = []) {
+  if (runtimeKind === "tool") {
+    const selected = new Set(
+      (Array.isArray(selectedToolNames) ? selectedToolNames : [])
+        .map((toolName) => normalizeToolName(toolName).toLowerCase())
+        .filter(Boolean)
+    );
+    return normalizeToolCapabilitySnapshots(registeredToolCapabilities)
+      .filter((entry) => selected.has(entry.toolName.toLowerCase()))
+      .flatMap((entry) => entry.capabilitySummaries);
+  }
   if (runtimeKind !== "model") return [];
   const installed = new Set(
     Array.isArray(installedSkillIds)
@@ -3145,6 +3240,7 @@ async function buildGuideContextWithFallback(latestUserText) {
   const guideProfile = palProfiles.find((pal) => pal.id === workspaceAgentSelection.activeGuideId) || null;
   const guideIdentity = await loadAgentIdentityForPal(guideProfile);
   const runtimeKind = normalizePalRuntimeKind(guideProfile?.runtimeKind);
+  const selectedToolNames = Array.isArray(guideProfile?.cliTools) ? guideProfile.cliTools : [];
   const guideOperatingRules = buildOperatingRulesPrompt("guide", locale);
   const configuredSkillIds = await resolveGuideConfiguredSkillIds();
   const installedSkillIds = Array.isArray(settingsState.registeredSkills)
@@ -3162,11 +3258,20 @@ async function buildGuideContextWithFallback(latestUserText) {
       configuredSkillIds,
       installedSkillIds,
       catalogItems: skillCatalogItems,
+      selectedToolNames,
+      registeredToolCapabilities: resolveRegisteredToolCapabilitySnapshots(selectedToolNames),
     })
     : null;
   const skillSummaries = Array.isArray(resolvedByApi?.skillSummaries)
     ? resolvedByApi.skillSummaries
-    : fallbackResolveSkillSummaries(runtimeKind, configuredSkillIds, installedSkillIds, skillCatalogItems);
+    : fallbackResolveSkillSummaries(
+      runtimeKind,
+      configuredSkillIds,
+      installedSkillIds,
+      skillCatalogItems,
+      selectedToolNames,
+      resolveRegisteredToolCapabilitySnapshots(selectedToolNames)
+    );
   if (external) {
     const builderInput = {
       latestUserText,
@@ -3240,6 +3345,7 @@ async function resolveWorkerAssignmentProfiles() {
         }
       }
       const runtimeKind = normalizePalRuntimeKind(pal.runtimeKind);
+      const selectedToolNames = Array.isArray(pal.cliTools) ? pal.cliTools : [];
       const configuredSkillIds = identity && identity.hasIdentityFiles
         ? (Array.isArray(identity.enabledSkillIds)
           ? identity.enabledSkillIds.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
@@ -3253,11 +3359,20 @@ async function resolveWorkerAssignmentProfiles() {
           configuredSkillIds,
           installedSkillIds,
           catalogItems: skillCatalogItems,
+          selectedToolNames,
+          registeredToolCapabilities: resolveRegisteredToolCapabilitySnapshots(selectedToolNames),
         })
         : null;
       const skillSummaries = Array.isArray(resolvedSkillSummaries?.skillSummaries)
         ? resolvedSkillSummaries.skillSummaries
-        : fallbackResolveSkillSummaries(runtimeKind, configuredSkillIds, installedSkillIds, skillCatalogItems);
+        : fallbackResolveSkillSummaries(
+          runtimeKind,
+          configuredSkillIds,
+          installedSkillIds,
+          skillCatalogItems,
+          selectedToolNames,
+          resolveRegisteredToolCapabilitySnapshots(selectedToolNames)
+        );
       const roleText = identity && identity.hasIdentityFiles && normalizeText(identity.role)
         ? normalizeText(identity.role)
         : normalizeText(pal.persona || pal.displayName || pal.id);
@@ -7411,6 +7526,7 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
     ]);
     const role = normalizePalRole(pal.role);
     const runtimeKind = normalizePalRuntimeKind(pal.runtimeKind);
+    const selectedToolNames = Array.isArray(pal.cliTools) ? pal.cliTools : [];
     const installedSkillIds = Array.isArray(settingsState.registeredSkills)
       ? settingsState.registeredSkills.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
       : [];
@@ -7426,11 +7542,20 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
         configuredSkillIds: enabledSkillIds,
         installedSkillIds,
         catalogItems: skillCatalogItems,
+        selectedToolNames,
+        registeredToolCapabilities: resolveRegisteredToolCapabilitySnapshots(selectedToolNames),
       })
       : null;
     const skillSummaries = Array.isArray(resolvedByApi?.skillSummaries)
       ? resolvedByApi.skillSummaries
-      : fallbackResolveSkillSummaries(runtimeKind, enabledSkillIds, installedSkillIds, skillCatalogItems);
+      : fallbackResolveSkillSummaries(
+        runtimeKind,
+        enabledSkillIds,
+        installedSkillIds,
+        skillCatalogItems,
+        selectedToolNames,
+        resolveRegisteredToolCapabilitySnapshots(selectedToolNames)
+      );
     const workspaceRoot = resolveRuntimeWorkspaceRootForChat();
     const basePrompt = buildOperatingRulesPrompt(role, locale, targetKind);
     const contextBuilderApi = resolvePalContextBuilderApi();

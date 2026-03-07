@@ -43,6 +43,19 @@ test("SqliteSettingsStore saves and loads settings without exposing api key", as
         },
       ],
       registeredTools: ["Codex"],
+      registeredToolCapabilities: [
+        {
+          toolName: "Codex",
+          status: "available",
+          fetchedAt: "2026-03-07T00:00:00.000Z",
+          commandName: "codex",
+          versionText: "codex-cli 0.111.0",
+          capabilities: [
+            { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+          ],
+          capabilitySummaries: ["exec: Run Codex non-interactively"],
+        },
+      ],
       registeredSkills: ["codex-file-search"],
     });
 
@@ -52,6 +65,8 @@ test("SqliteSettingsStore saves and loads settings without exposing api key", as
     const loaded = await store.load();
     assert.equal(loaded.registeredModels[0].apiKeyConfigured, true);
     assert.equal(Object.prototype.hasOwnProperty.call(loaded.registeredModels[0], "apiKey"), false);
+    assert.equal(loaded.registeredToolCapabilities[0].toolName, "Codex");
+    assert.equal(loaded.registeredToolCapabilities[0].capabilitySummaries[0], "exec: Run Codex non-interactively");
 
     const resolved = await store.resolveModelApiKey("gpt-4.1");
     assert.equal(resolved, "secret-abc");
@@ -76,6 +91,19 @@ test("SqliteSettingsStore keeps existing api key when saving without apiKeyInput
         },
       ],
       registeredTools: ["Codex"],
+      registeredToolCapabilities: [
+        {
+          toolName: "Codex",
+          status: "available",
+          fetchedAt: "2026-03-07T00:00:00.000Z",
+          commandName: "codex",
+          versionText: "codex-cli 0.111.0",
+          capabilities: [
+            { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+          ],
+          capabilitySummaries: ["exec: Run Codex non-interactively"],
+        },
+      ],
       registeredSkills: [],
     });
 
@@ -90,6 +118,19 @@ test("SqliteSettingsStore keeps existing api key when saving without apiKeyInput
         },
       ],
       registeredTools: ["Codex"],
+      registeredToolCapabilities: [
+        {
+          toolName: "Codex",
+          status: "available",
+          fetchedAt: "2026-03-07T00:00:00.000Z",
+          commandName: "codex",
+          versionText: "codex-cli 0.111.0",
+          capabilities: [
+            { id: "codex.command.exec", name: "exec", kind: "command", description: "Run Codex non-interactively" },
+          ],
+          capabilitySummaries: ["exec: Run Codex non-interactively"],
+        },
+      ],
       registeredSkills: [],
     });
 
