@@ -38,10 +38,13 @@ const FILE_SEARCH_IGNORE_DIR_NAMES = new Set([
   "coverage",
   ".next",
   ".turbo",
+  ".tomoshibikan",
   ".palpal",
 ]);
 const RUNTIME_DEBUG_ENABLED = /^(1|true|yes)$/i.test(
-  normalizeText(process.env.PALPAL_RUNTIME_DEBUG).toLowerCase()
+  normalizeText(
+    process.env.TOMOSHIBIKAN_RUNTIME_DEBUG || process.env.PALPAL_RUNTIME_DEBUG
+  ).toLowerCase()
 );
 
 const STANDARD_PROVIDER_ENV_KEYS = {
@@ -72,10 +75,10 @@ function normalizeText(value) {
 function runtimeDebugLog(message, details = null) {
   if (!RUNTIME_DEBUG_ENABLED) return;
   if (details === null || typeof details === "undefined") {
-    console.log(`[palpal-runtime] ${message}`);
+    console.log(`[tomoshibikan-runtime] ${message}`);
     return;
   }
-  console.log(`[palpal-runtime] ${message}`, details);
+  console.log(`[tomoshibikan-runtime] ${message}`, details);
 }
 
 function safeStringify(value, fallback = "{}") {
@@ -477,7 +480,7 @@ async function fetchTextWithTimeout(url, timeoutMs = 8000) {
       redirect: "follow",
       signal: controller.signal,
       headers: {
-        "User-Agent": "palpal-hive-runtime/0.1",
+        "User-Agent": "tomoshibikan-runtime/0.1",
       },
     });
     const body = await response.text();
@@ -924,7 +927,7 @@ async function executeRequestedToolCalls(params) {
     }
     try {
       const output = await tool.execute(requested.args, {
-        runId: "palpal-hive",
+        runId: "tomoshibi-kan",
         agent: params.agent,
         inputText: params.inputText,
       });

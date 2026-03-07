@@ -10,16 +10,19 @@ const {
 } = require("../runtime/workspace-root");
 
 function printHelp() {
-  console.log("palpal - launch Tomoshibi-kan via Electron");
+  const cliName = path.basename(process.argv[1] || "tomoshibikan", path.extname(process.argv[1] || ""));
+  console.log(`${cliName} - launch Tomoshibi-kan via Electron`);
   console.log("");
   console.log("Usage:");
-  console.log("  palpal");
-  console.log("  palpal --devtools");
-  console.log("  palpal debug runs [--limit <n>] [--role <guide|worker|gate>] [--stage <guide_chat|worker_runtime|gate_review>] [--status <ok|error>]");
-  console.log("  palpal debug show <run_id>");
-  console.log("  palpal debug guide-failures [--limit <n>]");
-  console.log("  palpal debug smoke [--workspace <path>]");
-  console.log("  palpal --help");
+  console.log(`  ${cliName}`);
+  console.log(`  ${cliName} --devtools`);
+  console.log(`  ${cliName} debug runs [--limit <n>] [--role <guide|worker|gate>] [--stage <guide_chat|worker_runtime|gate_review>] [--status <ok|error>]`);
+  console.log(`  ${cliName} debug show <run_id>`);
+  console.log(`  ${cliName} debug guide-failures [--limit <n>]`);
+  console.log(`  ${cliName} debug smoke [--workspace <path>]`);
+  console.log(`  ${cliName} --help`);
+  console.log("");
+  console.log("Legacy alias: palpal");
 }
 
 function normalizeString(value) {
@@ -35,10 +38,15 @@ function getOptionValue(args, name, fallback = "") {
 function resolveWorkspacePathsForCli() {
   const wsRoot = resolveWorkspaceRoot({
     platform: process.platform,
-    envWorkspaceRoot: normalizeString(process.env.PALPAL_WS_ROOT || process.env.PALPAL_WORKSPACE_ROOT),
+    envWorkspaceRoot: normalizeString(
+      process.env.TOMOSHIBIKAN_WS_ROOT ||
+      process.env.TOMOSHIBIKAN_WORKSPACE_ROOT ||
+      process.env.PALPAL_WS_ROOT ||
+      process.env.PALPAL_WORKSPACE_ROOT
+    ),
     documentsPath: path.join(os.homedir(), "Documents"),
     homePath: os.homedir(),
-    userDataPath: path.join(os.homedir(), ".palpal"),
+    userDataPath: path.join(os.homedir(), ".tomoshibikan"),
   });
   return resolveWorkspacePaths(wsRoot);
 }

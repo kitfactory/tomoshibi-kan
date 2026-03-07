@@ -19,11 +19,13 @@ function parseBase64JsonArg(prefix) {
 }
 
 function parseRuntimeDefaultsArg() {
-  return parseBase64JsonArg("--palpal-runtime-defaults=");
+  return parseBase64JsonArg("--tomoshibikan-runtime-defaults=") ||
+    parseBase64JsonArg("--palpal-runtime-defaults=");
 }
 
 function parseCoreCatalogArg() {
-  return parseBase64JsonArg("--palpal-core-catalog=");
+  return parseBase64JsonArg("--tomoshibikan-core-catalog=") ||
+    parseBase64JsonArg("--palpal-core-catalog=");
 }
 
 function resolveRuntimeDefaults() {
@@ -49,40 +51,56 @@ function resolveCoreCatalog() {
 const runtimeDefaults = resolveRuntimeDefaults();
 const coreCatalog = resolveCoreCatalog();
 
-contextBridge.exposeInMainWorld("PalpalSettingsStorage", {
+const settingsStorageBridge = {
   load: () => ipcRenderer.invoke("settings:load"),
   save: (payload) => ipcRenderer.invoke("settings:save", payload),
   resolveModelApiKey: (modelName) =>
     ipcRenderer.invoke("settings:resolve-model-api-key", modelName),
-});
+};
 
-contextBridge.exposeInMainWorld("PalpalAgentIdentity", {
+const agentIdentityBridge = {
   load: (payload) => ipcRenderer.invoke("agent-identity:load", payload),
   save: (payload) => ipcRenderer.invoke("agent-identity:save", payload),
-});
+};
 
-contextBridge.exposeInMainWorld("PalpalRuntimeConfig", {
+const runtimeConfigBridge = {
   defaults: { ...runtimeDefaults },
   getDefaults: () => ({ ...runtimeDefaults }),
-});
+};
 
-contextBridge.exposeInMainWorld("PALPAL_CORE_PROVIDERS", [...coreCatalog.providers]);
-contextBridge.exposeInMainWorld("PALPAL_CORE_MODELS", [...coreCatalog.models]);
-
-contextBridge.exposeInMainWorld("PalpalCoreRuntime", {
+const coreRuntimeBridge = {
   listProviderModels: () => ipcRenderer.invoke("palpal-core:list-provider-models"),
   guideChat: (payload) => ipcRenderer.invoke("guide:chat", payload),
   palChat: (payload) => ipcRenderer.invoke("pal:chat", payload),
-});
+};
 
-contextBridge.exposeInMainWorld("PalpalDebugRuns", {
+const debugRunsBridge = {
   list: (options) => ipcRenderer.invoke("debug-runs:list", options),
-});
+};
 
-contextBridge.exposeInMainWorld("PalpalProjectDialog", {
+const projectDialogBridge = {
   pickDirectory: () => ipcRenderer.invoke("project:pick-directory"),
-});
+};
 
-contextBridge.exposeInMainWorld("PalpalExternal", {
+const externalBridge = {
   openUrl: (url) => ipcRenderer.invoke("external:open", url),
-});
+};
+
+contextBridge.exposeInMainWorld("TomoshibikanSettingsStorage", settingsStorageBridge);
+contextBridge.exposeInMainWorld("PalpalSettingsStorage", settingsStorageBridge);
+contextBridge.exposeInMainWorld("TomoshibikanAgentIdentity", agentIdentityBridge);
+contextBridge.exposeInMainWorld("PalpalAgentIdentity", agentIdentityBridge);
+contextBridge.exposeInMainWorld("TomoshibikanRuntimeConfig", runtimeConfigBridge);
+contextBridge.exposeInMainWorld("PalpalRuntimeConfig", runtimeConfigBridge);
+contextBridge.exposeInMainWorld("TOMOSHIBIKAN_CORE_PROVIDERS", [...coreCatalog.providers]);
+contextBridge.exposeInMainWorld("PALPAL_CORE_PROVIDERS", [...coreCatalog.providers]);
+contextBridge.exposeInMainWorld("TOMOSHIBIKAN_CORE_MODELS", [...coreCatalog.models]);
+contextBridge.exposeInMainWorld("PALPAL_CORE_MODELS", [...coreCatalog.models]);
+contextBridge.exposeInMainWorld("TomoshibikanCoreRuntime", coreRuntimeBridge);
+contextBridge.exposeInMainWorld("PalpalCoreRuntime", coreRuntimeBridge);
+contextBridge.exposeInMainWorld("TomoshibikanDebugRuns", debugRunsBridge);
+contextBridge.exposeInMainWorld("PalpalDebugRuns", debugRunsBridge);
+contextBridge.exposeInMainWorld("TomoshibikanProjectDialog", projectDialogBridge);
+contextBridge.exposeInMainWorld("PalpalProjectDialog", projectDialogBridge);
+contextBridge.exposeInMainWorld("TomoshibikanExternal", externalBridge);
+contextBridge.exposeInMainWorld("PalpalExternal", externalBridge);

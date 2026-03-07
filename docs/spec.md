@@ -1,4 +1,4 @@
-﻿# PalPal-Hive
+﻿# Tomoshibi-kan
 
 要件とは（レビュー者視点）＋ Given/When/Done ＋ MSG/ERR のID管理  
 ※I/F詳細・API使用は書かない
@@ -218,7 +218,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 | API_KEY（明示入力値） | OSキーチェーン（Windows Credential Manager / macOS Keychain / libsecret） | 平文でDB保存しない。`secret_ref` のみ設定データへ保持する |
 
 #### 開発既定ランタイム（Guide）
-- 開発/テスト既定の model/base_url/provider/api_key は `.env`（`PALPAL_LMSTUDIO_*`）から注入する。
+- 開発/テスト既定の model/base_url/provider/api_key は `.env`（`LMSTUDIO_*`）から注入する。
 - `.env` 未設定時は `openai/gpt-oss-20b` / `http://192.168.11.16:1234/v1` / `openai` / `lmstudio` をフォールバック値とする。
 
 #### API_KEY入力の扱い（必須）
@@ -290,7 +290,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
       skills.yaml
   skills/
   memory/
-  .palpal/
+  .tomoshibikan/
     state/
     secrets/
     cache/
@@ -304,8 +304,8 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Gate 作成時は、利用言語（`ja` / `en`）に応じた `SOUL.md + RUBRIC.md` のテンプレートを初期生成する。
 - Workspace は 1 つの active guide と 1 つの default gate を持つ。
 - Task / Job は必要に応じて `gate_id` を持てる。未指定時は workspace の default gate を使う。
-- API_KEY など機密は `.palpal/secrets` のみで扱い、Markdown 側へ保存しない。
-- Git 管理対象は `.palpal` を除く領域とする。
+- API_KEY など機密は `.tomoshibikan/secrets` のみで扱い、Markdown 側へ保存しない。
+- Git 管理対象は `.tomoshibikan` を除く領域とする。
 
 ## 追加仕様 (2026-03-01): PalContextBuilder
 
@@ -488,9 +488,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 
 ### ルール
 - workspace 初期化時に候補ルートを順に試行する。
-  1. 既定ルート（または `PALPAL_WS_ROOT`）
-  2. `userData/workspaces/palpal`
-  3. `temp/palpal/workspace`
+  1. 既定ルート（または `TOMOSHIBIKAN_WS_ROOT`）
+  2. `userData/workspaces/tomoshibi-kan`
+  3. `temp/tomoshibi-kan/workspace`
 - `EACCES` / `EPERM` のときのみ次候補へフォールバックする。
 - 非権限系エラーは即時失敗として扱う。
 
@@ -683,9 +683,11 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - `meta_json` には `identityVersions` (`soulVersion`, `roleVersion`, `rubricVersion`) や `handoffPolicy` など、状況比較に必要な最小メタデータを含めてよい。
 
 ### Debug CLI
-- `palpal debug runs` は最新 debug record の一覧を表示できること。
-- `palpal debug show <run_id>` は単一 debug record の `input/output/meta/error` を表示できること。
-- `palpal debug guide-failures` は `guide_chat` record を `conversation | needs_clarification | plan_ready | parse_failure | runtime_error` と blocking cue で分類して要約表示できること。
-- `palpal debug smoke` は isolated workspace 上で Electron orchestration smoke を実行し、`guide_chat / worker_runtime / gate_review` の debug record が生成されることを確認できること。
+- `tomoshibikan debug runs` は最新 debug record の一覧を表示できること。
+- `tomoshibikan debug show <run_id>` は単一 debug record の `input/output/meta/error` を表示できること。
+- `tomoshibikan debug guide-failures` は `guide_chat` record を `conversation | needs_clarification | plan_ready | parse_failure | runtime_error` と blocking cue で分類して要約表示できること。
+- `tomoshibikan debug smoke` は isolated workspace 上で Electron orchestration smoke を実行し、`guide_chat / worker_runtime / gate_review` の debug record が生成されることを確認できること。
 - 初期段階では `tail/export/UI` は持たず、まず `runs/show/smoke` に限定する。
+
+
 

@@ -38,7 +38,7 @@ function createWorkspaceRoot(args) {
     fs.mkdirSync(explicit, { recursive: true });
     return path.resolve(explicit);
   }
-  return fs.mkdtempSync(path.join(os.tmpdir(), "palpal-guide-check-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibi-kan-guide-check-"));
 }
 
 function createSafeStorageMock() {
@@ -66,6 +66,10 @@ async function readDebugRuns(workspaceRoot) {
 async function resetPrototypeLocalState(page) {
   await page.evaluate(() => {
     const keys = [
+      "tomoshibi-kan.projects.v1",
+      "tomoshibi-kan.board-state.v1",
+      "tomoshibi-kan.agent-profiles.v1",
+      "tomoshibi-kan.settings.v1",
       "palpal-hive.projects.v1",
       "palpal-hive.board-state.v1",
       "palpal-hive.agent-profiles.v1",
@@ -210,6 +214,7 @@ async function runCheck(args) {
     args: [appRoot],
     env: {
       ...process.env,
+      TOMOSHIBIKAN_WS_ROOT: workspaceRoot,
       PALPAL_WS_ROOT: workspaceRoot,
     },
   });

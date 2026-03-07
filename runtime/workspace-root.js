@@ -1,5 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const WORKSPACE_SLUG = "tomoshibi-kan";
+const LEGACY_WORKSPACE_SLUG = "palpal";
+const INTERNAL_DIR_NAME = ".tomoshibikan";
+const LEGACY_INTERNAL_DIR_NAME = ".palpal";
 
 function normalizeString(value) {
   return String(value || "").trim();
@@ -33,24 +37,29 @@ function resolveWorkspaceRoot(input = {}) {
       ? input.documentsExists
       : (documentsPath ? fs.existsSync(documentsPath) : false);
 
-  // Linux fallback is ~/.local/share/palpal when Documents is missing.
+  // Linux fallback is ~/.local/share/tomoshibi-kan when Documents is missing.
   if (platform === "linux") {
-    if (documentsPath && documentsExists) return path.join(documentsPath, "palpal");
-    if (homePath) return path.join(homePath, ".local", "share", "palpal");
-    if (userDataPath) return path.join(userDataPath, "workspaces", "palpal");
-    return path.resolve("palpal");
+    if (documentsPath && documentsExists) return path.join(documentsPath, WORKSPACE_SLUG);
+    if (homePath) return path.join(homePath, ".local", "share", WORKSPACE_SLUG);
+    if (userDataPath) return path.join(userDataPath, "workspaces", WORKSPACE_SLUG);
+    return path.resolve(WORKSPACE_SLUG);
   }
 
-  // Windows/macOS default to Documents/palpal.
-  if (documentsPath) return path.join(documentsPath, "palpal");
-  if (homePath) return path.join(homePath, "Documents", "palpal");
-  if (userDataPath) return path.join(userDataPath, "workspaces", "palpal");
-  return path.resolve("palpal");
+  // Windows/macOS default to Documents/tomoshibi-kan.
+  if (documentsPath) return path.join(documentsPath, WORKSPACE_SLUG);
+  if (homePath) return path.join(homePath, "Documents", WORKSPACE_SLUG);
+  if (userDataPath) return path.join(userDataPath, "workspaces", WORKSPACE_SLUG);
+  return path.resolve(WORKSPACE_SLUG);
 }
 
 function resolveWorkspacePaths(wsRoot) {
   const root = path.resolve(normalizeString(wsRoot));
-  const internalRoot = path.join(root, ".palpal");
+  const preferredInternalRoot = path.join(root, INTERNAL_DIR_NAME);
+  const legacyInternalRoot = path.join(root, LEGACY_INTERNAL_DIR_NAME);
+  const internalRoot =
+    fs.existsSync(preferredInternalRoot) || !fs.existsSync(legacyInternalRoot)
+      ? preferredInternalRoot
+      : legacyInternalRoot;
   const stateDir = path.join(internalRoot, "state");
   const secretsDir = path.join(internalRoot, "secrets");
   const cacheDir = path.join(internalRoot, "cache");
@@ -130,6 +139,10 @@ function resolveWritableWorkspacePaths(candidateRoots = [], options = {}) {
 }
 
 module.exports = {
+  WORKSPACE_SLUG,
+  LEGACY_WORKSPACE_SLUG,
+  INTERNAL_DIR_NAME,
+  LEGACY_INTERNAL_DIR_NAME,
   resolveWorkspaceRoot,
   resolveWorkspacePaths,
   ensureWorkspaceLayout,

@@ -49,7 +49,11 @@ function sanitizeRuntimeResponseForDebug(output = {}) {
 }
 
 function configureDebugStubRuntimeIfEnabled() {
-  if (!/^(1|true|yes)$/i.test(normalizeString(process.env.PALPAL_DEBUG_STUB_RUNTIME).toLowerCase())) {
+  if (!/^(1|true|yes)$/i.test(
+    normalizeString(
+      process.env.TOMOSHIBIKAN_DEBUG_STUB_RUNTIME || process.env.PALPAL_DEBUG_STUB_RUNTIME
+    ).toLowerCase()
+  )) {
     return;
   }
   __setCoreRuntimeBindingsForTest({
@@ -111,7 +115,7 @@ async function appendOrchestrationDebugRunSafe(settings, record) {
   try {
     await settings.appendOrchestrationDebugRun(record);
   } catch (error) {
-    console.warn("[palpal] failed to append orchestration debug run", error);
+    console.warn("[tomoshibikan] failed to append orchestration debug run", error);
   }
 }
 
@@ -166,7 +170,12 @@ function appPathOrEmpty(name) {
 function resolveWorkspacePathsFromApp() {
   const primaryRoot = resolveWorkspaceRoot({
     platform: process.platform,
-    envWorkspaceRoot: normalizeString(process.env.PALPAL_WS_ROOT || process.env.PALPAL_WORKSPACE_ROOT),
+    envWorkspaceRoot: normalizeString(
+      process.env.TOMOSHIBIKAN_WS_ROOT ||
+      process.env.TOMOSHIBIKAN_WORKSPACE_ROOT ||
+      process.env.PALPAL_WS_ROOT ||
+      process.env.PALPAL_WORKSPACE_ROOT
+    ),
     documentsPath: appPathOrEmpty("documents"),
     homePath: appPathOrEmpty("home"),
     userDataPath: appPathOrEmpty("userData"),
@@ -175,14 +184,14 @@ function resolveWorkspacePathsFromApp() {
   const tempPath = appPathOrEmpty("temp");
   const fallbackRoots = [
     primaryRoot,
-    userDataPath ? path.join(userDataPath, "workspaces", "palpal") : "",
-    tempPath ? path.join(tempPath, "palpal", "workspace") : "",
+    userDataPath ? path.join(userDataPath, "workspaces", "tomoshibi-kan") : "",
+    tempPath ? path.join(tempPath, "tomoshibi-kan", "workspace") : "",
   ];
   const resolved = resolveWritableWorkspacePaths(fallbackRoots);
   if (resolved.fallbackUsed) {
     // English-only log: startup diagnostics should be locale-agnostic.
     console.warn(
-      `[palpal] workspace root fallback applied: primary=${primaryRoot} selected=${resolved.wsRoot}`
+      `[tomoshibikan] workspace root fallback applied: primary=${primaryRoot} selected=${resolved.wsRoot}`
     );
   }
   return resolved.paths;
@@ -374,12 +383,12 @@ function bindIpc(settings, identity) {
 
 function encodeRuntimeDefaultsArg(defaults) {
   const payload = Buffer.from(JSON.stringify(defaults), "utf8").toString("base64");
-  return `--palpal-runtime-defaults=${payload}`;
+  return `--tomoshibikan-runtime-defaults=${payload}`;
 }
 
 function encodeCoreCatalogArg(catalog) {
   const payload = Buffer.from(JSON.stringify(catalog || { providers: [], models: [] }), "utf8").toString("base64");
-  return `--palpal-core-catalog=${payload}`;
+  return `--tomoshibikan-core-catalog=${payload}`;
 }
 
 function shouldOpenExternally(url) {

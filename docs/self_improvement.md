@@ -2,7 +2,7 @@
 
 ## 1. 目的
 
-この文書は、LLM の入出力ログから改善を回す仕組みについての調査結果を整理し、`palpal-hive` に適用するための軽量な設計案をまとめる。
+この文書は、LLM の入出力ログから改善を回す仕組みについての調査結果を整理し、`tomoshibi-kan` に適用するための軽量な設計案をまとめる。
 
 狙いは次の 3 点に絞る。
 
@@ -14,7 +14,7 @@
 
 プロンプト自己改善の分野は、すでに「良い一文を自動生成する」段階を超えている。現在の中心は、`観測 -> 評価 -> 問題の切り出し -> 改善提案 -> 再評価` というループをどう設計するかである。
 
-`palpal-hive` においても、改善対象を単なる system prompt 文字列として扱うのは不適切である。実際の挙動は、少なくとも以下の合成結果として現れる。
+`tomoshibi-kan` においても、改善対象を単なる system prompt 文字列として扱うのは不適切である。実際の挙動は、少なくとも以下の合成結果として現れる。
 
 - runtime 側の system prompt
 - Agent Identity (`SOUL.md`, `ROLE.md`, `RUBRIC.md`)
@@ -26,7 +26,7 @@
 
 最初の実装は次の構成が最も軽く、かつ効果が高い。
 
-1. `guide:chat` / `pal:chat` の実行を `.palpal/logs` に JSONL で記録する
+1. `guide:chat` / `pal:chat` の実行を `.tomoshibikan/logs` に JSONL で記録する
 2. ログから失敗パターンを抽出する
 3. パターンごとに、どこを直すべきかを Markdown レポート化する
 4. 自動書き換えは行わず、人が `SOUL.md` / `ROLE.md` / `RUBRIC.md` / runtime prompt を更新する
@@ -68,9 +68,9 @@
 
 実運用上の失敗は、prompt wording ではなく、context 注入不足、tool loop 制御不足、identity 文書の曖昧さ、fallback 設計不足で起きることが多い。
 
-### 3.3 `palpal-hive` に対する含意
+### 3.3 `tomoshibi-kan` に対する含意
 
-`palpal-hive` の現在構造では、改善対象を次の 4 層に分けるのが自然である。
+`tomoshibi-kan` の現在構造では、改善対象を次の 4 層に分けるのが自然である。
 
 - `Runtime layer`
   - `GUIDE_SYSTEM_PROMPT`
@@ -89,13 +89,13 @@
 
 ここから分かるのは、「prompt optimizer を入れる」より、「各失敗がどの層の問題かを切り分ける」方が先だということである。
 
-## 4. `palpal-hive` の現状と導入余地
+## 4. `tomoshibi-kan` の現状と導入余地
 
 現状の観測では、導入ポイントはかなり明確である。
 
 - Electron IPC の LLM 入口は `guide:chat` / `pal:chat`
 - 実行本体は `runtime/palpal-core-runtime.js`
-- Workspace 内に `.palpal/logs` を置く前提が既にある
+- Workspace 内に `.tomoshibikan/logs` を置く前提が既にある
 - Agent Identity は `SOUL.md` / `ROLE.md` / `RUBRIC.md` としてローカルファイル化されている
 - tool loop には `loopStopReason` と `loopTrace` が既にある
 
@@ -130,7 +130,7 @@ first slice では次は避ける。
 
 保存先:
 
-- `<ws-root>/.palpal/logs/llm-runs.jsonl`
+- `<ws-root>/.tomoshibikan/logs/llm-runs.jsonl`
 
 最低限の記録項目:
 
@@ -169,7 +169,7 @@ first slice では次は避ける。
 
 出力:
 
-- `<ws-root>/.palpal/logs/self-improvement-report.md`
+- `<ws-root>/.tomoshibikan/logs/self-improvement-report.md`
 
 #### C. 改善提案生成
 
@@ -206,7 +206,7 @@ first slice が回った後で、必要なら次を追加する。
   "agentName": "guide-core",
   "provider": "lmstudio",
   "modelName": "openai/gpt-oss-20b",
-  "workspaceRoot": "C:/Users/kitad/palpal-hive",
+  "workspaceRoot": "C:/Users/kitad/tomoshibi-kan",
   "systemPrompt": "You are Guide...",
   "userText": "README を見て次のタスクを提案して",
   "responseText": "README を確認し、次の作業として...",
@@ -299,7 +299,7 @@ LLM は全件採点ではなく、以下に限定して使う。
 - Expected effect: max turn 到達前の収束率改善
 - How to validate: 失敗再現テストとログ比較
 
-## 10. `palpal-hive` で最初に直すべき単位
+## 10. `tomoshibi-kan` で最初に直すべき単位
 
 改善対象は、最初から広げすぎない方がよい。
 
@@ -358,7 +358,7 @@ LLM は全件採点ではなく、以下に限定して使う。
 
 ## 13. 最終提案
 
-`palpal-hive` に今必要なのは、自動 prompt optimizer ではない。必要なのは、以下の軽量ループである。
+`tomoshibi-kan` に今必要なのは、自動 prompt optimizer ではない。必要なのは、以下の軽量ループである。
 
 1. 実行を記録する
 2. 失敗パターンを見つける
@@ -366,7 +366,7 @@ LLM は全件採点ではなく、以下に限定して使う。
 4. 人が `runtime prompt` / `SOUL` / `ROLE` / `RUBRIC` を更新する
 5. 再度ログで効果を見る
 
-この設計は軽く、現行の `palpal-hive` アーキテクチャに素直に乗り、将来 Braintrust や LangSmith のような外部基盤へ接続する場合にも無駄になりにくい。
+この設計は軽く、現行の `tomoshibi-kan` アーキテクチャに素直に乗り、将来 Braintrust や LangSmith のような外部基盤へ接続する場合にも無駄になりにくい。
 
 ## 14. 参考ソース
 
@@ -383,3 +383,4 @@ LLM は全件採点ではなく、以下に限定して使う。
 - LangSmith Polly: https://docs.langchain.com/langsmith/polly
 - LangSmith Insights: https://docs.langchain.com/langsmith/insights
 - CRITIC: https://openreview.net/forum?id=WSrRF5Wy6v
+

@@ -22,7 +22,8 @@ const VIEWPORTS = [
   { width: 1024, height: 768 },
 ];
 
-const CLAWHUB_LIVE_MODE = process.env.PALPAL_E2E_LIVE === "1";
+const CLAWHUB_LIVE_MODE =
+  process.env.TOMOSHIBIKAN_E2E_LIVE === "1" || process.env.PALPAL_E2E_LIVE === "1";
 const CLAWHUB_MOCK_BASE_SKILLS = [
   {
     slug: "codex-file-search",
@@ -534,9 +535,9 @@ for (const viewport of VIEWPORTS) {
       await page.click('#guideMentionMenu .guide-mention-item:has-text("@wireframe/app.js")');
       await expect(page.locator("#guideInput")).toHaveValue("@wireframe/app.js ");
 
-      await page.fill("#guideInput", "@palpal-hive:");
+      await page.fill("#guideInput", "@Tomoshibi-kan:");
       await expect(page.locator("#guideMentionMenu")).toBeVisible();
-      await expect(page.locator("#guideMentionMenu")).toContainText("@palpal-hive:wireframe/app.js");
+      await expect(page.locator("#guideMentionMenu")).toContainText("@Tomoshibi-kan:wireframe/app.js");
     });
 
     test("task detail drawer is visible only on task tab", async ({ page }) => {

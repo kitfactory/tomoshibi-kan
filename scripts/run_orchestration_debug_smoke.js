@@ -22,7 +22,7 @@ function createWorkspaceRoot(args) {
     fs.mkdirSync(explicit, { recursive: true });
     return path.resolve(explicit);
   }
-  return fs.mkdtempSync(path.join(os.tmpdir(), "palpal-smoke-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibi-kan-smoke-"));
 }
 
 function createSafeStorageMock() {
@@ -114,7 +114,9 @@ async function runSmoke(args) {
     args: [appRoot],
     env: {
       ...process.env,
+      TOMOSHIBIKAN_WS_ROOT: workspaceRoot,
       PALPAL_WS_ROOT: workspaceRoot,
+      TOMOSHIBIKAN_DEBUG_STUB_RUNTIME: "1",
       PALPAL_DEBUG_STUB_RUNTIME: "1",
     },
   });

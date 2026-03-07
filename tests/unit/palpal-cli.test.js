@@ -88,7 +88,7 @@ async function seedDebugRuns(wsRoot) {
 }
 
 test("palpal debug runs lists filtered debug records", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-cli-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);
     const result = spawnSync(
@@ -98,6 +98,7 @@ test("palpal debug runs lists filtered debug records", async () => {
         cwd: path.resolve(__dirname, "../.."),
         env: {
           ...process.env,
+          TOMOSHIBIKAN_WS_ROOT: tmpDir,
           PALPAL_WS_ROOT: tmpDir,
         },
         encoding: "utf8",
@@ -113,7 +114,7 @@ test("palpal debug runs lists filtered debug records", async () => {
 });
 
 test("palpal debug show prints one debug record detail", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-cli-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);
     const result = spawnSync(
@@ -123,6 +124,7 @@ test("palpal debug show prints one debug record detail", async () => {
         cwd: path.resolve(__dirname, "../.."),
         env: {
           ...process.env,
+          TOMOSHIBIKAN_WS_ROOT: tmpDir,
           PALPAL_WS_ROOT: tmpDir,
         },
         encoding: "utf8",
@@ -149,10 +151,11 @@ test("palpal help includes debug smoke command", () => {
   );
   assert.equal(result.status, 0);
   assert.match(result.stdout, /palpal debug smoke/);
+  assert.match(result.stdout, /Legacy alias: palpal/);
 });
 
 test("palpal debug guide-failures summarizes guide statuses and cues", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-cli-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);
     const result = spawnSync(
@@ -162,6 +165,7 @@ test("palpal debug guide-failures summarizes guide statuses and cues", async () 
         cwd: path.resolve(__dirname, "../.."),
         env: {
           ...process.env,
+          TOMOSHIBIKAN_WS_ROOT: tmpDir,
           PALPAL_WS_ROOT: tmpDir,
         },
         encoding: "utf8",

@@ -325,7 +325,7 @@ test("requestGuideChatCompletion returns fallback text instead of throwing when 
 });
 
 test("requestGuideChatCompletion resolves @ prefixed file path and returns recovered file content on max turns", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-read-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-read-"));
   fs.writeFileSync(path.join(tempWorkspace, "README.md"), "Runtime fallback README content.", "utf8");
 
   let generateCount = 0;
@@ -385,7 +385,7 @@ test("requestGuideChatCompletion resolves @ prefixed file path and returns recov
 });
 
 test("requestGuideChatCompletion codex-file-search returns concrete workspace matches", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-search-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-search-"));
   fs.mkdirSync(path.join(tempWorkspace, "docs"), { recursive: true });
   fs.writeFileSync(path.join(tempWorkspace, "docs", "README.md"), "Guide search test content.", "utf8");
 
@@ -435,7 +435,7 @@ test("requestGuideChatCompletion codex-file-search returns concrete workspace ma
 });
 
 test("requestGuideChatCompletion resolves workspace-name-prefixed file-read path", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-prefix-read-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-prefix-read-"));
   const workspaceName = path.basename(tempWorkspace);
   fs.writeFileSync(path.join(tempWorkspace, "README.md"), "Workspace prefix read test.", "utf8");
 
@@ -484,7 +484,7 @@ test("requestGuideChatCompletion resolves workspace-name-prefixed file-read path
 });
 
 test("requestGuideChatCompletion resolves workspace-name-prefixed file-search path", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-prefix-search-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-prefix-search-"));
   const workspaceName = path.basename(tempWorkspace);
   fs.mkdirSync(path.join(tempWorkspace, "docs"), { recursive: true });
   fs.writeFileSync(path.join(tempWorkspace, "docs", "README.md"), "Workspace prefix search.", "utf8");
@@ -535,7 +535,7 @@ test("requestGuideChatCompletion resolves workspace-name-prefixed file-search pa
 });
 
 test("requestGuideChatCompletion returns file-not-found fallback when read fails and loop stops", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-missing-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-missing-"));
 
   let generateCount = 0;
   coreRuntime.__setCoreRuntimeBindingsForTest({
@@ -586,7 +586,7 @@ test("requestGuideChatCompletion returns file-not-found fallback when read fails
 });
 
 test("requestGuideChatCompletion stops early when the same file-read not-found repeats", async () => {
-  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-runtime-repeated-missing-"));
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-runtime-repeated-missing-"));
   let generateCount = 0;
 
   coreRuntime.__setCoreRuntimeBindingsForTest({
@@ -645,3 +645,4 @@ test("requestGuideChatCompletion stops early when the same file-read not-found r
     fs.rmSync(tempWorkspace, { recursive: true, force: true });
   }
 });
+

@@ -38,7 +38,7 @@ function createWorkspaceRoot(args) {
     fs.mkdirSync(explicit, { recursive: true });
     return path.resolve(explicit);
   }
-  return fs.mkdtempSync(path.join(os.tmpdir(), "palpal-orchestrator-check-"));
+  return fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibi-kan-orchestrator-check-"));
 }
 
 function createSafeStorageMock() {
@@ -218,6 +218,7 @@ async function runCheck(args) {
     args: [appRoot],
     env: {
       ...process.env,
+      TOMOSHIBIKAN_WS_ROOT: workspaceRoot,
       PALPAL_WS_ROOT: workspaceRoot,
     },
   });

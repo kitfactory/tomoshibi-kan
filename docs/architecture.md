@@ -229,7 +229,7 @@ interface SkillCatalogPort {
 - `ModelConfig` の永続化データは `apiKey` の代わりに `secretRef` を保持する。
 - UI入力の API_KEY は write-only とし、読み出し時は「設定済み」状態のみ返す。
 - モデル削除時は設定レコード削除と `SecretStorePort.remove(secretRef)` を同一トランザクション境界で扱う。
-- 開発既定の model/provider/base_url/api_key は `.env`（`PALPAL_LMSTUDIO_*`）から解決し、preload bridge で Renderer に渡す。
+- 開発既定の model/provider/base_url/api_key は `.env`（`LMSTUDIO_*`）から解決し、preload bridge で Renderer に渡す。
 
 ## 5. Execution Loop とUseCase対応
 1. 相談受付/Plan提示: `GuideConversationUseCase`
@@ -289,12 +289,12 @@ interface SkillCatalogPort {
 
 ### パス解決
 - `WorkspaceRootResolver` を追加し、`ws-root` を OS 既定値または環境変数 override で決定する。
-- `WorkspaceInternalPathResolver` は `<ws-root>/.palpal` 配下の `state/secrets/cache/logs` を解決する。
+- `WorkspaceInternalPathResolver` は `<ws-root>/.tomoshibikan` 配下の `state/secrets/cache/logs` を解決する。
 
 ### 保存責務
 - `SqliteSettingsRepository` は `state/settings.sqlite` を使用する。
 - `SecretStorePort` は `secrets/secrets.json`（OS暗号化利用）を使用する。
-- `.palpal` の下位ディレクトリは起動時に作成保証する。
+- `.tomoshibikan` の下位ディレクトリは起動時に作成保証する。
 
 ### 読み取り責務
 - `user.md` は `<ws-root>/user.md` を単一の共通ユーザー文脈として読む。
@@ -303,7 +303,7 @@ interface SkillCatalogPort {
 - Workspace は `activeGuideProfileId` と `defaultGateProfileId` を保持し、Guide 系 UseCase は active guide、Gate 系 UseCase は対象別 `gateProfileId` または default gate を解決して使う。
 
 ### 非機能制約
-- `.palpal` は Git 管理しない。
+- `.tomoshibikan` は Git 管理しない。
 - 機密値は Markdown へ出力しない。
 
 ## 追加設計 (2026-03-01): PalContextBuilder
@@ -314,7 +314,7 @@ interface SkillCatalogPort {
 - `ContextBudgetPlanner`: token 予算配分
 - `ContextCompactor`: truncate/summarize/drop の適用
 - `ContextComposer`: LLM 送信 payload 生成
-- `ContextAuditRecorder`: 監査ログを `.palpal/logs` へ保存
+- `ContextAuditRecorder`: 監査ログを `.tomoshibikan/logs` へ保存
 
 ### Agent Identity Layer（Step1）
 - `AgentIdentityRepository`（新設予定）:
@@ -427,7 +427,7 @@ interface JobRunRepositoryPort {
 - scheduler miss は `skipped` を直接記録（`running` を経由しない）
 
 ### 監視/ログ
-- Scheduler tick の結果（due件数、起動件数、skip件数）を `.palpal/logs` に記録する。
+- Scheduler tick の結果（due件数、起動件数、skip件数）を `.tomoshibikan/logs` に記録する。
 - Event Log と JobRunRepository の双方に記録し、UI は Event Log から概況、JobRun から詳細履歴を表示する。
 
 ### 境界制約
@@ -736,7 +736,9 @@ CREATE TABLE orchestration_debug_runs (
 ### Debug CLI
 - `cli/palpal.js` は Electron launcher のまま維持しつつ、`debug runs` / `debug show` / `debug smoke` を追加する。
 - `cli/palpal.js` の `debug guide-failures` は `guide_chat` record の `output.text` を `GuidePlan.parseGuidePlanResponse` で再解釈し、`status + blocking cue` を集計する。
-- CLI は `PALPAL_WS_ROOT` から workspace を解決し、`SqliteSettingsStore.listOrchestrationDebugRuns()` を使って debug record を読む。
+- CLI は `TOMOSHIBIKAN_WS_ROOT` から workspace を解決し、`SqliteSettingsStore.listOrchestrationDebugRuns()` を使って debug record を読む。
 - `debug smoke` は Playwright Electron launcher を使って app を起動し、isolated workspace に対して Settings -> Guide -> Job/Gate の最小経路を実行する。
 - 出力は plain text とし、一覧・詳細・smoke summary の 3 形態のみを初期対応とする。
+
+
 

@@ -8,6 +8,7 @@ const args = [
 ];
 const env = {
   ...process.env,
+  TOMOSHIBIKAN_E2E_LIVE: "1",
   PALPAL_E2E_LIVE: "1",
 };
 

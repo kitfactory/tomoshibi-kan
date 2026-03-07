@@ -57,6 +57,7 @@ async function main(args) {
     args: [appRoot],
     env: {
       ...process.env,
+      TOMOSHIBIKAN_WS_ROOT: workspaceRoot,
       PALPAL_WS_ROOT: workspaceRoot,
     },
   });

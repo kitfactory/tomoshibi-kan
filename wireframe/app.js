@@ -315,7 +315,8 @@ function buildOperatingRulesPrompt(role, localeValue, targetKind = "task") {
       "- Keep the response concise and action-oriented.",
     ].join("\n");
 }
-const SETTINGS_LOCAL_STORAGE_KEY = "palpal-hive.settings.v1";
+const SETTINGS_LOCAL_STORAGE_KEY = "tomoshibi-kan.settings.v1";
+const LEGACY_SETTINGS_LOCAL_STORAGE_KEYS = ["palpal-hive.settings.v1"];
 const GATE_REASON_TEMPLATES = [
   {
     id: "missing-evidence",
@@ -343,6 +344,33 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function resolveWindowBridge(nextName, legacyName) {
+  if (typeof window === "undefined") return null;
+  return window[nextName] || window[legacyName] || null;
+}
+
+function readLocalStorageSnapshot(primaryKey, legacyKeys = []) {
+  if (typeof window === "undefined" || !window.localStorage) return null;
+  for (const key of [primaryKey, ...legacyKeys]) {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw) return raw;
+    } catch (error) {
+      return null;
+    }
+  }
+  return null;
+}
+
+function writeLocalStorageSnapshot(primaryKey, payload) {
+  if (typeof window === "undefined" || !window.localStorage) return;
+  try {
+    window.localStorage.setItem(primaryKey, payload);
+  } catch (error) {
+    // ignore localStorage write failures in prototype mode
+  }
+}
+
 function buildClawHubSkillUrl(skillId) {
   const normalized = normalizeGenericSkillId(skillId) || normalizeText(skillId);
   if (!normalized) return `${CLAWHUB_WEB_BASE_URL}/skills`;
@@ -358,11 +386,8 @@ function buildClawHubSkillUrl(skillId) {
 }
 
 function resolveExternalLinkApi() {
-  return typeof window !== "undefined" &&
-    window.PalpalExternal &&
-    typeof window.PalpalExternal.openUrl === "function"
-    ? window.PalpalExternal
-    : null;
+  const bridge = resolveWindowBridge("TomoshibikanExternal", "PalpalExternal");
+  return bridge && typeof bridge.openUrl === "function" ? bridge : null;
 }
 
 async function openExternalUrlWithFallback(url) {
@@ -428,10 +453,11 @@ function resolveRuntimeDefaultsFromBridge() {
     baseUrl: "http://192.168.11.16:1234/v1",
     apiKey: "lmstudio",
   };
-  if (typeof window === "undefined" || !window.PalpalRuntimeConfig) return fallback;
-  const source = typeof window.PalpalRuntimeConfig.getDefaults === "function"
-    ? window.PalpalRuntimeConfig.getDefaults()
-    : window.PalpalRuntimeConfig.defaults;
+  const runtimeConfig = resolveWindowBridge("TomoshibikanRuntimeConfig", "PalpalRuntimeConfig");
+  if (!runtimeConfig) return fallback;
+  const source = typeof runtimeConfig.getDefaults === "function"
+    ? runtimeConfig.getDefaults()
+    : runtimeConfig.defaults;
   if (!source || typeof source !== "object") return fallback;
   return {
     providerId: normalizeText(source.providerId) || fallback.providerId,
@@ -451,10 +477,10 @@ const FALLBACK_PROVIDER_REGISTRY = [
 ];
 
 function hasRuntimeCatalogBridge() {
+  const runtime = resolveWindowBridge("TomoshibikanCoreRuntime", "PalpalCoreRuntime");
   return Boolean(
-    typeof window !== "undefined" &&
-    window.PalpalCoreRuntime &&
-    typeof window.PalpalCoreRuntime.listProviderModels === "function"
+    runtime &&
+    typeof runtime.listProviderModels === "function"
   );
 }
 
@@ -486,7 +512,9 @@ function resolveProviderRegistry(rawProviders) {
 }
 
 let PALPAL_CORE_PROVIDER_REGISTRY = resolveProviderRegistry(
-  typeof window !== "undefined" ? window.PALPAL_CORE_PROVIDERS : []
+  typeof window !== "undefined"
+    ? (window.TOMOSHIBIKAN_CORE_PROVIDERS || window.PALPAL_CORE_PROVIDERS)
+    : []
 );
 
 let PROVIDER_OPTIONS = PALPAL_CORE_PROVIDER_REGISTRY.map((provider) => provider.id);
@@ -779,9 +807,12 @@ const PAL_ROLE_OPTIONS = ["guide", "gate", "worker"];
 const PAL_RUNTIME_KIND_OPTIONS = ["model", "tool"];
 const EVENT_LOG_PAGE_SIZE = 6;
 const EVENT_TYPE_FILTER_KEYS = ["all", "dispatch", "gate", "task", "job", "resubmit", "plan"];
-const PROJECTS_LOCAL_STORAGE_KEY = "palpal-hive.projects.v1";
-const PAL_PROFILES_LOCAL_STORAGE_KEY = "palpal-hive.agent-profiles.v1";
-const BOARD_STATE_LOCAL_STORAGE_KEY = "palpal-hive.board-state.v1";
+const PROJECTS_LOCAL_STORAGE_KEY = "tomoshibi-kan.projects.v1";
+const LEGACY_PROJECTS_LOCAL_STORAGE_KEYS = ["palpal-hive.projects.v1"];
+const PAL_PROFILES_LOCAL_STORAGE_KEY = "tomoshibi-kan.agent-profiles.v1";
+const LEGACY_PAL_PROFILES_LOCAL_STORAGE_KEYS = ["palpal-hive.agent-profiles.v1"];
+const BOARD_STATE_LOCAL_STORAGE_KEY = "tomoshibi-kan.board-state.v1";
+const LEGACY_BOARD_STATE_LOCAL_STORAGE_KEYS = ["palpal-hive.board-state.v1"];
 const DEFAULT_PROJECT_FILE_HINTS = [
   "README.md",
   "docs/OVERVIEW.md",
@@ -1244,9 +1275,8 @@ function buildProjectStateSnapshot() {
 }
 
 function readProjectStateSnapshot() {
-  if (typeof window === "undefined" || !window.localStorage) return null;
   try {
-    const raw = window.localStorage.getItem(PROJECTS_LOCAL_STORAGE_KEY);
+    const raw = readLocalStorageSnapshot(PROJECTS_LOCAL_STORAGE_KEY, LEGACY_PROJECTS_LOCAL_STORAGE_KEYS);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
@@ -1257,9 +1287,8 @@ function readProjectStateSnapshot() {
 }
 
 function writeProjectStateSnapshot() {
-  if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    window.localStorage.setItem(PROJECTS_LOCAL_STORAGE_KEY, JSON.stringify(buildProjectStateSnapshot()));
+    writeLocalStorageSnapshot(PROJECTS_LOCAL_STORAGE_KEY, JSON.stringify(buildProjectStateSnapshot()));
   } catch (error) {
     // ignore localStorage write failures in prototype mode
   }
@@ -1409,9 +1438,11 @@ function normalizePalProfilesSnapshot(snapshot) {
 }
 
 function readPalProfilesSnapshotWithFallback() {
-  if (typeof window === "undefined" || !window.localStorage) return null;
   try {
-    const raw = window.localStorage.getItem(PAL_PROFILES_LOCAL_STORAGE_KEY);
+    const raw = readLocalStorageSnapshot(
+      PAL_PROFILES_LOCAL_STORAGE_KEY,
+      LEGACY_PAL_PROFILES_LOCAL_STORAGE_KEYS
+    );
     if (!raw) return null;
     return normalizePalProfilesSnapshot(JSON.parse(raw));
   } catch (error) {
@@ -1420,9 +1451,8 @@ function readPalProfilesSnapshotWithFallback() {
 }
 
 function writePalProfilesSnapshotWithFallback(snapshot = buildPalProfilesSnapshot()) {
-  if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    window.localStorage.setItem(PAL_PROFILES_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
+    writeLocalStorageSnapshot(PAL_PROFILES_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
   } catch (error) {
     // ignore localStorage write failures in prototype mode
   }
@@ -1550,9 +1580,8 @@ function normalizeBoardStateSnapshot(snapshot) {
 }
 
 function readBoardStateSnapshot() {
-  if (typeof window === "undefined" || !window.localStorage) return null;
   try {
-    const raw = window.localStorage.getItem(BOARD_STATE_LOCAL_STORAGE_KEY);
+    const raw = readLocalStorageSnapshot(BOARD_STATE_LOCAL_STORAGE_KEY, LEGACY_BOARD_STATE_LOCAL_STORAGE_KEYS);
     if (!raw) return null;
     return normalizeBoardStateSnapshot(JSON.parse(raw));
   } catch (error) {
@@ -1561,9 +1590,8 @@ function readBoardStateSnapshot() {
 }
 
 function writeBoardStateSnapshot(snapshot = buildBoardStateSnapshot()) {
-  if (typeof window === "undefined" || !window.localStorage) return;
   try {
-    window.localStorage.setItem(BOARD_STATE_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
+    writeLocalStorageSnapshot(BOARD_STATE_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
   } catch (error) {
     // ignore localStorage write failures in prototype mode
   }
@@ -1674,11 +1702,8 @@ function addProjectByDirectory(directory) {
 }
 
 function resolveProjectDialogBridge() {
-  return typeof window !== "undefined" &&
-    window.PalpalProjectDialog &&
-    typeof window.PalpalProjectDialog.pickDirectory === "function"
-    ? window.PalpalProjectDialog
-    : null;
+  const bridge = resolveWindowBridge("TomoshibikanProjectDialog", "PalpalProjectDialog");
+  return bridge && typeof bridge.pickDirectory === "function" ? bridge : null;
 }
 
 function directoryFromPickerFile(file) {
@@ -1876,23 +1901,18 @@ function resolveSettingsPersistenceModelApi() {
 }
 
 function resolveSettingsStorageApi() {
-  return typeof window !== "undefined" &&
-    window.PalpalSettingsStorage &&
-    typeof window.PalpalSettingsStorage.load === "function" &&
-    typeof window.PalpalSettingsStorage.save === "function"
-    ? window.PalpalSettingsStorage
+  const bridge = resolveWindowBridge("TomoshibikanSettingsStorage", "PalpalSettingsStorage");
+  return bridge &&
+    typeof bridge.load === "function" &&
+    typeof bridge.save === "function"
+    ? bridge
     : null;
 }
 
 function resolvePalpalCoreRuntimeApi() {
-  if (
-    typeof window === "undefined" ||
-    !window.PalpalCoreRuntime ||
-    typeof window.PalpalCoreRuntime.guideChat !== "function"
-  ) {
-    return null;
-  }
-  return window.PalpalCoreRuntime;
+  const runtime = resolveWindowBridge("TomoshibikanCoreRuntime", "PalpalCoreRuntime");
+  if (!runtime || typeof runtime.guideChat !== "function") return null;
+  return runtime;
 }
 
 function hasPalpalCoreRuntimeApi() {
@@ -1932,7 +1952,9 @@ function applyCoreCatalogSnapshot(catalog) {
   DEFAULT_MODEL_NAME = DEV_LMSTUDIO_MODEL_NAME || MODEL_OPTIONS[0] || "";
 
   if (typeof window !== "undefined") {
+    window.TOMOSHIBIKAN_CORE_PROVIDERS = [...PALPAL_CORE_PROVIDER_REGISTRY];
     window.PALPAL_CORE_PROVIDERS = [...PALPAL_CORE_PROVIDER_REGISTRY];
+    window.TOMOSHIBIKAN_CORE_MODELS = [...PALPAL_CORE_MODEL_REGISTRY];
     window.PALPAL_CORE_MODELS = [...PALPAL_CORE_MODEL_REGISTRY];
   }
   return true;
@@ -1941,7 +1963,7 @@ function applyCoreCatalogSnapshot(catalog) {
 async function refreshCoreCatalogFromRuntime() {
   if (!hasRuntimeCatalogBridge()) return false;
   try {
-    const runtime = window.PalpalCoreRuntime;
+    const runtime = resolvePalpalCoreRuntimeApi();
     const latest = await runtime.listProviderModels();
     const applied = applyCoreCatalogSnapshot(latest);
     if (!applied) return false;
@@ -2075,7 +2097,10 @@ function normalizeSettingsSnapshotWithFallback(snapshot) {
 
 function readLocalSettingsSnapshotWithFallback() {
   try {
-    const raw = window.localStorage.getItem(SETTINGS_LOCAL_STORAGE_KEY);
+    const raw = readLocalStorageSnapshot(
+      SETTINGS_LOCAL_STORAGE_KEY,
+      LEGACY_SETTINGS_LOCAL_STORAGE_KEYS
+    );
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     return normalizeSettingsSnapshotWithFallback(parsed);
@@ -2086,7 +2111,7 @@ function readLocalSettingsSnapshotWithFallback() {
 
 function writeLocalSettingsSnapshotWithFallback(snapshot) {
   try {
-    window.localStorage.setItem(SETTINGS_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
+    writeLocalStorageSnapshot(SETTINGS_LOCAL_STORAGE_KEY, JSON.stringify(snapshot));
   } catch (error) {
     // ignore
   }
@@ -2857,11 +2882,11 @@ function resolvePalContextBuilderApi() {
 }
 
 function resolveAgentIdentityApi() {
-  return typeof window !== "undefined" &&
-    window.PalpalAgentIdentity &&
-    typeof window.PalpalAgentIdentity.load === "function" &&
-    typeof window.PalpalAgentIdentity.save === "function"
-    ? window.PalpalAgentIdentity
+  const bridge = resolveWindowBridge("TomoshibikanAgentIdentity", "PalpalAgentIdentity");
+  return bridge &&
+    typeof bridge.load === "function" &&
+    typeof bridge.save === "function"
+    ? bridge
     : null;
 }
 
@@ -2967,11 +2992,8 @@ function resolveDebugIdentitySeedsApi() {
 }
 
 function resolveDebugRunsApi() {
-  return typeof window !== "undefined" &&
-    window.PalpalDebugRuns &&
-    typeof window.PalpalDebugRuns.list === "function"
-    ? window.PalpalDebugRuns
-    : null;
+  const bridge = resolveWindowBridge("TomoshibikanDebugRuns", "PalpalDebugRuns");
+  return bridge && typeof bridge.list === "function" ? bridge : null;
 }
 
 function guideMessageToContextMessage(message) {

@@ -6,10 +6,11 @@ const WIREFRAME_URL = pathToFileURL(
   path.resolve(__dirname, "../../wireframe/index.html")
 ).href;
 
-const LIVE_MODE = process.env.PALPAL_E2E_LIVE === "1";
+const LIVE_MODE =
+  process.env.TOMOSHIBIKAN_E2E_LIVE === "1" || process.env.PALPAL_E2E_LIVE === "1";
 
 test.describe("clawhub live @live", () => {
-  test.skip(!LIVE_MODE, "Set PALPAL_E2E_LIVE=1 to run live network tests.");
+  test.skip(!LIVE_MODE, "Set TOMOSHIBIKAN_E2E_LIVE=1 to run live network tests.");
 
   test("skill search reaches terminal state with live ClawHub", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });

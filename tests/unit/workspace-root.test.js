@@ -12,59 +12,59 @@ const {
   resolveWritableWorkspacePaths,
 } = require("../../runtime/workspace-root.js");
 
-test("resolveWorkspaceRoot uses Documents/palpal on Windows", () => {
+test("resolveWorkspaceRoot uses Documents/tomoshibi-kan on Windows", () => {
   const root = resolveWorkspaceRoot({
     platform: "win32",
     documentsPath: "C:\\Users\\kitad\\Documents",
     homePath: "C:\\Users\\kitad",
-    userDataPath: "C:\\Users\\kitad\\AppData\\Roaming\\palpal-hive",
+    userDataPath: "C:\\Users\\kitad\\AppData\\Roaming\\tomoshibi-kan",
   });
   assert.equal(
     root,
-    path.join("C:\\Users\\kitad\\Documents", "palpal")
+    path.join("C:\\Users\\kitad\\Documents", "tomoshibi-kan")
   );
 });
 
-test("resolveWorkspaceRoot uses Documents/palpal on macOS", () => {
+test("resolveWorkspaceRoot uses Documents/tomoshibi-kan on macOS", () => {
   const root = resolveWorkspaceRoot({
     platform: "darwin",
     documentsPath: "/Users/kitad/Documents",
     homePath: "/Users/kitad",
-    userDataPath: "/Users/kitad/Library/Application Support/palpal-hive",
+    userDataPath: "/Users/kitad/Library/Application Support/tomoshibi-kan",
   });
-  assert.equal(root, path.join("/Users/kitad/Documents", "palpal"));
+  assert.equal(root, path.join("/Users/kitad/Documents", "tomoshibi-kan"));
 });
 
-test("resolveWorkspaceRoot uses Documents/palpal on Linux when Documents exists", () => {
+test("resolveWorkspaceRoot uses Documents/tomoshibi-kan on Linux when Documents exists", () => {
   const root = resolveWorkspaceRoot({
     platform: "linux",
     documentsPath: "/home/kitad/Documents",
     documentsExists: true,
     homePath: "/home/kitad",
-    userDataPath: "/home/kitad/.config/palpal-hive",
+    userDataPath: "/home/kitad/.config/tomoshibi-kan",
   });
-  assert.equal(root, path.join("/home/kitad/Documents", "palpal"));
+  assert.equal(root, path.join("/home/kitad/Documents", "tomoshibi-kan"));
 });
 
-test("resolveWorkspaceRoot falls back to ~/.local/share/palpal on Linux when Documents is missing", () => {
+test("resolveWorkspaceRoot falls back to ~/.local/share/tomoshibi-kan on Linux when Documents is missing", () => {
   const root = resolveWorkspaceRoot({
     platform: "linux",
     documentsPath: "/home/kitad/Documents",
     documentsExists: false,
     homePath: "/home/kitad",
-    userDataPath: "/home/kitad/.config/palpal-hive",
+    userDataPath: "/home/kitad/.config/tomoshibi-kan",
   });
-  assert.equal(root, path.join("/home/kitad", ".local", "share", "palpal"));
+  assert.equal(root, path.join("/home/kitad", ".local", "share", "tomoshibi-kan"));
 });
 
 test("resolveWorkspaceRoot prioritizes env override", () => {
   const root = resolveWorkspaceRoot({
     platform: "linux",
-    envWorkspaceRoot: "/tmp/custom-palpal-root",
+    envWorkspaceRoot: "/tmp/custom-tomoshibikan-root",
     documentsPath: "/home/kitad/Documents",
     documentsExists: true,
   });
-  assert.equal(root, path.resolve("/tmp/custom-palpal-root"));
+  assert.equal(root, path.resolve("/tmp/custom-tomoshibikan-root"));
 });
 
 test("resolveWorkspaceRoot ignores invalid env override and falls back to default path", () => {
@@ -73,18 +73,18 @@ test("resolveWorkspaceRoot ignores invalid env override and falls back to defaul
     envWorkspaceRoot: "C:\\Users\\kitad\\Invalid|Path",
     documentsPath: "C:\\Users\\kitad\\Documents",
     homePath: "C:\\Users\\kitad",
-    userDataPath: "C:\\Users\\kitad\\AppData\\Roaming\\palpal-hive",
+    userDataPath: "C:\\Users\\kitad\\AppData\\Roaming\\tomoshibi-kan",
   });
-  assert.equal(root, path.join("C:\\Users\\kitad\\Documents", "palpal"));
+  assert.equal(root, path.join("C:\\Users\\kitad\\Documents", "tomoshibi-kan"));
 });
 
 test("isValidWorkspaceRootOverride validates Windows-invalid characters", () => {
-  assert.equal(isValidWorkspaceRootOverride("C:\\Users\\kitad\\AppData\\Local\\palpal\\workspace", "win32"), true);
+  assert.equal(isValidWorkspaceRootOverride("C:\\Users\\kitad\\AppData\\Local\\tomoshibi-kan\\workspace", "win32"), true);
   assert.equal(isValidWorkspaceRootOverride("C:\\Users\\kitad\\Invalid|Path", "win32"), false);
 });
 
-test("resolveWorkspacePaths + ensureWorkspaceLayout creates .palpal sub-directories", () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-ws-"));
+test("resolveWorkspacePaths + ensureWorkspaceLayout creates .tomoshibikan sub-directories", () => {
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-ws-"));
   try {
     const wsRoot = path.join(tmpRoot, "workspace");
     const paths = resolveWorkspacePaths(wsRoot);
@@ -104,8 +104,8 @@ test("resolveWorkspacePaths + ensureWorkspaceLayout creates .palpal sub-director
 });
 
 test("resolveWritableWorkspacePaths falls back when primary root is access denied", () => {
-  const blockedRoot = path.resolve(path.join(os.tmpdir(), "palpal-blocked-root"));
-  const fallbackRoot = path.resolve(path.join(os.tmpdir(), "palpal-fallback-root"));
+  const blockedRoot = path.resolve(path.join(os.tmpdir(), "tomoshibikan-blocked-root"));
+  const fallbackRoot = path.resolve(path.join(os.tmpdir(), "tomoshibikan-fallback-root"));
   const touched = [];
 
   const result = resolveWritableWorkspacePaths([blockedRoot, fallbackRoot], {
@@ -126,8 +126,8 @@ test("resolveWritableWorkspacePaths falls back when primary root is access denie
 });
 
 test("resolveWritableWorkspacePaths throws immediately on non-access error", () => {
-  const primaryRoot = path.resolve(path.join(os.tmpdir(), "palpal-primary-root"));
-  const fallbackRoot = path.resolve(path.join(os.tmpdir(), "palpal-secondary-root"));
+  const primaryRoot = path.resolve(path.join(os.tmpdir(), "tomoshibikan-primary-root"));
+  const fallbackRoot = path.resolve(path.join(os.tmpdir(), "tomoshibikan-secondary-root"));
 
   assert.throws(
     () => resolveWritableWorkspacePaths([primaryRoot, fallbackRoot], {
