@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-mojibake-repair-and-encoding-guard] `app.js` と `debug-identity-seeds.js` の日本語文字化けを修復し、AGENTS に再発防止ルールを追加する
+- [x] [DR-20260307-mojibake-repair-and-encoding-guard] delta request/apply/verify/archive を実施し、UI 文字化け修復とエンコーディング運用ルール追加を archive まで閉じる
 - [x] [SEED-20260307-guide-soul-role-real-check] Guide の `SOUL.md` / `ROLE.md` 更新後に、assist OFF の実モデル autonomous check を再実行し、`conversation / needs_clarification / plan_ready` と task materialization を再確認する
 - [x] [DR-20260307-guide-soul-role-real-check] delta request/apply/verify/archive を実施し、Guide identity 更新後の real-model 所見を archive まで閉じる
 - [x] [SEED-20260307-guide-soul-role-refresh] 提示された Guide 像を `SOUL.md` / `ROLE.md` / debug seed に反映し、現行の task 聞き取りハーネス性能を落とさない
@@ -87,6 +89,7 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260307-mojibake-repair-and-encoding-guard] `app.js` / `debug-identity-seeds.js` の日本語文字化けを修復し、AGENTS に UTF-8 / apply_patch 優先 / verify での文字化け確認ルールを追加した
 - [x] [DR-20260307-guide-soul-role-real-check] Guide の `SOUL.md` / `ROLE.md` 更新後も assist OFF の実モデルで `plan_ready` と `Trace / Fix / Verify` 3 task materialization が成立することを確認した
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
