@@ -12,6 +12,7 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
 
   assert.ok(seed);
   assert.match(seed.soul, /Guide/);
+  assert.match(seed.soul, /玄関の灯り|話してよい/);
   assert.match(seed.role, /管理人 Guide|管理人/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
   assert.match(seed.role, /debug work|debug work へ橋渡し/);
@@ -38,15 +39,19 @@ test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
   const writer = getBuiltInDebugIdentitySeed({ id: "pal-delta", role: "worker", skills: [] }, "en");
 
   assert.match(researcher.role, /researcher resident/);
+  assert.match(researcher.soul, /handがかり|fact|hints|evidence/);
   assert.match(researcher.role, /trace \/ research work first/);
   assert.match(researcher.role, /Do not edit files/);
   assert.match(maker.role, /maker resident/);
+  assert.match(maker.soul, /small change|戻しやすく|scoped and reversible/);
   assert.match(maker.role, /make \/ fix work first/);
   assert.match(maker.role, /Prefer simple fixes over broad refactors/);
   assert.match(arranger.role, /arranger resident/);
+  assert.match(arranger.soul, /収まり|pass\/fail|friction/);
   assert.match(arranger.role, /verify \/ adjust work first/);
   assert.match(arranger.role, /Do not edit files/);
   assert.match(writer.role, /writer resident/);
+  assert.match(writer.soul, /輪郭|names, summaries|言葉/);
   assert.match(writer.role, /writing \/ naming \/ summary work first/);
   assert.match(writer.role, /Do not widen the task into implementation or gate judgment/);
 });
