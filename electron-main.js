@@ -286,6 +286,15 @@ function bindIpc(settings, identity) {
   ipcMain.handle("progress-log:latest", async (_event, options) => {
     return settings.getLatestTaskProgressLogEntry(options);
   });
+  ipcMain.handle("plan-artifact:append", async (_event, payload) => {
+    return settings.appendPlanArtifact(payload);
+  });
+  ipcMain.handle("plan-artifact:list", async (_event, options) => {
+    return settings.listPlanArtifacts(options);
+  });
+  ipcMain.handle("plan-artifact:latest", async (_event, options) => {
+    return settings.getLatestPlanArtifact(options);
+  });
   ipcMain.handle("agent-identity:load", async (_event, payload) => {
     return identity.loadAgentIdentity(payload);
   });

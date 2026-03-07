@@ -267,6 +267,8 @@ interface SkillCatalogPort {
   - Pal 追加初期値生成、Runtime適用、削除可否判定を担当する。
 - `agent-routing.js`
   - Worker/Gate selector の scoring と候補選定を担当する。
+- `plan-orchestrator.js`
+  - 保存済み `Plan artifact` から task materialization / worker selection を行う renderer-side Orchestrator helper を担当する。
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `palpal-core-registry.js`
@@ -758,9 +760,24 @@ CREATE TABLE orchestration_debug_runs (
 - `PlanExecutionOrchestrator` は独立モジュールとして保持し、dispatch、retry、reroute、gate submit、status 遷移、完了判定などの deterministic 制御を担当する。
 - `PlanExecutionOrchestrator` は planning の主体ではない。新しい Plan が必要な場合は `replan_required` を起こし、Guide へ差し戻す。
 - `GuideConversationUseCase` は初回 plan だけでなく replan の生成主体でもある。
+- `GuideConversationUseCase` が valid な `plan_ready` を受理した時は、まず `Plan artifact` を persistent に保存し、その保存済み artifact を起点に後段の materialize / dispatch を呼び出す。
+- `GuideConversationUseCase` は raw user request や未保存の plan object から直接 dispatch せず、保存済み `Plan artifact` を境界として `PlanExecutionOrchestrator` 側へ渡す。
 - `PlanExecutionOrchestrator` が LLM に依存する意味判断を行う場合、`activeGuideProfileId` から解決した Guide の model / `SOUL.md` / `ROLE.md` を使う。これを `GuideReasoningContext` として扱う。
 - `GuideReasoningContext` を使う対象は、少なくとも `replan`, `outcome interpretation`, `user-facing progress summary` のような意味判断に限る。
 - `dispatch`, `retry count`, `timeout`, `gate submit`, `state machine` は `GuideReasoningContext` に依存せず、Orchestrator core の責務に留める。
+
+### Plan Artifact
+```ts
+type PlanArtifact = {
+  planId: string;
+  createdAt: string;
+  status: "approved" | "draft";
+  replyText: string;
+  planJson: string;
+  sourceRunId?: string;
+  approvedAt?: string;
+};
+```
 
 ### Task-centric Progress Log
 - progress log は event log の一種だが、task/job を主キーに途中経過を追えることを最優先とする。
@@ -795,8 +812,10 @@ type TaskProgressLogEntry = {
 ```
 
 ### Repository / bridge
+- `SqliteSettingsStore` は `plan_artifacts` table を持ち、`appendPlanArtifact`, `listPlanArtifacts`, `getLatestPlanArtifact` を提供する。
 - `SqliteSettingsStore` は `task_progress_logs` table を持ち、`appendTaskProgressLogEntry`, `listTaskProgressLogEntries`, `getLatestTaskProgressLogEntry` を提供する。
 - 保存先は既存 `settings.sqlite` とし、新しい DB ファイルは増やさない。
+- Electron main は `plan-artifact:append`, `plan-artifact:list`, `plan-artifact:latest` IPC handler を公開し、preload は `TomoshibikanPlanArtifacts` bridge を expose する。
 - Electron main は `progress-log:append`, `progress-log:list`, `progress-log:latest` IPC handler を公開し、preload は `TomoshibikanProgressLog` bridge を expose する。
 - renderer は direct DB access を持たず、bridge が無い browser verify では in-memory fallback を使ってよい。
 

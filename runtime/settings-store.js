@@ -130,6 +130,12 @@ function createProgressLogId() {
   return `progress-${now}-${rand}`;
 }
 
+function createPlanArtifactId() {
+  const now = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `PLAN-${now}-${rand}`.toUpperCase();
+}
+
 function clampLimit(value, fallback = 50) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
@@ -176,6 +182,23 @@ function normalizeTaskProgressLogPayload(payload) {
     messageForUser: normalizeString(payload?.messageForUser),
     payloadJson: safeJsonStringify(payload?.payload ?? {}, "{}"),
     sourceRunId: normalizeString(payload?.sourceRunId),
+  };
+}
+
+function normalizePlanArtifactPayload(payload) {
+  const createdAt = normalizeString(payload?.createdAt) || new Date().toISOString();
+  const status = normalizeString(payload?.status) || "approved";
+  const approvedAt = status === "approved"
+    ? (normalizeString(payload?.approvedAt) || createdAt)
+    : normalizeString(payload?.approvedAt);
+  return {
+    planId: normalizeString(payload?.planId) || createPlanArtifactId(),
+    createdAt,
+    status,
+    replyText: normalizeString(payload?.replyText),
+    planJson: safeJsonStringify(payload?.plan ?? {}, "{}"),
+    sourceRunId: normalizeString(payload?.sourceRunId),
+    approvedAt,
   };
 }
 
@@ -350,6 +373,21 @@ class SqliteSettingsStore {
     db.run(`
       CREATE INDEX IF NOT EXISTS idx_task_progress_logs_target_created_at
       ON task_progress_logs (target_kind, target_id, created_at DESC);
+    `);
+    db.run(`
+      CREATE TABLE IF NOT EXISTS plan_artifacts (
+        plan_id TEXT PRIMARY KEY,
+        created_at TEXT NOT NULL,
+        status TEXT NOT NULL,
+        reply_text TEXT NOT NULL DEFAULT '',
+        plan_json TEXT NOT NULL DEFAULT '{}',
+        source_run_id TEXT NOT NULL DEFAULT '',
+        approved_at TEXT NOT NULL DEFAULT ''
+      );
+    `);
+    db.run(`
+      CREATE INDEX IF NOT EXISTS idx_plan_artifacts_created_at
+      ON plan_artifacts (created_at DESC);
     `);
     this.db = db;
     this.persistDb();
@@ -672,6 +710,76 @@ class SqliteSettingsStore {
     return rows[0] || null;
   }
 
+  async appendPlanArtifact(payload) {
+    return this.withLock(async () => {
+      const normalized = normalizePlanArtifactPayload(payload);
+      this.db.run(
+        `INSERT INTO plan_artifacts (
+          plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          normalized.planId,
+          normalized.createdAt,
+          normalized.status,
+          normalized.replyText,
+          normalized.planJson,
+          normalized.sourceRunId,
+          normalized.approvedAt,
+        ]
+      );
+      this.persistDb();
+      return {
+        planId: normalized.planId,
+        createdAt: normalized.createdAt,
+        status: normalized.status,
+        replyText: normalized.replyText,
+        plan: safeJsonParse(normalized.planJson, {}),
+        sourceRunId: normalized.sourceRunId,
+        approvedAt: normalized.approvedAt,
+      };
+    });
+  }
+
+  async listPlanArtifacts(options = {}) {
+    return this.withLock(async () => {
+      const limit = clampLimit(options.limit, 50);
+      const status = normalizeString(options.status);
+      const clauses = [];
+      const params = [];
+      if (status) {
+        clauses.push("status = ?");
+        params.push(status);
+      }
+      const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+      const rows = queryRows(
+        this.db,
+        `SELECT plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
+           FROM plan_artifacts
+           ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT ?`,
+        [...params, limit]
+      );
+      return rows.map((row) => ({
+        planId: normalizeString(row.plan_id),
+        createdAt: normalizeString(row.created_at),
+        status: normalizeString(row.status),
+        replyText: normalizeString(row.reply_text),
+        plan: safeJsonParse(row.plan_json, {}),
+        sourceRunId: normalizeString(row.source_run_id),
+        approvedAt: normalizeString(row.approved_at),
+      }));
+    });
+  }
+
+  async getLatestPlanArtifact(options = {}) {
+    const rows = await this.listPlanArtifacts({
+      ...options,
+      limit: 1,
+    });
+    return rows[0] || null;
+  }
+
   async close() {
     return this.withLock(async () => {
       if (!this.db) return;
@@ -687,4 +795,5 @@ module.exports = {
   normalizeSettingsPayload,
   normalizeDebugRunPayload,
   normalizeTaskProgressLogPayload,
+  normalizePlanArtifactPayload,
 };

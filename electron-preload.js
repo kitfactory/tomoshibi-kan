@@ -84,6 +84,12 @@ const progressLogBridge = {
   latest: (options) => ipcRenderer.invoke("progress-log:latest", options),
 };
 
+const planArtifactBridge = {
+  append: (payload) => ipcRenderer.invoke("plan-artifact:append", payload),
+  list: (options) => ipcRenderer.invoke("plan-artifact:list", options),
+  latest: (options) => ipcRenderer.invoke("plan-artifact:latest", options),
+};
+
 const projectDialogBridge = {
   pickDirectory: () => ipcRenderer.invoke("project:pick-directory"),
 };
@@ -108,6 +114,8 @@ contextBridge.exposeInMainWorld("TomoshibikanDebugRuns", debugRunsBridge);
 contextBridge.exposeInMainWorld("PalpalDebugRuns", debugRunsBridge);
 contextBridge.exposeInMainWorld("TomoshibikanProgressLog", progressLogBridge);
 contextBridge.exposeInMainWorld("PalpalProgressLog", progressLogBridge);
+contextBridge.exposeInMainWorld("TomoshibikanPlanArtifacts", planArtifactBridge);
+contextBridge.exposeInMainWorld("PalpalPlanArtifacts", planArtifactBridge);
 contextBridge.exposeInMainWorld("TomoshibikanProjectDialog", projectDialogBridge);
 contextBridge.exposeInMainWorld("PalpalProjectDialog", projectDialogBridge);
 contextBridge.exposeInMainWorld("TomoshibikanExternal", externalBridge);

@@ -493,9 +493,18 @@ for (const viewport of VIEWPORTS) {
       });
       await page.fill("#guideInput", "設定画面の保存を改善して、モデル登録と検証を進めてください");
       await page.click("#guideSend");
+      const latestPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "approved" });
+      });
+      expect(latestPlan).toBeTruthy();
+      expect(latestPlan.plan.goal).toBe("設定画面の保存不具合を解消する");
+      expect(latestPlan.status).toBe("approved");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
       const latestTask = page.locator('[data-task-row="TASK-004"]');
+      await expect(latestTask).toHaveAttribute("data-plan-id", String(latestPlan.planId));
       await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-gamma/);
       await expect(latestTask).toContainText(/Assigned|割り当て済み/);
     });

@@ -132,6 +132,7 @@
 - Guide Planning Boundary: Guide は valid な `Plan` オブジェクトを作れるまでユーザーとの対話を継続する。valid Plan がない間は後段へ進めない。
 - Guide Conversation Boundary: ユーザーが task 化や実行計画化を求めていない通常会話では、Guide は `conversation` 状態に留まり、Plan の内容や task 化を前に出さない。
 - Orchestrator Start Boundary: `PlanExecutionOrchestrator` は valid かつ `approved` な Plan を受け取った時だけ開始する。raw 会話文や未確定の計画案からは開始しない。
+- Plan Artifact: valid な `plan_ready` を受けた時は、まず `Plan artifact` として保存し、その保存済み artifact を起点に後段の materialize / dispatch を進める。
 
 - Context Handoff Policy: `Execution Loop` 内でどの文脈を次の agent へ渡すかを制御する workspace 方針。既定は `Balanced` とし、生の対話全文ではなく構造化データと要約を優先して引き継ぐ。
 

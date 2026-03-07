@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-orchestrator-dispatch-extraction] task materialization / worker selection / dispatch 相当の責務を `PlanOrchestrator` モジュールへ抽出し、Guide send フローから分離する
+- [x] [DR-20260308-orchestrator-dispatch-extraction] delta request/apply/verify/archive を実施し、PlanOrchestrator への最小抽出を archive まで閉じる
+- [x] [SEED-20260308-plan-artifact-boundary] `Guide -> valid Plan -> persistent Plan` の境界を先に実装し、task materialization / dispatch を `approved Plan` 以降へ寄せる
+- [x] [DR-20260308-plan-artifact-boundary] delta request/apply/verify/archive を実施し、Guide plan artifact 境界の最小実装を archive まで閉じる
 - [x] [SEED-20260307-guide-codex-cli-autonomous-check] Guide を `Codex` CLI runtime に固定した real runner を回し、Plan 作成と task materialization の可否を観測する
 - [x] [DR-20260307-guide-codex-cli-autonomous-check] delta request/apply/verify/archive を実施し、Guide Codex CLI autonomous check を archive まで閉じる
 - [x] [SEED-20260307-guide-codex-cli-runtime] Guide が `Codex` CLI tool runtime を設定した時に send 前 validation で落ちず、core runtime bridge 経由で実行できるようにする
@@ -125,6 +129,8 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260308-orchestrator-dispatch-extraction] `PlanOrchestrator` module を追加し、Guide send フローから task materialization / worker selection / dispatch 相当の責務を分離した
+- [x] [DR-20260308-plan-artifact-boundary] valid `plan_ready` を persistent な `Plan artifact` として保存し、Guide send フローを `artifact 保存 -> artifact 経由 materialize` へ切り替えた
 - [x] [DR-20260307-guide-progress-query-minimal] Guide が progress log と board state を使って、task/job の進捗確認質問へローカルに答える minimal query を追加した
 - [x] [DR-20260307-task-progress-log-minimal] `task_progress_logs` の SQLite schema / Electron bridge / append/query を追加し、dispatch・to_gate・gate_review を query できる minimal progress log を実装した
 - [x] [DR-20260307-mojibake-baseline-repair] `wireframe/app.js` と `workspace-layout.spec.js` の主要日本語文言 baseline を UTF-8 で修復し、targeted Playwright と delta validator を PASS させた
@@ -457,6 +463,9 @@
 - [x] [DR-20260306-guide-autonomous-check] Guide 単体の自律確認 delta request を起点に、観測 runner と verify 記録を適用した
 
 # future
+- [ ] [SEED-20260308-orchestrator-dispatch-extraction] dispatch / worker selection / gate submit 起動を Guide 送信フローから `PlanExecutionOrchestrator` へ抽出する
+- [ ] [SEED-20260308-orchestrator-replan-bridge] `replan_required` 発生時に Orchestrator が Guide の model / SOUL を使って再計画要求を返せる境界を実装する
+- [ ] [SEED-20260308-routing-precision-after-boundary] Plan artifact / Orchestrator 境界の固定後に、worker routing 精度を role-first に改善する
 - [ ] [SEED-20260306-guide-output-parser-hardening] Guide の `plan_ready` 出力に混ざる wrapper token と軽微な JSON 破損を修復し、parse 成功率を上げる
 - [ ] [SEED-20260306-guide-structured-output-adoption] Guide runtime に native structured output / schema mode を導入できるか検証し、可能なら採用する
 - [ ] [SEED-20260306-guide-output-prompt-tightening] Guide の output instruction を短く締め、`conversation / needs_clarification / plan_ready` の出し分けを安定化する

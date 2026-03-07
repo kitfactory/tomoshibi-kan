@@ -253,3 +253,41 @@ test("SqliteSettingsStore appends and queries task progress log entries", async 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test("SqliteSettingsStore appends and queries plan artifacts", async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
+  const store = await createStore(tmpDir);
+  try {
+    const saved = await store.appendPlanArtifact({
+      status: "approved",
+      replyText: "Trace / Fix / Verify に分けます。",
+      plan: {
+        goal: "保存不具合を直す",
+        completionDefinition: "reload 後も model が残る",
+        constraints: ["既存設定フローを維持する"],
+        tasks: [
+          { title: "Trace", description: "再現確認" },
+          { title: "Fix", description: "修正実装" },
+        ],
+      },
+      sourceRunId: "debug-guide-001",
+    });
+
+    assert.match(saved.planId, /^PLAN-/);
+    assert.equal(saved.status, "approved");
+    assert.equal(saved.plan.goal, "保存不具合を直す");
+
+    const rows = await store.listPlanArtifacts({ status: "approved", limit: 10 });
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].replyText, "Trace / Fix / Verify に分けます。");
+    assert.equal(rows[0].sourceRunId, "debug-guide-001");
+    assert.equal(rows[0].plan.tasks.length, 2);
+
+    const latest = await store.getLatestPlanArtifact({ status: "approved" });
+    assert.ok(latest);
+    assert.equal(latest.planId, saved.planId);
+  } finally {
+    await store.close();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

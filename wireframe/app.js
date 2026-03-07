@@ -1134,6 +1134,7 @@ let events = [
   }, "09:52"),
 ];
 let progressLogEntries = [];
+let planArtifacts = [];
 
 function makeEvent(type, targetId, result, summary, timestamp) {
   eventSeq += 1;
@@ -1516,6 +1517,7 @@ function normalizeTaskRecord(input, index = 0) {
   });
   return {
     id: normalizeText(input?.id) || `TASK-${String(index + 1).padStart(3, "0")}`,
+    planId: normalizeText(input?.planId) || "PLAN-001",
     title: normalizeText(input?.title) || `Task ${index + 1}`,
     description: normalizeText(input?.description),
     palId: normalizeText(input?.palId),
@@ -1538,6 +1540,7 @@ function normalizeJobRecord(input, index = 0) {
   });
   return {
     id: normalizeText(input?.id) || `JOB-${String(index + 1).padStart(3, "0")}`,
+    planId: normalizeText(input?.planId) || "PLAN-001",
     title: normalizeText(input?.title) || `Job ${index + 1}`,
     description: normalizeText(input?.description),
     palId: normalizeText(input?.palId),
@@ -3037,7 +3040,15 @@ function resolveDebugIdentitySeedsApi() {
   return typeof window !== "undefined" &&
     window.DebugIdentitySeeds &&
     typeof window.DebugIdentitySeeds.getBuiltInDebugIdentitySeed === "function"
-    ? window.DebugIdentitySeeds
+      ? window.DebugIdentitySeeds
+      : null;
+}
+
+function resolvePlanOrchestratorApi() {
+  return typeof window !== "undefined" &&
+    window.PlanOrchestrator &&
+    typeof window.PlanOrchestrator.materializePlanArtifact === "function"
+    ? window.PlanOrchestrator
     : null;
 }
 
@@ -3394,6 +3405,7 @@ async function resolveWorkerAssignmentProfiles() {
 function createTaskRecord(input) {
   return {
     id: input.id,
+    planId: normalizeText(input?.planId) || "PLAN-001",
     title: input.title,
     description: input.description,
     palId: input.palId,
@@ -3473,10 +3485,11 @@ async function createPlannedTasksFromGuideRequest(userText) {
   return { created: created.length };
 }
 
-async function createPlannedTasksFromGuidePlan(plan) {
+async function createPlannedTasksFromGuidePlan(plan, options = {}) {
   const normalizedPlan = plan && typeof plan === "object" ? plan : null;
   const taskList = Array.isArray(normalizedPlan?.tasks) ? normalizedPlan.tasks : [];
   if (taskList.length === 0) return { created: 0 };
+  const planId = normalizeText(options.planId) || "PLAN-001";
   const workers = await resolveWorkerAssignmentProfiles();
   if (workers.length === 0) return { created: 0 };
   const routingApi = resolveAgentRoutingApi();
@@ -3526,6 +3539,7 @@ async function createPlannedTasksFromGuidePlan(plan) {
     sequence += 1;
     const task = createTaskRecord({
       id,
+      planId,
       title: taskDraft.title,
       description: taskDraft.description,
       palId: workerId,
@@ -3541,6 +3555,7 @@ async function createPlannedTasksFromGuidePlan(plan) {
       : `${task.id} dispatched to ${workerId}.`;
     appendEvent("dispatch", task.id, "ok", summaryJa, summaryEn);
     void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
+      planId,
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "ok",
@@ -3553,6 +3568,66 @@ async function createPlannedTasksFromGuidePlan(plan) {
     });
   });
 
+  if (created.length > 0 && !selectedTaskId) {
+    selectedTaskId = created[0].id;
+  }
+  renderTaskBoard();
+  writeBoardStateSnapshot();
+  return { created: created.length };
+}
+
+async function materializeApprovedPlanArtifact(artifact) {
+  const normalizedPlanId = normalizeText(artifact?.planId);
+  const status = normalizeText(artifact?.status || "approved");
+  const plan = artifact?.plan && typeof artifact.plan === "object" ? artifact.plan : null;
+  if (!normalizedPlanId || status !== "approved" || !plan) {
+    return { created: 0 };
+  }
+  const orchestratorApi = resolvePlanOrchestratorApi();
+  if (!orchestratorApi) {
+    return createPlannedTasksFromGuidePlan(plan, {
+      planId: normalizedPlanId,
+    });
+  }
+  const workers = await resolveWorkerAssignmentProfiles();
+  if (workers.length === 0) return { created: 0 };
+  const routingApi = resolveAgentRoutingApi();
+  const result = orchestratorApi.materializePlanArtifact({
+    artifact,
+    workers,
+    nextSequence: nextTaskSequenceNumber(),
+    routingApi,
+    buildTaskRecord: (input) => createTaskRecord(input),
+  });
+  const createdTasks = Array.isArray(result?.createdTasks) ? result.createdTasks : [];
+  const created = [];
+  createdTasks.forEach((entry) => {
+    const task = entry?.task;
+    if (!task || typeof task !== "object") return;
+    tasks.push(task);
+    created.push(task);
+    const workerId = normalizeText(entry?.workerId || task.palId);
+    const routingExplanation = formatWorkerRoutingExplanation(entry?.explanation);
+    const summaryJa = routingExplanation.ja
+      ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
+      : `${task.id} を ${workerId} に割り当てました。`;
+    const summaryEn = routingExplanation.en
+      ? `${task.id} dispatched to ${workerId} (${routingExplanation.en}).`
+      : `${task.id} dispatched to ${workerId}.`;
+    appendEvent("dispatch", task.id, "ok", summaryJa, summaryEn);
+    void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
+      planId: normalizedPlanId,
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: summaryJa,
+      messageEn: summaryEn,
+      payload: {
+        workerId,
+        routingExplanation,
+      },
+    });
+  });
   if (created.length > 0 && !selectedTaskId) {
     selectedTaskId = created[0].id;
   }
@@ -4271,6 +4346,16 @@ function resolveProgressLogApi() {
   return null;
 }
 
+function resolvePlanArtifactApi() {
+  if (window.TomoshibikanPlanArtifacts && typeof window.TomoshibikanPlanArtifacts === "object") {
+    return window.TomoshibikanPlanArtifacts;
+  }
+  if (window.PalpalPlanArtifacts && typeof window.PalpalPlanArtifacts === "object") {
+    return window.PalpalPlanArtifacts;
+  }
+  return null;
+}
+
 function appendTaskProgressLogEntryLocal(payload) {
   const entry = {
     entryId: normalizeText(payload?.entryId) || `progress-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
@@ -4324,6 +4409,71 @@ async function getLatestTaskProgressLogEntryWithFallback(options = {}) {
   return rows[0] || null;
 }
 
+function appendPlanArtifactLocal(payload) {
+  const entry = {
+    planId: normalizeText(payload?.planId) || `PLAN-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`.toUpperCase(),
+    createdAt: normalizeText(payload?.createdAt) || new Date().toISOString(),
+    status: normalizeText(payload?.status) || "approved",
+    replyText: normalizeText(payload?.replyText),
+    plan: payload?.plan && typeof payload.plan === "object" ? payload.plan : {},
+    sourceRunId: normalizeText(payload?.sourceRunId),
+    approvedAt: normalizeText(payload?.approvedAt) || new Date().toISOString(),
+  };
+  planArtifacts.unshift(entry);
+  planArtifacts = planArtifacts.slice(0, 50);
+  return entry;
+}
+
+async function appendPlanArtifactWithFallback(payload) {
+  const api = resolvePlanArtifactApi();
+  if (api && typeof api.append === "function") {
+    return api.append(payload);
+  }
+  return appendPlanArtifactLocal(payload);
+}
+
+async function listPlanArtifactsWithFallback(options = {}) {
+  const api = resolvePlanArtifactApi();
+  if (api && typeof api.list === "function") {
+    return api.list(options);
+  }
+  const status = normalizeText(options.status);
+  const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+  return planArtifacts
+    .filter((entry) => (!status || entry.status === status))
+    .slice(0, limit);
+}
+
+async function getLatestPlanArtifactWithFallback(options = {}) {
+  const api = resolvePlanArtifactApi();
+  if (api && typeof api.latest === "function") {
+    return api.latest(options);
+  }
+  const rows = await listPlanArtifactsWithFallback({ ...options, limit: 1 });
+  return rows[0] || null;
+}
+
+if (typeof window !== "undefined" && (!window.TomoshibikanPlanArtifacts || typeof window.TomoshibikanPlanArtifacts !== "object")) {
+  const fallbackPlanArtifactApi = {
+    append: (payload) => appendPlanArtifactLocal(payload),
+    list: (options = {}) => {
+      const status = normalizeText(options.status);
+      const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+      return planArtifacts
+        .filter((entry) => (!status || entry.status === status))
+        .slice(0, limit);
+    },
+    latest: (options = {}) => {
+      const rows = fallbackPlanArtifactApi.list({ ...options, limit: 1 });
+      return rows[0] || null;
+    },
+  };
+  window.TomoshibikanPlanArtifacts = fallbackPlanArtifactApi;
+  if (!window.PalpalPlanArtifacts || typeof window.PalpalPlanArtifacts !== "object") {
+    window.PalpalPlanArtifacts = fallbackPlanArtifactApi;
+  }
+}
+
 function appendEvent(type, targetId, result, summaryJa, summaryEn) {
   events.unshift(
     makeEvent(type, targetId, result, { ja: summaryJa, en: summaryEn }, formatNow().slice(11))
@@ -4348,6 +4498,10 @@ function appendTaskProgressLogForTarget(targetKind, targetId, actionType, option
     payload: options.payload && typeof options.payload === "object" ? options.payload : {},
     sourceRunId: normalizeText(options.sourceRunId),
   });
+}
+
+function resolveTargetPlanId(target) {
+  return normalizeText(target?.planId) || "PLAN-001";
 }
 
 function formatWorkerRoutingExplanation(explanation) {
@@ -5193,7 +5347,13 @@ async function sendGuideMessage() {
     });
     let createdCount = 0;
     if (parsedPlanResponse?.ok && parsedPlanResponse.status === "plan_ready" && parsedPlanResponse.plan) {
-      const created = await createPlannedTasksFromGuidePlan(parsedPlanResponse.plan);
+      const planArtifact = await appendPlanArtifactWithFallback({
+        status: "approved",
+        replyText,
+        plan: parsedPlanResponse.plan,
+        sourceRunId: normalizeText(modelReply?.runId),
+      });
+      const created = await materializeApprovedPlanArtifact(planArtifact);
       createdCount = Number(created?.created || 0);
     }
     input.value = "";
@@ -5254,7 +5414,7 @@ function renderTaskBoard() {
       const statusText = tUi(STATUS_UI_ID[task.status]);
       const gateProfile = resolveGateProfileForTarget(task);
       const gateProfileId = normalizeText(gateProfile?.id);
-      return `<li data-task-row="${task.id}" data-board-kind="task" data-board-status="${task.status}" data-board-state="${isSelected ? "selected" : "idle"}" data-gate-profile-id="${escapeHtml(gateProfileId)}" data-gate-decision="${escapeHtml(task.gateResult?.decision || "none")}" class="task-board-row rounded-box border ${selected} bg-base-100 p-3 shadow-sm mb-3">
+      return `<li data-task-row="${task.id}" data-plan-id="${escapeHtml(task.planId || "")}" data-board-kind="task" data-board-status="${task.status}" data-board-state="${isSelected ? "selected" : "idle"}" data-gate-profile-id="${escapeHtml(gateProfileId)}" data-gate-decision="${escapeHtml(task.gateResult?.decision || "none")}" class="task-board-row rounded-box border ${selected} bg-base-100 p-3 shadow-sm mb-3">
         <div class="flex items-center justify-between gap-2">
           <span class="text-sm font-semibold">${task.title}</span>
           <span class="badge ${statusBadgeClass(task.status)} badge-sm">${statusText}</span>
@@ -5309,7 +5469,7 @@ function renderJobBoard() {
       const hasLastRun = normalizeText(job.lastRunAt) && normalizeText(job.lastRunAt) !== "-";
       const gateProfile = resolveGateProfileForTarget(job);
       const gateProfileId = normalizeText(gateProfile?.id);
-      return `<li data-job-row="${job.id}" data-board-kind="job" data-board-status="${job.status}" data-last-run-state="${hasLastRun ? "recorded" : "empty"}" data-gate-profile-id="${escapeHtml(gateProfileId)}" data-gate-decision="${escapeHtml(job.gateResult?.decision || "none")}" class="job-board-row cron-board-row rounded-box border border-base-300 bg-base-100 p-3 shadow-sm mb-3">
+      return `<li data-job-row="${job.id}" data-plan-id="${escapeHtml(job.planId || "")}" data-board-kind="job" data-board-status="${job.status}" data-last-run-state="${hasLastRun ? "recorded" : "empty"}" data-gate-profile-id="${escapeHtml(gateProfileId)}" data-gate-decision="${escapeHtml(job.gateResult?.decision || "none")}" class="job-board-row cron-board-row rounded-box border border-base-300 bg-base-100 p-3 shadow-sm mb-3">
         <div class="flex items-center justify-between gap-2">
           <span class="text-sm font-semibold">${escapeHtml(job.title)}</span>
           <span class="badge ${statusBadgeClass(job.status)} badge-sm">${statusText}</span>
@@ -7960,6 +8120,7 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
       `${latest.id} runtime result updated`
     );
     void appendTaskProgressLogForTarget(targetKind, latest.id, "worker_runtime", {
+      planId: resolveTargetPlanId(latest),
       actualActor: "worker",
       displayActor: "Resident",
       status: "ok",
@@ -7981,6 +8142,7 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
       `${targetId} runtime execution failed`
     );
     void appendTaskProgressLogForTarget(targetKind, targetId, "worker_runtime", {
+      planId: resolveTargetPlanId(collection.find((item) => item.id === targetId)),
       actualActor: "worker",
       displayActor: "Resident",
       status: "error",
@@ -8035,6 +8197,7 @@ async function runTaskAction(action, taskId) {
         : `${task.id} moved to to_gate`
     );
     void appendTaskProgressLogForTarget("task", task.id, "to_gate", {
+      planId: resolveTargetPlanId(task),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "pending",
@@ -8066,6 +8229,7 @@ async function runTaskAction(action, taskId) {
     });
     appendEvent("resubmit", task.id, "ok", `${task.id} を再提出`, `${task.id} resubmitted`);
     void appendTaskProgressLogForTarget("task", task.id, "resubmit", {
+      planId: resolveTargetPlanId(task),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "ok",
@@ -8115,6 +8279,7 @@ async function runJobAction(action, jobId) {
         : `${job.id} moved to to_gate`
     );
     void appendTaskProgressLogForTarget("job", job.id, "to_gate", {
+      planId: resolveTargetPlanId(job),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "pending",
@@ -8146,6 +8311,7 @@ async function runJobAction(action, jobId) {
     });
     appendEvent("resubmit", job.id, "ok", `${job.id} を再提出`, `${job.id} resubmitted`);
     void appendTaskProgressLogForTarget("job", job.id, "resubmit", {
+      planId: resolveTargetPlanId(job),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "ok",
@@ -8269,6 +8435,7 @@ function runGate(decision) {
     }
     appendEvent("gate", target.id, "rejected", `${target.id} を差し戻しました`, `${target.id} rejected`);
     void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
+      planId: resolveTargetPlanId(target),
       actualActor: "gate",
       displayActor: "Gate",
       status: "rejected",
@@ -8281,6 +8448,7 @@ function runGate(decision) {
     });
     if (shouldRequireReplanFromGateResult(gateResult)) {
       void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "replan_required", {
+        planId: resolveTargetPlanId(target),
         actualActor: "orchestrator",
         displayActor: "Guide",
         status: "blocked",
@@ -8300,6 +8468,7 @@ function runGate(decision) {
     }
     appendEvent("gate", target.id, "approved", `${target.id} を承認しました`, `${target.id} approved`);
     void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
+      planId: resolveTargetPlanId(target),
       actualActor: "gate",
       displayActor: "Gate",
       status: "approved",
@@ -8313,9 +8482,12 @@ function runGate(decision) {
   }
   setMessage("MSG-PPH-0004");
   closeGate();
-  if (!isRejectDecision && !isJob && tasks.every((t) => t.status === "done")) {
-    appendEvent("plan", "PLAN-001", "completed", "Plan完了を通知", "Plan completion announced");
-    void appendTaskProgressLogForTarget("plan", "PLAN-001", "plan_completed", {
+  const completedPlanId = resolveTargetPlanId(target);
+  const samePlanTasks = tasks.filter((item) => resolveTargetPlanId(item) === completedPlanId);
+  if (!isRejectDecision && !isJob && samePlanTasks.length > 0 && samePlanTasks.every((item) => item.status === "done")) {
+    appendEvent("plan", completedPlanId, "completed", "Plan完了を通知", "Plan completion announced");
+    void appendTaskProgressLogForTarget("plan", completedPlanId, "plan_completed", {
+      planId: completedPlanId,
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "completed",

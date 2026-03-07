@@ -565,6 +565,8 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide の最新出力が valid な `Plan` オブジェクトとして parse / validate できない場合、システムは `GuideConversationUseCase` に留まり、Guide との対話を継続する。
 - valid な `Plan` オブジェクトが存在しない間、Task/Job の materialize、dispatch、worker routing、gate routing を開始してはならない。
 - `PlanExecutionOrchestrator` は raw user request や Guide の自然文応答を入力として開始せず、valid かつ `approved` な `Plan` オブジェクトを受け取った時だけ開始する。
+- valid な `plan_ready` を受けた時は、まず persistent な `Plan artifact` を保存し、その保存済み artifact を起点に Task/Job の materialize と dispatch を開始する。
+- `GuideConversationUseCase` 相当の send フローは raw user request や未保存の `Plan` object から直接 dispatch してはならず、保存済み `Plan artifact` を経由しなければならない。
 - したがって、現行 prototype に存在する task draft 生成補助は正本の planning 主体ではなく、将来は `Plan` の parse / validate / normalize 補助へ置き換える前提とする。
 - Guide runtime は `runtimeKind=model | tool` を取りうる。first step では `tool` runtime として `Codex` を許可する。
 - `tool` runtime の Guide には skill/tool を動的注入しない。Guide/Orchestrator には事前 probe で得た capability summary を渡してよいが、CLI tool 自体の内包能力は実行時に再構成しない。
@@ -700,6 +702,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - replan の要求を出す主体は `PlanExecutionOrchestrator` とし、再plan の生成主体は Guide とする。
 - `PlanExecutionOrchestrator` が LLM に依存する判断を行う場合、active Guide と同じ model と `SOUL.md` を使ってよい。ただし、state 遷移や dispatch のような deterministic な処理まで Guide へ委譲してはならない。
 - task/job の進行確認のため、`task-centric progress log` を持つ。目的は、ユーザーが途中で「依頼した task は今どうなっているか」を確認できるようにすることにある。
+- `Plan artifact` は少なくとも `plan_id`, `created_at`, `status`, `reply_text`, `plan_json`, `source_run_id`, `approved_at` を保持する。
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
 - `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
