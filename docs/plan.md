@@ -1,9 +1,5 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
-- [x] [SEED-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace path / localStorage key / docs ブランド表記を `Tomoshibi-kan` 基準へ揃え、旧 `palpal` 系は fallback で互換維持する
-- [x] [DR-20260307-first-party-rename-tomoshibi-kan] delta request/apply/verify/archive を実施し、first-party rename を archive まで閉じる
 - [x] [SEED-20260307-brand-tomoshibikan-and-origin-commit] 表示名を `Tomoshibi-kan / 灯火館` へ更新し、コアコンセプトへブランド世界観を取り込んだうえで current worktree を commit する
 - [x] [DR-20260307-brand-tomoshibikan-and-origin-commit] delta request/apply/verify/archive を実施し、brand rename・origin 設定・commit を archive まで閉じる
 - [x] [SEED-20260307-guide-few-shot-three-option-recommendation] Guide の `OPERATING_RULES` だけで弱い `3案提示 + 1案推薦 + 短い締め` を few-shot 例で補強し、assist OFF の実モデルで再観測する
@@ -131,8 +127,6 @@
 - [x] [DR-20260301-settings-skill-section-split] Settings��Skill���3�J�e�S���֕���
 - [x] [DR-20260301-settings-structure-refine] Settings��Language�d���폜��Model/CLI/Skills�p�l���č\��
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-ws-root-layout] ws-root 既定値（Windows/macOS/Linux）と単一ルート構成（`<ws-root>/.palpal` 分離）を実装前提で定義する
 - [x] [SEED-20260301-pal-markdown-contract] Pal(Guide/Gate/Worker) ごとのフォルダ契約と `USER.md` 上位配置ルールを spec/architecture に反映する
 - [x] [SEED-20260301-context-builder-spec] PalContextBuilder の入力ソース（SOUL/Skill/MCP/編集ファイル/会話/メモリ）・優先度・token予算・監査ログ仕様を確定する
@@ -155,8 +149,6 @@
 - [x] [DR-20260301-context-builder-rollout] Context Builder を role 共通 API に拡張し、tool runtime の Skill 非注入を固定した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-job-scheduler-spec] Job 定期実行スケジューラ（cron/interval）と実行履歴保持の仕様を確定する
 
 # archive
@@ -165,8 +157,6 @@
 - [x] [DR-20260301-job-scheduler-spec] Job定期実行スケジューラと実行履歴保持の仕様を spec/architecture に確定した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-gate-reason-template-nav] Gate判定理由テンプレートと再提出ナビゲーションを改善する
 
 # archive
@@ -175,8 +165,6 @@
 - [x] [DR-20260301-gate-reason-template-nav] Gate理由テンプレート追加とreject後の再提出ナビゲーション改善を実装した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-event-log-query-controls] Event Log の検索・フィルタ・ページングを導入する
 
 # archive
@@ -185,8 +173,6 @@
 - [x] [DR-20260301-event-log-query-controls] Event Log の検索/フィルタ/ページングUIとロジックを実装した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-api-key-rotation-policy] API_KEY ローテーション/移行（secret_ref再発行・削除整合）の運用仕様を定義する
 
 # archive
@@ -195,8 +181,6 @@
 - [x] [DR-20260301-api-key-rotation-policy] API_KEY ローテーション/移行の運用仕様を spec/architecture に確定した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-core-adapter-swap-tests] palpal-core 実実装接続時の Adapter 差し替え検証を追加する
 
 # archive
@@ -205,8 +189,6 @@
 - [x] [DR-20260301-core-adapter-swap-tests] palpal-core adapter の差し替え契約を unit test で検証可能にした
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-i18n-dictionary-verify] i18n 辞書を UI-PPH/MSG-PPH で整合し、未翻訳フォールバックを自動検証する
 
 # archive
@@ -215,8 +197,6 @@
 - [x] [DR-20260301-i18n-dictionary-verify] i18n 辞書検証スクリプトとフォールバック強化を実装した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-workspace-access-fallback] electron.exe の書き込み拒否時に workspace 保存先をフォールバックさせる
 
 # archive
@@ -225,8 +205,6 @@
 - [x] [DR-20260301-workspace-access-fallback] Workspace 書き込み拒否時の自動フォールバックを実装した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-ws-root-env-appdata] PALPAL_WS_ROOT を AppData 配下へ固定する
 
 # archive
@@ -235,8 +213,6 @@
 - [x] [DR-20260301-ws-root-env-appdata] .env で PALPAL_WS_ROOT を AppData 配下へ固定した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260301-settings-pal-model-immediate] Settingsで追加したモデルをPalタブへ即時反映する
 
 # archive
@@ -245,8 +221,6 @@
 - [x] [DR-20260301-settings-pal-model-immediate] Settings追加モデルがPalタブで即時利用できるようにした
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260302-settings-footer-save-dirty] Settings 保存を画面下フッター化し、差分時のみ有効化する
 
 # archive
@@ -287,8 +261,6 @@
 - [x] [DR-20260304-e2e-clawhub-mock-live-split] E2E の ClawHub 依存を mock/live に分離し、通常テストを安定化した
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260304-agent-identity-repository] Agent Identity Layer（`SOUL.md`/`role.md`/`skills.yaml`）の read/write 用 delta request を作成する
 - [x] [SEED-20260304-agent-identity-repository] Electron IPC + runtime repository で Agent Identity ファイル保存を実装し、unit test を追加する
 - [x] [SEED-20260304-agent-skill-reference-resolver] `skills.yaml` の `enabled_skill_ids` を Settings のインストール済み Skill 台帳へ解決する delta request を作成する
@@ -409,8 +381,6 @@
 - [x] [DR-20260306-orchestration-debug-smoke-cli] `palpal debug smoke` と stubbed Electron smoke script を追加し、実経路の debug record を CLI で追えるようにした
 
 # current
-- [ ] [SEED-20260307-first-party-rename-commit] DR-20260307-first-party-rename-tomoshibi-kan で適用済みの rename 差分を 1 commit に確定する
-- [x] [DR-20260307-first-party-rename-commit] delta request/apply/verify/archive を実施し、first-party rename commit を archive まで閉じる
 - [x] [SEED-20260306-guide-autonomous-check] 実モデル/CLI で Guide 単体の自律確認を行い、対話整理・task/job 分解・worker/gate routing 根拠を debug record で観測する
 - [x] [DR-20260306-guide-autonomous-check] Guide 単体の自律確認 delta request を起点に、観測 runner と verify 記録を適用した
 
