@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-worldbuilding-gate-reinforce] `tomoshibikan_worldbuilding_jp.md` の `Gard` typo を `Gate` へ修正し、一刻館的な「何をしているか分からないが要所で効く人」として Gate 像を補強する
+- [x] [DR-20260307-worldbuilding-gate-reinforce] delta request/apply/verify/archive を実施し、worldbuilding 内の Gate 役割補強を archive まで閉じる
 - [x] [SEED-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree に含めて commit する
 - [x] [DR-20260307-brand-key-visual-commit] delta request/apply/verify/archive を実施し、キービジュアル採用と commit を archive まで閉じる
 - [x] [SEED-20260307-technical-identifier-rename-tomoshibi] first-class の `pal/palpal` 技術識別子を `tomoshibi*` 側へ寄せ、互換 alias/fallback は維持する
@@ -158,6 +160,7 @@
 - [x] [SEED-20260301-job-scheduler-spec] Job 定期実行スケジューラ（cron/interval）と実行履歴保持の仕様を確定する
 
 # archive
+- [x] [DR-20260307-worldbuilding-gate-reinforce] `Gard` を `Gate` へ修正し、静かな古参住人兼審査役としての Gate 像を worldbuilding に補強した
 - [x] [DR-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree とともに commit し、採用を履歴化した
 - [x] [DR-20260307-technical-identifier-rename-tomoshibi] first-class の bridge / IPC / registry / helper 識別子を `tomoshibi*` へ寄せ、旧 alias/fallback は維持した
 - [x] [DR-20260307-remaining-tomoshibi-rename-audit] 残っている `pal/palpal` first-party 識別子と `Pal / Guide / Gate` 用語の棚卸しを行い、safe rename と concept rename に分離した
