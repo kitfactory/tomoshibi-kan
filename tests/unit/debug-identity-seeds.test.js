@@ -11,8 +11,9 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
   }, "ja");
 
   assert.ok(seed);
-  assert.match(seed.soul, /証拠|対話/);
+  assert.match(seed.soul, /Guide/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
+  assert.match(seed.role, /debug work/);
   assert.deepEqual(seed.enabledSkillIds, ["codex-file-search", "browser-chrome"]);
 });
 

@@ -43,6 +43,11 @@ test("default identity templates switch by locale", () => {
   assert.match(buildDefaultRoleTemplate("ja", "worker"), /# ROLE/);
   assert.match(buildDefaultSoulTemplate("en", "worker"), /Core Stance/);
   assert.match(buildDefaultRoleTemplate("en", "worker"), /Workstyle/);
+  assert.match(buildDefaultSoulTemplate("ja", "guide"), /Guide/);
+  assert.match(buildDefaultSoulTemplate("ja", "guide"), /安心して言葉にできる空気/);
+  assert.match(buildDefaultRoleTemplate("ja", "guide"), /日常会話の相手/);
+  assert.match(buildDefaultSoulTemplate("en", "guide"), /caretaker of Tomoshibikan/);
+  assert.match(buildDefaultRoleTemplate("en", "guide"), /Daily conversation partner/);
   assert.match(buildDefaultRubricTemplate("ja", "gate"), /# RUBRIC/);
   assert.match(buildDefaultRubricTemplate("en", "gate"), /Review Criteria/);
 });
@@ -124,6 +129,28 @@ test("AgentIdentityStore initializes localized templates when requested", async 
     const workerDir = path.join(tmpRoot, "pals", "pal-template");
     assert.equal(fs.existsSync(path.join(workerDir, "SOUL.md")), true);
     assert.equal(fs.existsSync(path.join(workerDir, "ROLE.md")), true);
+  } finally {
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
+  }
+});
+
+test("AgentIdentityStore initializes localized templates for guide", async () => {
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
+  const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
+  try {
+    const saved = await store.saveAgentIdentity({
+      agentType: "guide",
+      agentId: "guide-core",
+      locale: "ja",
+      initializeTemplates: true,
+      enabledSkillIds: ["codex-file-search"],
+    });
+    assert.match(saved.soul, /灯火館の管理人/);
+    assert.match(saved.role, /日常会話の相手/);
+
+    const guideDir = path.join(tmpRoot, "guides", "guide-core");
+    assert.equal(fs.existsSync(path.join(guideDir, "SOUL.md")), true);
+    assert.equal(fs.existsSync(path.join(guideDir, "ROLE.md")), true);
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }

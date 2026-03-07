@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-guide-soul-role-real-check] Guide の `SOUL.md` / `ROLE.md` 更新後に、assist OFF の実モデル autonomous check を再実行し、`conversation / needs_clarification / plan_ready` と task materialization を再確認する
+- [x] [DR-20260307-guide-soul-role-real-check] delta request/apply/verify/archive を実施し、Guide identity 更新後の real-model 所見を archive まで閉じる
+- [x] [SEED-20260307-guide-soul-role-refresh] 提示された Guide 像を `SOUL.md` / `ROLE.md` / debug seed に反映し、現行の task 聞き取りハーネス性能を落とさない
+- [x] [DR-20260307-guide-soul-role-refresh] delta request/apply/verify/archive を実施し、Guide identity refresh を archive まで閉じる
 - [x] [SEED-20260307-worldbuilding-gate-reinforce] `tomoshibikan_worldbuilding_jp.md` の `Gard` typo を `Gate` へ修正し、一刻館的な「何をしているか分からないが要所で効く人」として Gate 像を補強する
 - [x] [DR-20260307-worldbuilding-gate-reinforce] delta request/apply/verify/archive を実施し、worldbuilding 内の Gate 役割補強を archive まで閉じる
 - [x] [SEED-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree に含めて commit する
@@ -83,6 +87,7 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260307-guide-soul-role-real-check] Guide の `SOUL.md` / `ROLE.md` 更新後も assist OFF の実モデルで `plan_ready` と `Trace / Fix / Verify` 3 task materialization が成立することを確認した
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
 - [x] [DR-20260307-brand-tomoshibikan-and-origin-commit] `Tomoshibi-kan / 灯火館` を表示名と core concept に反映し、`origin` を `https://github.com/kitfactory/tomoshibi-kan.git` に設定したうえで current worktree を commit した
@@ -160,6 +165,7 @@
 - [x] [SEED-20260301-job-scheduler-spec] Job 定期実行スケジューラ（cron/interval）と実行履歴保持の仕様を確定する
 
 # archive
+- [x] [DR-20260307-guide-soul-role-refresh] Guide の `SOUL.md` / `ROLE.md` と debug seed を更新し、現行の task 聞き取り rules/few-shot の回帰がないことを確認した
 - [x] [DR-20260307-worldbuilding-gate-reinforce] `Gard` を `Gate` へ修正し、静かな古参住人兼審査役としての Gate 像を worldbuilding に補強した
 - [x] [DR-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree とともに commit し、採用を履歴化した
 - [x] [DR-20260307-technical-identifier-rename-tomoshibi] first-class の bridge / IPC / registry / helper 識別子を `tomoshibi*` へ寄せ、旧 alias/fallback は維持した
