@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-worldbuilding-file-git-check] `docs/tomoshibikan_worldbuilding_jp.md` の git 追跡状態を確認し、必要なら add する
+- [x] [DR-20260307-worldbuilding-file-git-check] delta request/apply/verify/archive を実施し、worldbuilding file の git 管理状態確認を archive まで閉じる
 - [x] [SEED-20260307-resident-facing-ui-labels] ユーザーに見える `Pal` 表記を `住人` 側へ寄せ、技術用語 `worker` は内部に残したまま UI ラベルを揃える
 - [x] [DR-20260307-resident-facing-ui-labels] delta request/apply/verify/archive を実施し、minimal user-facing naming を archive まで閉じる
 - [x] [SEED-20260307-resident-facing-default-seeds] built-in Guide/Gate/Worker の初期値を `管理人 / 住人 / 古参住人` に寄せ、技術用語 `worker` との境界を保ったまま世界観と揃える
@@ -222,6 +224,7 @@
 - [x] [SEED-20260301-gate-reason-template-nav] Gate判定理由テンプレートと再提出ナビゲーションを改善する
 
 # archive
+- [x] [DR-20260307-worldbuilding-file-git-check] `docs/tomoshibikan_worldbuilding_jp.md` は既に git 管理対象であり、追加の `git add` は不要であることを確認した
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
 - [x] [DR-20260301-gate-reason-template-nav] Gate理由テンプレート追加とreject後の再提出ナビゲーション改善を実装した
