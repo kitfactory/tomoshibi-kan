@@ -1,0 +1,22 @@
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Cache-Control: no-store
+Cf-Cache-Status: DYNAMIC
+Cf-Ray: 9d6d3f24a8b1e36e-NRT
+Content-Type: application/json
+Convex-Usher: usher
+Date: Wed, 04 Mar 2026 01:53:20 GMT
+Ratelimit-Limit: 120
+Ratelimit-Remaining: 95
+Ratelimit-Reset: 40
+Server: Vercel
+Strict-Transport-Security: max-age=63072000
+Vary: Accept-Encoding
+Via: 1.1 Caddy
+X-Ratelimit-Limit: 120
+X-Ratelimit-Remaining: 95
+X-Ratelimit-Reset: 1772589240
+X-Vercel-Cache: MISS
+X-Vercel-Id: hnd1::8jls4-1772589200099-b1dabecd0e7d
+Transfer-Encoding: chunked
+

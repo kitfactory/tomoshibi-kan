@@ -1,8 +1,8 @@
 {
-  "name": "palpal-hive-wireframe",
+  "name": "tomoshibi-kan-wireframe",
   "version": "0.1.1",
   "private": true,
-  "description": "PalPal-Hive wireframe prototype on Electron",
+  "description": "Tomoshibi-kan wireframe prototype on Electron",
   "main": "electron-main.js",
   "bin": {
     "palpal": "./cli/palpal.js"
@@ -15,8 +15,11 @@
     "palpal": "node ./cli/palpal.js",
     "palpal:help": "node ./cli/palpal.js --help",
     "check:main": "node --check electron-main.js",
+    "verify:i18n": "node scripts/verify_i18n_dictionary.js",
+    "test:unit": "node --test tests/unit/runtime-validation.test.js tests/unit/skill-catalog.test.js tests/unit/pal-profile.test.js tests/unit/guide-chat.test.js tests/unit/settings-persistence.test.js tests/unit/settings-store.test.js tests/unit/workspace-root.test.js tests/unit/context-builder.test.js tests/unit/palpal-core-runtime.test.js tests/unit/agent-identity-store.test.js tests/unit/agent-skill-resolver.test.js tests/unit/guide-task-planner.test.js",
     "pretest:e2e": "npm run build:wireframe-css",
     "test:e2e": "playwright test",
+    "test:e2e:live": "node scripts/run_e2e_live.js",
     "test:e2e:install": "playwright install chromium"
   },
   "devDependencies": {
@@ -25,5 +28,9 @@
     "daisyui": "^5.5.19",
     "electron": "^30.0.0",
     "tailwindcss": "^4.2.1"
+  },
+  "dependencies": {
+    "palpal-core": "^0.1.1",
+    "sql.js": "^1.14.0"
   }
 }

@@ -9,9 +9,11 @@
 - 今回スコープ（1〜5行）:
   - ユーザーI/Fは現行プロトタイプ（Tab UI）の見た目・振る舞いを基準に据える
   - 内部設計は将来実装方針（UseCase中心・レイヤー分離・Port境界）を正として整理する
-  - `spec.md` を Task + Job + Settings + Skill運用（ClawHub擬似Download導線）まで拡張する
-  - `architecture.md` に Jobフロー・設定管理・SkillCatalog Port を追加し、差し替え可能性を明確化する
-  - `concept.md` のデータモデルを Plan/Task/Job/Runtime設定で再整備する
+  - `Runtime(model/tool)` 排他保存、`SkillCatalog(検索/擬似Download/削除)`, `PalProfile(追加/保存/削除)` を差分適用して検証可能化する
+  - `Guide Chat / Settings / Task-Gate / Event Log / Cron` の tone rollout をプロトタイプへ反映し、`concept/spec/architecture/plan` へ最小同期する
+  - 設定保存を Electron IPC 経由の「非機密=SQLite / API_KEY=SecretStore(write-only)」で実装し、次は運用仕様（ローテーション/移行）を整理する
+  - Settings のモデル候補は `palpal-core` registry を正とし、開発既定（LM Studio）は `.env` 注入で切替可能にする
+  - Guide/worker の model runtime は有効 Skill を tool-call 実行ループへ接続し、Task/Cron 実行結果へ反映する
 - 非ゴール（やらないこと）:
   - 3Dキャラクタ演出、背景演出の実装
   - Slack/Discord/Email など外部チャット連携
@@ -21,6 +23,8 @@
   - concept: `./concept.md`
   - spec: `./spec.md`
   - architecture: `./architecture.md`
+  - experience tone: `./experience_tone.md`
+  - ui tone application: `./ui_tone_application.md`
   - design assist: `./design_assist.md`
   - plan: `./plan.md`
 

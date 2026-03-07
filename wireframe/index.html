@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PalPal-Hive Wireframe</title>
+    <title>Tomoshibi-kan Wireframe</title>
     <link rel="stylesheet" href="./generated.css" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -13,7 +13,8 @@
         <nav class="workspace-tabs tabs tabs-lifted tabs-lg" aria-label="workspace-tabs">
           <button type="button" class="tab tab-btn tab-active active" data-tab="guide" data-ui-id="UI-PPH-0002">Guide Chat</button>
           <button type="button" class="tab tab-btn" data-tab="pal">Pal List</button>
-          <button type="button" class="tab tab-btn" data-tab="job">Job</button>
+          <button type="button" class="tab tab-btn" data-tab="project">Project</button>
+          <button type="button" class="tab tab-btn" data-tab="job">Cron</button>
           <button type="button" class="tab tab-btn" data-tab="task" data-ui-id="UI-PPH-0003">Task Board</button>
           <button type="button" class="tab tab-btn" data-tab="event" data-ui-id="UI-PPH-0004">Event Log</button>
           <button type="button" class="tab tab-btn" data-tab="settings">Settings</button>
@@ -26,8 +27,10 @@
                 <ul id="guideChat" class="guide-stream"></ul>
               </div>
               <form id="guideComposer" class="chat-composer rounded-box border border-base-300 bg-base-100">
+                <div id="guideProjectFocus" class="guide-project-focus text-xs text-base-content/70"></div>
+                <ul id="guideMentionMenu" class="guide-mention-menu hidden" role="listbox" aria-label="mention-suggestions"></ul>
                 <textarea id="guideInput" rows="3" class="textarea textarea-bordered w-full"></textarea>
-                <button id="guideSend" type="submit" class="btn btn-primary">騾∽ｿ｡</button>
+                <button id="guideSend" type="submit" class="btn btn-primary">送信</button>
               </form>
             </div>
           </div>
@@ -46,8 +49,8 @@
 
         <section hidden class="panel tab-panel rounded-box rounded-t-none border border-base-300 bg-base-100 shadow-sm" data-tab-panel="job">
           <div class="panel-head border-b border-base-300 p-3">
-            <h2 class="text-sm font-semibold">Job Board</h2>
-            <span class="badge badge-outline">Periodic</span>
+            <h2 class="text-sm font-semibold">Cron Board</h2>
+            <span class="badge badge-outline">Scheduled</span>
           </div>
           <ul id="jobBoard" class="job-list p-3"></ul>
         </section>
@@ -56,6 +59,20 @@
           <div class="panel-head border-b border-base-300 p-3">
             <h2 class="text-sm font-semibold" data-ui-id="UI-PPH-0004">Event Log</h2>
             <span class="badge badge-outline" data-ui-id="UI-PPH-0203">Limit: 50</span>
+          </div>
+          <div class="event-toolbar border-b border-base-300 px-3 py-2" data-event-toolbar-state="idle">
+            <input
+              id="eventSearchInput"
+              type="text"
+              class="input input-sm input-bordered w-full md:max-w-sm"
+              placeholder="Search events"
+            />
+            <select id="eventTypeFilter" class="select select-sm select-bordered w-full md:max-w-[220px]"></select>
+            <div class="event-pager-controls" data-event-page-state="single">
+              <button id="eventPrevPage" type="button" class="btn btn-sm btn-outline">Prev</button>
+              <span id="eventPageInfo" class="text-xs text-base-content/70">1 / 1</span>
+              <button id="eventNextPage" type="button" class="btn btn-sm btn-outline">Next</button>
+            </div>
           </div>
           <ul id="eventLog" class="event-list p-3"></ul>
         </section>
@@ -66,6 +83,14 @@
             <span class="badge badge-outline">Profiles</span>
           </div>
           <ul id="palList" class="pal-list p-3"></ul>
+        </section>
+
+        <section hidden class="panel tab-panel rounded-box rounded-t-none border border-base-300 bg-base-100 shadow-sm" data-tab-panel="project">
+          <div class="panel-head border-b border-base-300 p-3">
+            <h2 class="text-sm font-semibold">Project</h2>
+            <span class="badge badge-outline">Directories</span>
+          </div>
+          <div id="projectTabContent" class="project-tab-body p-3"></div>
         </section>
 
         <section hidden class="panel tab-panel rounded-box rounded-t-none border border-base-300 bg-base-100 shadow-sm" data-tab-panel="settings">
@@ -85,7 +110,7 @@
         <div class="guide-character-body"></div>
       </div>
 
-      <aside id="detailDrawer" class="drawer rounded-box border border-base-300 bg-base-100 shadow-xl hidden" aria-label="task-detail">
+      <aside id="detailDrawer" class="drawer task-detail-drawer rounded-box border border-base-300 bg-base-100 shadow-xl hidden" aria-label="task-detail" data-detail-state="closed">
         <div class="drawer-head flex items-center justify-between border-b border-base-300 px-3 py-2">
           <h3 class="text-sm font-semibold" data-ui-id="UI-PPH-0204">Task Detail</h3>
           <button id="closeDrawer" class="btn btn-sm btn-circle btn-ghost">✕</button>
@@ -93,18 +118,57 @@
         <div id="detailBody" class="drawer-body overflow-auto p-3"></div>
       </aside>
 
-      <div id="gatePanel" class="overlay hidden">
-        <div class="modal rounded-box border border-base-300 bg-base-100 shadow-xl">
+      <div id="gatePanel" class="overlay gate-overlay hidden" data-gate-state="closed" data-gate-kind="none">
+        <div class="modal gate-modal rounded-box border border-base-300 bg-base-100 shadow-xl">
           <div class="modal-head flex items-center justify-between border-b border-base-300 px-4 py-3">
             <h3 class="text-base font-semibold" data-ui-id="UI-PPH-0205">Gate Panel</h3>
             <button id="closeGate" class="btn btn-sm btn-circle btn-ghost">✕</button>
           </div>
-          <div class="modal-body p-4">
+          <div class="modal-body gate-modal-body p-4">
+            <div id="gateProfileSummary" class="text-sm text-base-content/70"></div>
+            <div id="gateRuntimeStatus" class="mt-2 text-xs text-base-content/60"></div>
+            <div id="gateRuntimeSuggestion" class="mt-2 hidden rounded-box border border-base-300 bg-base-100/80 p-2 text-sm"></div>
             <label for="gateReason" class="label-text" data-ui-id="UI-PPH-0206">Reject Reason</label>
             <textarea id="gateReason" rows="4" class="textarea textarea-bordered mt-1 w-full"></textarea>
-            <div class="btn-row mt-3 flex justify-end gap-2">
+            <div class="gate-template-box mt-3 rounded-box border border-base-300 bg-base-100/80 p-2">
+              <div id="gateReasonTemplateLabel" class="text-xs font-semibold text-base-content/70">Reason Templates</div>
+              <div id="gateReasonTemplateList" class="mt-2 flex flex-wrap gap-2"></div>
+            </div>
+            <div class="btn-row gate-actions mt-3 flex justify-end gap-2">
               <button id="rejectTask" class="btn btn-error" data-ui-id="UI-PPH-0209">Reject</button>
               <button id="approveTask" class="btn btn-primary" data-ui-id="UI-PPH-0210">Approve</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="palConfigModal" class="overlay hidden">
+        <div class="modal rounded-box border border-base-300 bg-base-100 shadow-xl pal-config-modal">
+          <div class="modal-head flex items-center justify-between border-b border-base-300 px-4 py-3">
+            <h3 id="palConfigModalTitle" class="text-base font-semibold">Pal Settings</h3>
+            <button id="closePalConfigModal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+          </div>
+          <div id="palConfigModalBody" class="modal-body p-4 pal-config-modal-body"></div>
+          <div class="pal-config-modal-footer border-t border-base-300 px-3 py-1">
+            <button id="palConfigDelete" type="button" class="btn btn-xs btn-error btn-outline">Delete</button>
+            <button id="palConfigSave" type="button" class="btn btn-xs btn-primary">Save</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="identityEditorModal" class="overlay hidden">
+        <div class="modal rounded-box border border-base-300 bg-base-100 shadow-xl pal-config-modal">
+          <div class="modal-head flex items-center justify-between border-b border-base-300 px-4 py-3">
+            <h3 id="identityEditorTitle" class="text-base font-semibold">Identity Editor</h3>
+            <button id="closeIdentityEditorModal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+          </div>
+          <div class="modal-body p-4">
+            <div id="identityEditorMeta" class="text-xs text-base-content/60"></div>
+            <div id="identityEditorStatus" class="mt-2 text-xs text-base-content/60"></div>
+            <textarea id="identityEditorTextarea" class="textarea textarea-bordered mt-3 h-72 w-full font-mono text-sm"></textarea>
+            <div class="mt-4 flex justify-end gap-2">
+              <button id="identityEditorCancel" type="button" class="btn btn-sm btn-ghost">Cancel</button>
+              <button id="identityEditorSave" type="button" class="btn btn-sm btn-primary">Save</button>
             </div>
           </div>
         </div>
@@ -124,6 +188,18 @@
 
     </div>
     <script src="./palpal-core-registry.js"></script>
+    <script src="./skill-catalog.js"></script>
+    <script src="./runtime-validation.js"></script>
+    <script src="./pal-profile.js"></script>
+    <script src="./guide-chat.js"></script>
+    <script src="./context-builder.js"></script>
+    <script src="./agent-skill-resolver.js"></script>
+    <script src="./agent-routing.js"></script>
+    <script src="./debug-identity-seeds.js"></script>
+    <script src="./guide-plan.js"></script>
+    <script src="./guide-planning-intent.js"></script>
+    <script src="./guide-task-planner.js"></script>
+    <script src="./settings-persistence.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>

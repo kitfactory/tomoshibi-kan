@@ -1,0 +1,152 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+const { buildGuideContext, buildPalContext } = require("../../wireframe/context-builder.js");
+
+test("buildGuideContext returns system/history/user messages within budget", () => {
+  const result = buildGuideContext({
+    latestUserText: "次のタスクを整理してください",
+    sessionMessages: [
+      { role: "user", content: "前提を確認したい" },
+      { role: "assistant", content: "現在は2件が保留中です" },
+    ],
+    contextWindow: 4096,
+    reservedOutput: 512,
+    safetyMargin: 256,
+    maxHistoryMessages: 8,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(Array.isArray(result.messages), true);
+  assert.equal(result.messages[0].role, "system");
+  assert.equal(result.messages[result.messages.length - 1].role, "user");
+  assert.equal(result.audit.estimatedInputTokens <= result.audit.budget, true);
+});
+
+test("buildGuideContext drops old history when budget is tight", () => {
+  const long = "a".repeat(1200);
+  const result = buildGuideContext({
+    latestUserText: "一番新しい発話を残してください",
+    sessionMessages: [
+      { role: "user", content: long },
+      { role: "assistant", content: long },
+      { role: "user", content: "直近の質問" },
+      { role: "assistant", content: "直近の回答" },
+    ],
+    contextWindow: 1400,
+    reservedOutput: 512,
+    safetyMargin: 512,
+    maxHistoryMessages: 10,
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.audit.excluded.length > 0, true);
+  assert.equal(result.audit.compaction.some((item) => item.startsWith("drop-history:")), true);
+});
+
+test("buildGuideContext returns error when latest user text is missing", () => {
+  const result = buildGuideContext({
+    latestUserText: "   ",
+    sessionMessages: [],
+  });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.errorCode, "MSG-PPH-1001");
+  assert.equal(result.messages.length, 0);
+});
+
+test("buildPalContext injects skill summaries only for model runtime", () => {
+  const modelResult = buildPalContext({
+    role: "worker",
+    runtimeKind: "model",
+    latestUserText: "タスクを実行してください",
+    sessionMessages: [],
+    skillSummaries: ["file-search", "file-edit"],
+  });
+  assert.equal(modelResult.ok, true);
+  assert.equal(
+    modelResult.messages.some(
+      (message) => message.role === "developer" && message.content.includes("Enabled Skills")
+    ),
+    true
+  );
+
+  const toolResult = buildPalContext({
+    role: "worker",
+    runtimeKind: "tool",
+    latestUserText: "タスクを実行してください",
+    sessionMessages: [],
+    skillSummaries: ["file-search", "file-edit"],
+  });
+  assert.equal(toolResult.ok, true);
+  assert.equal(
+    toolResult.messages.some((message) => message.role === "developer"),
+    false
+  );
+  assert.equal(
+    toolResult.audit.compaction.includes("skip-skill-context:tool-runtime"),
+    true
+  );
+});
+
+test("buildPalContext composes LANGUAGE, SOUL, ROLE and RUBRIC into system prompt", () => {
+  const workerResult = buildPalContext({
+    role: "worker",
+    runtimeKind: "model",
+    locale: "ja",
+    latestUserText: "タスクを実行してください",
+    sessionMessages: [],
+    soulText: "落ち着いて検証する",
+    roleText: "実行結果は簡潔に報告する",
+  });
+  assert.equal(workerResult.ok, true);
+  assert.match(workerResult.messages[0].content, /\[LANGUAGE\]/);
+  assert.match(workerResult.messages[0].content, /日本語で回答/);
+  assert.match(workerResult.messages[0].content, /Worker Pal/);
+  assert.match(workerResult.messages[0].content, /\[SOUL\]/);
+  assert.match(workerResult.messages[0].content, /\[ROLE\]/);
+
+  const gateResult = buildPalContext({
+    role: "gate",
+    runtimeKind: "model",
+    locale: "en",
+    latestUserText: "Review the submission",
+    sessionMessages: [],
+    rubricText: "Reject when evidence is missing.",
+  });
+  assert.equal(gateResult.ok, true);
+  assert.match(gateResult.messages[0].content, /answer in English/);
+  assert.match(gateResult.messages[0].content, /decision`, `reason`, and `fixes`/);
+  assert.match(gateResult.messages[0].content, /\[RUBRIC\]/);
+});
+
+test("buildGuideContext uses planning-oriented Guide operating rules in Japanese", () => {
+  const result = buildGuideContext({
+    locale: "ja",
+    latestUserText: "新しい計画を考えて",
+    sessionMessages: [],
+  });
+  assert.equal(result.ok, true);
+  assert.match(result.messages[0].content, /仕事の依頼へ進もうとしているかどうか/);
+  assert.match(result.messages[0].content, /work intent/);
+  assert.match(result.messages[0].content, /これまでの会話からあり得そうな案件を具体化した 3 つの選択肢を、可能性の高い順に提示/);
+  assert.match(result.messages[0].content, /最も妥当な候補を 1 つ推薦/);
+  assert.match(result.messages[0].content, /1でよいですか？/);
+  assert.match(result.messages[0].content, /Trace \/ Fix \/ Verify の3段/);
+  assert.match(result.messages[0].content, /担当 Pal をユーザーへ聞き返さず自分で選ぶ/);
+});
+
+test("buildGuideContext uses planning-oriented Guide operating rules in English", () => {
+  const result = buildGuideContext({
+    locale: "en",
+    latestUserText: "Break this into trace, fix, and verify tasks.",
+    sessionMessages: [],
+  });
+  assert.equal(result.ok, true);
+  assert.match(result.messages[0].content, /moving toward a work request/);
+  assert.match(result.messages[0].content, /trace \/ fix \/ verify split/);
+  assert.match(result.messages[0].content, /propose three concrete likely work options grounded in the conversation so far, ordered by likelihood/);
+  assert.match(result.messages[0].content, /recommend the most plausible one/);
+  assert.match(result.messages[0].content, /Shall we go with 1\?/);
+  assert.match(result.messages[0].content, /one blocking fact prevents task creation/);
+});

@@ -9,6 +9,7 @@ const WIREFRAME_URL = pathToFileURL(
 const TAB_SPECS = [
   { key: "guide", button: '[data-tab="guide"]', panel: '[data-tab-panel="guide"]' },
   { key: "pal", button: '[data-tab="pal"]', panel: '[data-tab-panel="pal"]' },
+  { key: "project", button: '[data-tab="project"]', panel: '[data-tab-panel="project"]' },
   { key: "job", button: '[data-tab="job"]', panel: '[data-tab-panel="job"]' },
   { key: "task", button: '[data-tab="task"]', panel: '[data-tab-panel="task"]' },
   { key: "event", button: '[data-tab="event"]', panel: '[data-tab-panel="event"]' },
@@ -21,9 +22,269 @@ const VIEWPORTS = [
   { width: 1024, height: 768 },
 ];
 
+const CLAWHUB_LIVE_MODE = process.env.PALPAL_E2E_LIVE === "1";
+const CLAWHUB_MOCK_BASE_SKILLS = [
+  {
+    slug: "codex-file-search",
+    displayName: "File Search",
+    summary: "Search files and text quickly",
+    safety: "High",
+    rating: 4.8,
+    downloads: 12420,
+    stars: 932,
+    installs: 4180,
+    updatedAt: "2026-03-01T08:00:00Z",
+    highlighted: true,
+    suspicious: false,
+  },
+  {
+    slug: "codex-file-read",
+    displayName: "File Read",
+    summary: "Open and inspect file contents",
+    safety: "High",
+    rating: 4.7,
+    downloads: 11300,
+    stars: 870,
+    installs: 3950,
+    updatedAt: "2026-02-20T08:00:00Z",
+    highlighted: false,
+    suspicious: false,
+  },
+  {
+    slug: "codex-file-edit",
+    displayName: "File Edit",
+    summary: "Apply safe file edits and patches",
+    safety: "Medium",
+    rating: 4.5,
+    downloads: 9850,
+    stars: 721,
+    installs: 3520,
+    updatedAt: "2026-02-14T08:00:00Z",
+    highlighted: false,
+    suspicious: false,
+  },
+  {
+    slug: "codex-shell-command",
+    displayName: "Shell Command",
+    summary: "Run terminal commands in workspace",
+    safety: "Medium",
+    rating: 4.2,
+    downloads: 8120,
+    stars: 604,
+    installs: 2870,
+    updatedAt: "2026-01-29T08:00:00Z",
+    highlighted: false,
+    suspicious: true,
+  },
+  {
+    slug: "codex-test-runner",
+    displayName: "Test Runner",
+    summary: "Execute tests and inspect failures",
+    safety: "High",
+    rating: 4.6,
+    downloads: 10450,
+    stars: 788,
+    installs: 3340,
+    updatedAt: "2026-02-24T08:00:00Z",
+    highlighted: true,
+    suspicious: false,
+  },
+  {
+    slug: "browser-chrome",
+    displayName: "Chrome Browser",
+    summary: "Chrome browser control skill",
+    safety: "Medium",
+    rating: 4.4,
+    downloads: 9080,
+    stars: 682,
+    installs: 3010,
+    updatedAt: "2026-02-10T08:00:00Z",
+    highlighted: true,
+    suspicious: false,
+  },
+  {
+    slug: "duckduckgo-search",
+    displayName: "DuckDuckGo Search",
+    summary: "Performs web searches using DuckDuckGo.",
+    safety: "Unknown",
+    rating: 4.0,
+    downloads: 4200,
+    stars: 310,
+    installs: 1100,
+    updatedAt: "2026-03-04T08:00:00Z",
+    highlighted: false,
+    // intentionally omit suspicious to mirror /search payload gaps
+  },
+  {
+    slug: "ddg",
+    displayName: "Ddg",
+    summary: "Privacy web search skill for terminal workflows.",
+    safety: "Unknown",
+    rating: 0,
+    downloads: 1900,
+    stars: 0,
+    installs: 18,
+    updatedAt: "2026-03-04T09:00:00Z",
+    highlighted: false,
+    suspicious: false,
+  },
+];
+const CLAWHUB_MOCK_FILLER_SKILLS = Array.from({ length: 40 }, (_, index) => {
+  const rank = 40 - index;
+  const id = String(index + 1).padStart(2, "0");
+  return {
+    slug: `filler-skill-${id}`,
+    displayName: `Filler Skill ${id}`,
+    summary: "Filler skill for ranking and limit coverage.",
+    safety: "High",
+    rating: 4.1,
+    downloads: 5000 + rank * 250,
+    stars: 200 + rank,
+    installs: 700 + rank,
+    updatedAt: "2026-03-02T08:00:00Z",
+    highlighted: false,
+    suspicious: false,
+  };
+});
+const CLAWHUB_MOCK_SKILLS = [...CLAWHUB_MOCK_BASE_SKILLS, ...CLAWHUB_MOCK_FILLER_SKILLS];
+
+function sortSkillsForMock(items, sortBy) {
+  const list = [...items];
+  list.sort((left, right) => {
+    const leftName = String(left.displayName || "");
+    const rightName = String(right.displayName || "");
+    if (sortBy === "stars") {
+      const diff = Number(right.stars || 0) - Number(left.stars || 0);
+      return diff !== 0 ? diff : leftName.localeCompare(rightName);
+    }
+    if (sortBy === "installs") {
+      const diff = Number(right.installs || 0) - Number(left.installs || 0);
+      return diff !== 0 ? diff : leftName.localeCompare(rightName);
+    }
+    if (sortBy === "updated") {
+      const leftTime = Date.parse(left.updatedAt || "") || 0;
+      const rightTime = Date.parse(right.updatedAt || "") || 0;
+      const diff = rightTime - leftTime;
+      return diff !== 0 ? diff : leftName.localeCompare(rightName);
+    }
+    if (sortBy === "highlighted") {
+      const highlightDiff = Number(Boolean(right.highlighted)) - Number(Boolean(left.highlighted));
+      if (highlightDiff !== 0) return highlightDiff;
+      const diff = Number(right.downloads || 0) - Number(left.downloads || 0);
+      return diff !== 0 ? diff : leftName.localeCompare(rightName);
+    }
+    const diff = Number(right.downloads || 0) - Number(left.downloads || 0);
+    return diff !== 0 ? diff : leftName.localeCompare(rightName);
+  });
+  return list;
+}
+
+async function setupClawHubMock(page) {
+  if (CLAWHUB_LIVE_MODE) return;
+  await page.route("https://clawhub.ai/api/v1/**", async (route) => {
+    const requestUrl = new URL(route.request().url());
+    const pathName = requestUrl.pathname;
+    const parsedLimit = Number(requestUrl.searchParams.get("limit") || "30");
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.floor(parsedLimit)
+      : 30;
+    const headers = {
+      "access-control-allow-origin": "*",
+      "content-type": "application/json",
+    };
+    if (pathName.endsWith("/skills")) {
+      const nonSuspiciousOnly = requestUrl.searchParams.get("nonSuspicious") === "true";
+      const highlightedOnly = requestUrl.searchParams.get("highlighted") === "true";
+      const sortBy = String(requestUrl.searchParams.get("sort") || "downloads");
+      let items = [...CLAWHUB_MOCK_SKILLS];
+      if (nonSuspiciousOnly) {
+        items = items.filter((item) => !item.suspicious);
+      }
+      if (highlightedOnly) {
+        items = items.filter((item) => item.highlighted);
+      }
+      items = sortSkillsForMock(items, sortBy);
+      items = items.slice(0, limit);
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ items }),
+      });
+      return;
+    }
+    if (pathName.includes("/skills/")) {
+      const slug = decodeURIComponent(pathName.split("/skills/")[1] || "").trim();
+      const item = CLAWHUB_MOCK_SKILLS.find((entry) => entry.slug === slug);
+      if (!item) {
+        await route.fulfill({
+          status: 404,
+          headers,
+          body: JSON.stringify({ error: "not_found" }),
+        });
+        return;
+      }
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({
+          skill: {
+            slug: item.slug,
+            displayName: item.displayName,
+            summary: item.summary,
+            stats: {
+              downloads: item.downloads,
+              stars: item.stars,
+              installsAllTime: item.installs,
+              installsCurrent: item.installs,
+            },
+            updatedAt: item.updatedAt,
+          },
+        }),
+      });
+      return;
+    }
+    if (pathName.endsWith("/search")) {
+      const keyword = String(requestUrl.searchParams.get("q") || "").toLowerCase();
+      const results = CLAWHUB_MOCK_SKILLS
+        .filter((item) => {
+          const haystack = [item.slug, item.displayName, item.summary].join(" ").toLowerCase();
+          return haystack.includes(keyword);
+        })
+        .slice(0, limit)
+        .map((item) => ({
+          slug: item.slug,
+          displayName: item.displayName,
+          summary: item.summary,
+        }));
+      await route.fulfill({
+        status: 200,
+        headers,
+        body: JSON.stringify({ results }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 404,
+      headers,
+      body: JSON.stringify({ error: "not_found" }),
+    });
+  });
+}
+
 for (const viewport of VIEWPORTS) {
   test.describe(`workspace fits viewport ${viewport.width}x${viewport.height}`, () => {
     test.beforeEach(async ({ page }) => {
+      await setupClawHubMock(page);
+      await page.addInitScript(() => {
+        const queue = [
+          "C:/workspace/hive-docs",
+          "C:/workspace/hive-docs",
+          "C:/workspace/alpha-work",
+        ];
+        window.PalpalProjectDialog = {
+          pickDirectory: async () => queue.shift() || "C:/workspace/hive-docs",
+        };
+      });
       await page.setViewportSize(viewport);
       await page.goto(WIREFRAME_URL);
     });
@@ -71,6 +332,213 @@ for (const viewport of VIEWPORTS) {
       expect(distance).toBeLessThanOrEqual(2);
     });
 
+    test("guide chat is blocked when guide model is not configured", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+      await page.click("#settingsTabSave");
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "繝｢繝・Ν縺ｪ縺励〒騾∽ｿ｡");
+      await page.click("#guideSend");
+
+      await expect(page.locator("#errorToastCode")).toContainText("MSG-PPH-1010");
+      await expect(page.locator('[data-tab="settings"]')).toHaveClass(/active/);
+      await expect(page.locator("#guideChat")).toContainText(/Guide繝｢繝・Ν縺梧悴險ｭ螳嘶Guide model is not configured/);
+    });
+
+    test("guide chat resumes after registering model in settings", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+      await page.click("#settingsTabSave");
+
+      await page.click("#settingsTabOpenAddItem");
+      await page.selectOption("#settingsTabModelProvider", "openai");
+      await page.selectOption("#settingsTabModelName", "gpt-4.1");
+      await page.fill("#settingsTabModelApiKey", "guide-key");
+      await page.click("#settingsTabAddItemSubmit");
+      await page.click("#settingsTabSave");
+
+      await page.click('[data-tab="guide"]');
+      const messages = page.locator("#guideChat .chat");
+      const before = await messages.count();
+      await page.fill("#guideInput", "次の設計をお願いします");
+      await page.click("#guideSend");
+      await expect(messages).toHaveCount(before + 2);
+      await expect(page.locator("#guideChat")).toContainText(/gpt-4\.1|openai\/gpt-oss-20b/);
+    });
+
+    test("guide chat reflects focus and sending state in UI", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      await page.locator("#guideInput").focus();
+      await expect(page.locator(".app-shell")).toHaveClass(/guide-compose-active/);
+
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        const original = window.requestGuideModelReplyWithFallback;
+        window.requestGuideModelReplyWithFallback = async (...args) => {
+          await new Promise((resolve) => window.setTimeout(resolve, 250));
+          return original(...args);
+        };
+      });
+
+      await page.fill("#guideInput", "Guide の送信状態を確認します");
+      await page.click("#guideSend");
+
+      await expect(page.locator(".app-shell")).toHaveClass(/guide-busy/);
+      await expect(page.locator("#guideComposer")).toHaveAttribute("data-guide-state", "busy");
+      await expect(page.locator("#guideSend")).toHaveAttribute("aria-busy", "true");
+      await expect(page.locator("#guideSend")).toContainText(/騾∽ｿ｡荳ｭ|Sending/);
+      await expect(page.locator("#guideSend")).toHaveAttribute("aria-busy", "false");
+      await expect(page.locator("#guideComposer")).toHaveAttribute("data-guide-state", "idle");
+    });
+
+    test("guide chat creates planned tasks and assigns workers", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "plan_ready",
+            reply: "実行計画を作成しました。3つの Task に分解します。",
+            plan: {
+              goal: "設定画面の保存不具合を修正する",
+              completionDefinition: "保存と再読み込みが一致する",
+              constraints: ["既存設定フローは壊さない"],
+              tasks: [
+                {
+                  title: "再現確認",
+                  description: "保存不具合の再現手順を確認し、原因候補を整理する",
+                  requiredSkills: ["browser-chrome", "codex-file-search"],
+                },
+                {
+                  title: "修正実装",
+                  description: "原因を修正し、保存処理の整合を回復する",
+                  requiredSkills: ["codex-file-edit"],
+                },
+                {
+                  title: "検証",
+                  description: "回帰テストを実行し、修正完了を確認する",
+                  requiredSkills: ["codex-test-runner"],
+                },
+              ],
+            },
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "險ｭ螳夂判髱｢縺ｮ菫晏ｭ倥ｒ謾ｹ蝟・＠縺ｦ縲√Δ繝・Ν逋ｻ骭ｲ縺ｨ讀懆ｨｼ繧帝ｲ繧√※縺上□縺輔＞");
+      await page.click("#guideSend");
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
+      const latestTask = page.locator('[data-task-row="TASK-004"]');
+      await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-gamma/);
+      await expect(latestTask).toContainText(/Assigned|割り当て済み/);
+    });
+
+    test("guide chat keeps dialog open when plan is not ready", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "needs_clarification",
+            reply: "対象、再現手順、期待結果を先に教えてください。",
+            plan: null,
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "設定画面を直したい");
+      await page.click("#guideSend");
+      await expect(page.locator("#guideChat")).toContainText(/再現手順|期待結果/);
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+    });
+
+    test("guide chat keeps conversation mode without touching plan tasks", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "conversation",
+            reply: "その観点は重要です。まず今どんな点が気になっているかを整理しましょう。",
+            plan: null,
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "最近このアプリの使い心地どう思う？");
+      await page.click("#guideSend");
+      await expect(page.locator("#guideChat")).toContainText(/気になっている|整理しましょう/);
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+    });
+
+    test("project tab supports add and /use focus switch", async ({ page }) => {
+      await page.click('[data-tab="project"]');
+      await expect(page.locator("#projectTabContent")).toBeVisible();
+      await page.click("#projectPickDirectory");
+      await expect(page.locator("#projectTabContent")).toContainText("@hive-docs");
+      await expect(page.locator("[data-project-remove-id]").first()).toBeEnabled();
+
+      let duplicateMessage = "";
+      page.once("dialog", async (dialog) => {
+        duplicateMessage = dialog.message();
+        await dialog.accept();
+      });
+      await page.click("#projectPickDirectory");
+      expect(duplicateMessage).toMatch(/繝励Ο繧ｸ繧ｧ繧ｯ繝医・譌｢縺ｫ蜷ｫ縺ｾ繧後※縺・∪縺處Project is already included/);
+      await expect(page.locator('#projectList .badge:has-text("@hive-docs")')).toHaveCount(1);
+
+      while ((await page.locator("[data-project-remove-id]").count()) > 0) {
+        await page.locator("[data-project-remove-id]").first().click();
+      }
+      await expect(page.locator("#projectList")).toContainText(/繝励Ο繧ｸ繧ｧ繧ｯ繝医・縺ゅｊ縺ｾ縺帙ｓ|No projects/);
+
+      await page.click("#projectPickDirectory");
+      await expect(page.locator("#projectTabContent")).toContainText("@alpha-work");
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "/use alpha-work");
+      await page.click("#guideSend");
+      await expect(page.locator("#guideProjectFocus")).toContainText("alpha-work");
+    });
+
+    test("guide chat supports @ completion with focus and project:file", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "@wire");
+      await expect(page.locator("#guideMentionMenu")).toBeVisible();
+      await expect(page.locator("#guideMentionMenu")).toContainText("@wireframe/app.js");
+      await page.click('#guideMentionMenu .guide-mention-item:has-text("@wireframe/app.js")');
+      await expect(page.locator("#guideInput")).toHaveValue("@wireframe/app.js ");
+
+      await page.fill("#guideInput", "@palpal-hive:");
+      await expect(page.locator("#guideMentionMenu")).toBeVisible();
+      await expect(page.locator("#guideMentionMenu")).toContainText("@palpal-hive:wireframe/app.js");
+    });
+
     test("task detail drawer is visible only on task tab", async ({ page }) => {
       await page.click('[data-tab="guide"]');
       await expect(page.locator("#detailDrawer")).toBeHidden();
@@ -85,13 +553,419 @@ for (const viewport of VIEWPORTS) {
     test("job board supports gate flow", async ({ page }) => {
       await page.click('[data-tab="job"]');
       await expect(page.locator("#jobBoard")).toBeVisible();
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-last-run-state", "empty");
       await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
       await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
       await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
       await expect(page.locator("#gatePanel")).not.toHaveClass(/hidden/);
       await page.click("#approveTask");
       await expect(page.locator("#gatePanel")).toHaveClass(/hidden/);
-      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText(/Done|螳御ｺ・/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText(/Done|完了/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-last-run-state", "recorded");
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-gate-decision", "approved");
+    });
+
+    test("worker runtime receives structured handoff payload", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="pal-alpha"]');
+      await page.selectOption('[data-pal-runtime-select="pal-alpha"]', "model");
+      await page.selectOption('[data-pal-runtime-target-select="pal-alpha"]', "gpt-4o-mini");
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        window.__lastPalChatInput = null;
+        const runtime = window.PalpalCoreRuntime || {};
+        const original = runtime.palChat;
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = typeof runtime.guideChat === "function"
+          ? runtime.guideChat
+          : async () => ({ text: "guide-ok", toolCalls: [] });
+        runtime.palChat = async (input) => {
+          window.__lastPalChatInput = input;
+          return {
+            provider: input.provider,
+            modelName: input.modelName,
+            text: "worker-payload-ok",
+            toolCalls: [],
+          };
+        };
+        window.PalpalCoreRuntime = runtime;
+        window.__restorePalChat = () => {
+          runtime.palChat = original;
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+
+      await page.evaluate(() => window.executePalRuntimeForTarget("JOB-001", "job"));
+
+      await expect.poll(async () => page.evaluate(() => window.__lastPalChatInput?.userText || "")).toContain("[WorkerExecutionInput]");
+      const payload = await page.evaluate(() => window.__lastPalChatInput);
+      expect(payload.userText).toContain("target_type: job");
+      expect(payload.userText).toContain("target_id: JOB-001");
+      expect(payload.userText).toContain("assignee_pal_id: pal-alpha");
+      expect(payload.userText).toContain("gate_profile_id: gate-core");
+      expect(payload.userText).toContain("[HandoffSummary]");
+      expect(payload.userText).toContain("source_refs:");
+      expect(payload.userText).toContain("focus_project:");
+      expect(payload.userText).not.toContain("Plan Card");
+
+      await page.evaluate(() => {
+        if (typeof window.__restorePalChat === "function") {
+          window.__restorePalChat();
+        }
+      });
+    });
+
+    test("settings context handoff policy persists and shapes worker payload", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      await page.selectOption("#settingsContextHandoffPolicy", "minimal");
+      await page.click("#settingsTabSave");
+
+      await page.reload();
+      await page.click('[data-tab="settings"]');
+      await expect(page.locator("#settingsContextHandoffPolicy")).toHaveValue("minimal");
+
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="pal-alpha"]');
+      await page.selectOption('[data-pal-runtime-select="pal-alpha"]', "model");
+      await page.selectOption('[data-pal-runtime-target-select="pal-alpha"]', "gpt-4o-mini");
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        window.__lastPalChatInput = null;
+        const runtime = window.PalpalCoreRuntime || {};
+        const original = runtime.palChat;
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = typeof runtime.guideChat === "function"
+          ? runtime.guideChat
+          : async () => ({ text: "guide-ok", toolCalls: [] });
+        runtime.palChat = async (input) => {
+          window.__lastPalChatInput = input;
+          return {
+            provider: input.provider,
+            modelName: input.modelName,
+            text: "worker-payload-ok",
+            toolCalls: [],
+          };
+        };
+        window.PalpalCoreRuntime = runtime;
+        window.__restorePalChat = () => {
+          runtime.palChat = original;
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+
+      await page.evaluate(() => window.executePalRuntimeForTarget("JOB-001", "job"));
+      await expect.poll(async () => page.evaluate(() => window.__lastPalChatInput?.userText || "")).toContain("[WorkerExecutionInput]");
+      let payload = await page.evaluate(() => window.__lastPalChatInput);
+      expect(payload.userText).not.toContain("[HandoffSummary]");
+      expect(payload.userText).not.toContain("[CompressedHistorySummary]");
+
+      await page.click('[data-tab="settings"]');
+      await page.selectOption("#settingsContextHandoffPolicy", "verbose");
+      await page.click("#settingsTabSave");
+      await expect(page.locator("#settingsContextHandoffPolicy")).toHaveValue("verbose");
+
+      await page.evaluate(() => {
+        window.__lastPalChatInput = null;
+      });
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await expect.poll(async () => page.evaluate(() => window.__lastPalChatInput?.userText || "")).toContain("[CompressedHistorySummary]");
+      payload = await page.evaluate(() => window.__lastPalChatInput);
+      expect(payload.userText).toContain("[HandoffSummary]");
+      expect(payload.userText).toContain("guide-guide:");
+
+      await page.evaluate(() => {
+        if (typeof window.__restorePalChat === "function") {
+          window.__restorePalChat();
+        }
+      });
+    });
+
+    test("guide controller assist is off by default and can be enabled in settings", async ({ page }) => {
+      await page.evaluate(() => {
+        window.__lastGuideChatInput = null;
+        const runtime = window.PalpalCoreRuntime || {};
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = async (input) => {
+          window.__lastGuideChatInput = input;
+          return {
+            provider: input.provider,
+            modelName: input.modelName,
+            text: JSON.stringify({
+              status: "conversation",
+              reply: "ok",
+              plan: null,
+            }),
+            toolCalls: [],
+          };
+        };
+        window.PalpalCoreRuntime = runtime;
+        window.__restoreGuideChat = () => {
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+
+      await page.click('[data-tab="settings"]');
+      await expect(page.locator("#settingsGuideControllerAssistEnabled")).not.toBeChecked();
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。");
+      await page.click("#guideSend");
+      await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.debugMeta?.planningIntent || "")).toBe("none");
+      let payload = await page.evaluate(() => window.__lastGuideChatInput);
+      expect(payload.debugMeta.planningIntent).toBe("none");
+      expect(payload.debugMeta.planningReadiness).toBe("none");
+
+      await page.click('[data-tab="settings"]');
+      await page.check("#settingsGuideControllerAssistEnabled");
+      await page.click("#settingsTabSave");
+      await page.reload();
+      await page.click('[data-tab="settings"]');
+      await expect(page.locator("#settingsGuideControllerAssistEnabled")).toBeChecked();
+
+      await page.evaluate(() => {
+        window.__lastGuideChatInput = null;
+        const runtime = window.PalpalCoreRuntime || {};
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = async (input) => {
+          window.__lastGuideChatInput = input;
+          return {
+            provider: input.provider,
+            modelName: input.modelName,
+            text: JSON.stringify({
+              status: "conversation",
+              reply: "ok",
+              plan: null,
+            }),
+            toolCalls: [],
+          };
+        };
+        window.PalpalCoreRuntime = runtime;
+        window.__restoreGuideChat = () => {
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。");
+      await page.click("#guideSend");
+      await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.debugMeta?.planningIntent || "")).toBe("explicit_breakdown");
+      payload = await page.evaluate(() => window.__lastGuideChatInput);
+      expect(payload.debugMeta.planningIntent).toBe("explicit_breakdown");
+      expect(payload.debugMeta.planningReadiness).toBe("debug_repro_ready");
+
+      await page.evaluate(() => {
+        if (typeof window.__restoreGuideChat === "function") {
+          window.__restoreGuideChat();
+        }
+      });
+    });
+
+    test("gate reject uses templates and navigates to resubmit target", async ({ page }) => {
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+
+      await expect(page.locator("#gatePanel")).not.toHaveClass(/hidden/);
+      await page.click('[data-gate-template-id="missing-test"]');
+      await expect(page.locator("#gateReason")).toHaveValue(/繝・せ繝井ｸ崎ｶｳ|Insufficient tests/);
+
+      await page.click("#rejectTask");
+      await expect(page.locator("#gatePanel")).toHaveClass(/hidden/);
+      await expect(page.locator('[data-tab="job"]')).toHaveClass(/active/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText(/Resubmit|蜀肴署蜃ｺ/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveClass(/board-row-focus/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-gate-decision", "rejected");
+    });
+
+    test("gate runtime receives structured review payload and applies suggestion", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="gate-core"]');
+      await page.selectOption('[data-pal-runtime-select="gate-core"]', "model");
+      const gateRuntimeTarget = await page.locator('[data-pal-runtime-target-select="gate-core"] option').first().getAttribute("value");
+      expect(gateRuntimeTarget).toBeTruthy();
+      await page.selectOption('[data-pal-runtime-target-select="gate-core"]', String(gateRuntimeTarget));
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        window.__lastPalChatInput = null;
+        const runtime = window.PalpalCoreRuntime || {};
+        const original = runtime.palChat;
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = typeof runtime.guideChat === "function"
+          ? runtime.guideChat
+          : async () => ({ text: "guide-ok", toolCalls: [] });
+        runtime.palChat = async (input) => {
+          window.__lastPalChatInput = input;
+          return {
+            provider: input.provider,
+            modelName: input.modelName,
+            text: JSON.stringify({
+              decision: "rejected",
+              reason: "Evidence is too thin",
+              fixes: ["add evidence", "add test result"],
+            }),
+            toolCalls: [],
+          };
+        };
+        window.PalpalCoreRuntime = runtime;
+        window.__restorePalChat = () => {
+          runtime.palChat = original;
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+
+      await expect.poll(async () => page.evaluate(() => window.__lastPalChatInput?.userText || "")).toContain("[GateReviewInput]");
+      const payload = await page.evaluate(() => window.__lastPalChatInput);
+      expect(payload.userText).toContain("target_type: job");
+      expect(payload.userText).toContain("target_id: JOB-001");
+      expect(payload.userText).toContain("gate_profile_id: gate-core");
+      expect(payload.userText).toContain("[CompletionRitual]");
+      expect(payload.userText).toContain("[OutputFormat]");
+
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-runtime-state", "ready");
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-suggested-decision", "rejected");
+      await expect(page.locator("#gateRuntimeSuggestion")).toContainText("Evidence is too thin");
+      await expect(page.locator("#gateReason")).toHaveValue(/add evidence/);
+
+      await page.evaluate(() => {
+        if (typeof window.__restorePalChat === "function") {
+          window.__restorePalChat();
+        }
+      });
+    });
+
+    test("task board and gate expose visual state attributes", async ({ page }) => {
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="detail"][data-task-id="TASK-001"]');
+      await expect(page.locator('[data-task-row="TASK-001"]')).toHaveAttribute("data-board-state", "selected");
+      await expect(page.locator("#detailDrawer")).toHaveAttribute("data-detail-state", "open");
+
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-state", "open");
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-kind", "job");
+      await page.click("#closeGate");
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-state", "closed");
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-kind", "none");
+    });
+
+    test("task detail shows gate decision schema fields", async ({ page }) => {
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="detail"][data-task-id="TASK-003"]');
+      await expect(page.locator("#detailBody")).toContainText(/Gate Decision/);
+      await expect(page.locator("#detailBody")).toContainText(/Reason/);
+      await expect(page.locator("#detailBody")).toContainText(/Fixes/);
+    });
+
+    test("default gate is assigned to task and cron gate flow", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click("#palAddGateProfile");
+      const gateRows = page.locator('[data-pal-role="gate"]');
+      const gateId = await gateRows.last().getAttribute("data-pal-row");
+      expect(gateId).toBeTruthy();
+      await page.click("#closePalConfigModal");
+      await page.click(`[data-pal-set-default-gate-id="${gateId}"]`);
+
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+      await expect(page.locator('[data-task-row="TASK-001"]')).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator('[data-task-row="TASK-001"]')).toContainText("New Gate");
+      await page.click('[data-action="gate"][data-task-id="TASK-001"]');
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator("#gateProfileSummary")).toContainText("New Gate");
+      await page.click("#closeGate");
+
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText("New Gate");
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+      await expect(page.locator("#gatePanel")).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator("#gateProfileSummary")).toContainText("New Gate");
+
+      await page.reload();
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row="TASK-001"]')).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator('[data-task-row="TASK-001"]')).toContainText("New Gate");
+      await page.click('[data-tab="job"]');
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-gate-profile-id", String(gateId));
+      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText("New Gate");
+    });
+
+    test("event log supports search, filter, and pagination", async ({ page }) => {
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+      await page.click("#approveTask");
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+
+      await page.click('[data-tab="event"]');
+      await expect(page.locator("#eventLog")).toBeVisible();
+      await expect(page.locator("#eventPageInfo")).toContainText("1 / 2");
+
+      await page.click("#eventNextPage");
+      await expect(page.locator("#eventPageInfo")).toContainText("2 / 2");
+
+      await page.selectOption("#eventTypeFilter", "gate");
+      await expect(page.locator("#eventLog")).toContainText("/ gate /");
+
+      await page.fill("#eventSearchInput", "JOB-001");
+      await expect(page.locator("#eventLog")).toContainText("JOB-001");
+      await expect(page.locator("#eventLog")).not.toContainText("TASK-003");
+    });
+
+    test("event log exposes toolbar, pager, and row state attributes", async ({ page }) => {
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+      await page.click("#approveTask");
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+
+      await page.click('[data-tab="event"]');
+      await expect(page.locator(".event-toolbar")).toHaveAttribute("data-event-toolbar-state", "idle");
+      await expect(page.locator(".event-pager-controls")).toHaveAttribute("data-event-page-state", "paged");
+
+      await page.selectOption("#eventTypeFilter", "gate");
+      await expect(page.locator(".event-toolbar")).toHaveAttribute("data-event-toolbar-state", "filtered");
+      await expect(page.locator('#eventLog .event-log-row[data-event-type="gate"]').first()).toBeVisible();
+
+      await page.fill("#eventSearchInput", "no-match");
+      await expect(page.locator(".event-pager-controls")).toHaveAttribute("data-event-page-state", "empty");
+      await expect(page.locator("#eventPageInfo")).toHaveAttribute("data-page-current", "0");
+    });
+
+        test("event log shows routing explanations for dispatch and gate submit", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.fill("#guideInput", "Use browser and file search to inspect the UI flow and validate the results");
+      await page.click("#guideSend");
+
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
+      await page.click('[data-tab="event"]');
+      await expect(page.locator("#eventLog")).toContainText(/skills=|ROLE=/);
+
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-tab="event"]');
+      await page.fill("#eventSearchInput", "JOB-001");
+      await expect(page.locator("#eventLog")).toContainText(/RUBRIC=/);
     });
 
     test("settings tab shows model list and allows adding model", async ({ page }) => {
@@ -99,16 +973,19 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#settingsTabContent")).toBeVisible();
       await expect(page.locator("#settingsTabSkillList")).toContainText("File Search");
       await expect(page.locator("#settingsTabSkillList")).toContainText("File Edit");
-      await expect(page.locator("#settingsTabClawHubList")).toContainText("ClawHub");
+      await expect(page.locator("#settingsSkillMarketOpenModal")).toBeVisible();
       while ((await page.locator("[data-remove-model-index]").count()) > 0) {
         await page.locator("[data-remove-model-index]").first().click();
       }
       while ((await page.locator("[data-remove-tool-index]").count()) > 0) {
         await page.locator("[data-remove-tool-index]").first().click();
       }
-      await expect(page.locator("#settingsTabModelEmpty")).toContainText("モデルはありません");
+      await expect(page.locator("#settingsTabModelEmpty")).toContainText("繝｢繝・Ν縺ｯ縺ゅｊ縺ｾ縺帙ｓ");
       await page.click("#settingsTabOpenAddItem");
+      await expect(page.locator('#settingsTabModelProvider option[value="lmstudio"]')).toHaveCount(1);
       await page.selectOption("#settingsTabModelProvider", "anthropic");
+      await expect(page.locator("#settingsTabModelName")).toHaveValue("claude-3-7-sonnet");
+      await expect(page.locator('#settingsTabModelName option[value="gpt-4.1"]')).toHaveCount(0);
       await page.selectOption("#settingsTabModelName", "claude-3-7-sonnet");
       await page.fill("#settingsTabModelApiKey", "test-api-key");
       await page.click("#settingsTabAddItemSubmit");
@@ -121,63 +998,334 @@ for (const viewport of VIEWPORTS) {
       await page.click("#settingsTabSave");
 
       await page.click('[data-tab="pal"]');
-      await expect(page.locator("#palList")).toContainText("Anthropic");
       await expect(page.locator("#palList")).toContainText("claude-3-7-sonnet");
       await expect(page.locator("#palList")).toContainText("ClaudeCode");
+      await page.click('[data-pal-open-id="guide-core"]');
+      await expect(page.locator('[data-pal-runtime-select="guide-core"]')).toHaveValue("model");
+      await expect(page.locator('[data-pal-runtime-target-select="guide-core"]')).toHaveValue("claude-3-7-sonnet");
+    });
+
+    test("newly added model is immediately available in pal tab", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+
+      await page.click("#settingsTabOpenAddItem");
+      await page.selectOption("#settingsTabModelProvider", "anthropic");
+      await page.selectOption("#settingsTabModelName", "claude-3-7-sonnet");
+      await page.fill("#settingsTabModelApiKey", "test-api-key");
+      await page.click("#settingsTabAddItemSubmit");
+
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "model");
+      await expect(
+        page.locator('[data-pal-runtime-target-select="guide-core"] option[value="claude-3-7-sonnet"]')
+      ).toHaveCount(1);
+    });
+
+    test("settings save button is enabled only when changed and keeps unsaved state across tabs", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      const saveButton = page.locator("#settingsTabSave");
+      const footer = page.locator(".settings-footer");
+      const dirtyHint = page.locator("#settingsDirtyHint");
+      await expect(saveButton).toBeDisabled();
+      await expect(footer).toHaveAttribute("data-settings-state", "saved");
+      await expect(dirtyHint).toContainText(/菫晏ｭ俶ｸ医∩|Saved/);
+      const disabledBackground = await saveButton.evaluate((el) => getComputedStyle(el).backgroundColor);
+      const disabledCursor = await saveButton.evaluate((el) => getComputedStyle(el).cursor);
+      expect(disabledCursor).toBe("not-allowed");
+
+      await page.click('[data-remove-skill-id="codex-file-search"]');
+      await expect(saveButton).toBeEnabled();
+      await expect(footer).toHaveAttribute("data-settings-state", "dirty");
+      await expect(dirtyHint).toContainText(/譛ｪ菫晏ｭ倥・螟画峩縺後≠繧翫∪縺處Unsaved changes/);
+      const enabledBackground = await saveButton.evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(enabledBackground).not.toBe(disabledBackground);
+
+      await page.click('[data-tab="guide"]');
+      await page.click('[data-tab="settings"]');
+
+      await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(0);
+      await expect(saveButton).toBeEnabled();
+
+      await page.click('[data-clawhub-download-skill="codex-file-search"]');
+      await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(1);
+      await expect(saveButton).toBeDisabled();
+      await expect(footer).toHaveAttribute("data-settings-state", "saved");
+      const disabledBackgroundAgain = await saveButton.evaluate((el) => getComputedStyle(el).backgroundColor);
+      expect(disabledBackgroundAgain).toBe(disabledBackground);
+    });
+
+    test("settings footer reflects saving state and add form open state", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      await expect(page.locator(".settings-shell")).toHaveAttribute("data-add-form-open", "false");
+
+      await page.click("#settingsTabOpenAddItem");
+      await expect(page.locator(".settings-shell")).toHaveAttribute("data-add-form-open", "true");
+      await expect(page.locator('[data-settings-section="model"]')).toHaveClass(/is-adding/);
+
+      await page.click('[data-remove-skill-id="codex-file-search"]');
+      await expect(page.locator(".settings-footer")).toHaveAttribute("data-settings-state", "dirty");
+
+      await page.evaluate(() => {
+        if (typeof window.saveSettingsSnapshotWithFallback !== "function") {
+          throw new Error("saveSettingsSnapshotWithFallback is unavailable");
+        }
+        const original = window.saveSettingsSnapshotWithFallback;
+        window.saveSettingsSnapshotWithFallback = async (...args) => {
+          await new Promise((resolve) => window.setTimeout(resolve, 250));
+          return original(...args);
+        };
+      });
+
+      await page.click("#settingsTabSave");
+      await expect(page.locator(".settings-footer")).toHaveAttribute("data-settings-state", "saving");
+      await expect(page.locator("#settingsTabSave")).toHaveAttribute("aria-busy", "true");
+      await expect(page.locator("#settingsDirtyHint")).toContainText(/菫晏ｭ倅ｸｭ|Saving/);
+      await expect(page.locator(".settings-footer")).toHaveAttribute("data-settings-state", "saved");
+      await expect(page.locator("#settingsTabSave")).toHaveAttribute("aria-busy", "false");
+    });
+
+    test("settings skill search modal supports keyword search flow", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      if ((await page.locator('[data-remove-skill-id="codex-file-search"]').count()) > 0) {
+        await page.click('[data-remove-skill-id="codex-file-search"]');
+      }
+      await page.click("#settingsSkillMarketOpenModal");
+      await expect(page.locator("#settingsSkillMarketModal")).toHaveClass(/is-open/);
+      await expect(page.locator("#settingsSkillModalIdle")).toBeVisible();
+      await expect(page.locator('#settingsSkillModalResults [data-clawhub-download-skill]')).toHaveCount(0);
+      await expect(page.locator("#settingsSkillModalSort")).toBeVisible();
+      await expect(page.locator("#settingsSkillModalNonSuspicious")).toBeChecked();
+      await expect(page.locator("#settingsSkillModalHighlightedOnly")).not.toBeChecked();
+      const keyword = page.locator("#settingsSkillModalKeyword");
+      await keyword.fill("browser");
+      await page.click("#settingsSkillModalSearch");
+      await expect(keyword).toHaveValue("browser");
+      await expect(page.locator("#settingsSkillModalResults")).toBeVisible();
+      await page.click("#settingsSkillModalClose");
+      await expect(page.locator("#settingsSkillMarketModal")).not.toHaveClass(/is-open/);
+
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "no-such-skill");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalNoResults")).toBeVisible();
+      await page.click("#settingsSkillModalClose");
+
+      await page.click("#settingsSkillMarketOpenModal");
+      await expect(page.locator("#settingsSkillModalNoResults")).toHaveCount(0);
+      await expect(page.locator("#settingsSkillModalIdle")).toBeVisible();
+      const remainingRecommendations = await page.locator('[data-clawhub-download-skill]').count();
+      expect(remainingRecommendations).toBeGreaterThan(0);
+    });
+
+    test("settings skill search keeps duckduckgo result and allows install", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "duckduckgo");
+      await page.click("#settingsSkillModalSearch");
+
+      await expect(page.locator("#settingsSkillModalNoResults")).toHaveCount(0);
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("DuckDuckGo");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText(/Downloads:\s*(4,?200|-)/);
+      await expect(page.locator("#settingsSkillModalResults .settings-skill-modal-row")).toHaveCount(1);
+      await expect(page.locator('#settingsSkillModalResults [data-skill-link-id="duckduckgo-search"]')).toHaveCount(1);
+      await expect(page.locator('#settingsSkillModalResults [data-skill-link-id="duckduckgo-search"]')).toHaveAttribute("href", /\/skills\/duckduckgo-search$/);
+      await page.click('#settingsSkillModalResults [data-clawhub-download-skill="duckduckgo-search"]');
+      await expect(page.locator('[data-remove-skill-id="duckduckgo-search"]')).toHaveCount(1);
+    });
+
+    test("settings skill search normalizes full-width ddg keyword", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "Ｄｄｇ");
+      await page.click("#settingsSkillModalSearch");
+
+      await expect(page.locator("#settingsSkillModalNoResults")).toHaveCount(0);
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Ddg");
+      await expect(page.locator("#settingsSkillModalResults")).not.toContainText("螳牙・諤ｧ:");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Downloads: 1,900");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Stars: 0");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Installs: 18");
+    });
+
+    test("settings skill search without keyword still includes lower-ranked duckduckgo", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("DuckDuckGo Search");
+    });
+
+    test("settings skill modal supports non-suspicious, highlighted, and sort controls", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      if ((await page.locator('[data-remove-skill-id="codex-shell-command"]').count()) > 0) {
+        await page.click('[data-remove-skill-id="codex-shell-command"]');
+      }
+      if ((await page.locator('[data-remove-skill-id="browser-chrome"]').count()) > 0) {
+        await page.click('[data-remove-skill-id="browser-chrome"]');
+      }
+      await page.click("#settingsSkillMarketOpenModal");
+
+      await page.fill("#settingsSkillModalKeyword", "shell");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalNoResults")).toBeVisible();
+
+      await page.uncheck("#settingsSkillModalNonSuspicious");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Shell Command");
+
+      await page.fill("#settingsSkillModalKeyword", "");
+      await page.check("#settingsSkillModalHighlightedOnly");
+      await page.selectOption("#settingsSkillModalSort", "highlighted");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalResults")).toContainText("Chrome Browser");
+    });
+
+    test("settings persist after reload and api key is not displayed", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+      while ((await page.locator("[data-remove-tool-index]").count()) > 0) {
+        await page.locator("[data-remove-tool-index]").first().click();
+      }
+      await page.click("#settingsTabOpenAddItem");
+      await page.selectOption("#settingsTabModelProvider", "openai");
+      await page.selectOption("#settingsTabModelName", "gpt-4.1");
+      await page.fill("#settingsTabModelApiKey", "api-key-secret-123");
+      await page.fill("#settingsTabModelBaseUrl", "http://127.0.0.1:1234/v1");
+      await page.click("#settingsTabAddItemSubmit");
+      await page.click("#settingsTabSave");
+
+      await page.reload();
+      await page.click('[data-tab="settings"]');
+      await expect(page.locator("#settingsTabModelList")).toContainText("gpt-4.1");
+      await expect(page.locator("#settingsTabModelList")).toContainText("api_key: configured");
+      await expect(page.locator("#settingsTabModelList")).not.toContainText("api-key-secret-123");
+      await page.click("#settingsTabOpenAddItem");
+      await expect(page.locator("#settingsTabModelApiKey")).toHaveValue("");
+    });
+
+    test("settings allows LMStudio model without api key", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+
+      await page.click("#settingsTabOpenAddItem");
+      await page.selectOption("#settingsTabModelProvider", "lmstudio");
+      await page.selectOption("#settingsTabModelName", "openai/gpt-oss-20b");
+      await page.fill("#settingsTabModelBaseUrl", "http://192.168.11.16:1234/v1");
+      await expect(page.locator("#settingsTabModelApiKey")).toHaveValue("");
+      await page.click("#settingsTabAddItemSubmit");
+
+      await expect(page.locator("#settingsTabModelList")).toContainText("openai/gpt-oss-20b");
+      await page.click("#settingsTabSave");
+      await expect(page.locator("#errorToast")).toBeHidden();
     });
 
     test("settings tab supports skill uninstall and install", async ({ page }) => {
       await page.click('[data-tab="settings"]');
       await expect(page.locator("#settingsTabSkillList")).toContainText("File Search");
+      await expect(page.locator('#settingsTabSkillList [data-skill-link-id="codex-file-search"]')).toHaveCount(0);
 
       await page.click('[data-remove-skill-id="codex-file-search"]');
       await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(0);
-
-      await page.fill("#settingsTabSkillSearch", "file search");
-      await page.click('[data-clawhub-download-skill="codex-file-search"]');
+      await expect(page.locator("#settingsSkillMarketPreview")).toContainText("File Search");
+      await expect(page.locator("#settingsSkillMarketPreview")).toContainText("Search files and text quickly");
+      await expect(page.locator('#settingsSkillMarketPreview [data-skill-link-id="codex-file-search"]')).toHaveCount(0);
+      await expect(page.locator('#settingsSkillMarketPreview [data-clawhub-download-skill="codex-file-search"]')).toHaveCount(1);
+      await page.click('#settingsSkillMarketPreview [data-clawhub-download-skill="codex-file-search"]');
       await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(1);
+      await expect(page.locator('#settingsSkillMarketPreview [data-clawhub-download-skill="codex-file-search"]')).toHaveCount(0);
+
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "no-such-skill");
+      await page.click("#settingsSkillModalSearch");
+      await expect(page.locator("#settingsSkillModalNoResults")).toBeVisible();
+
+      await page.click("#settingsSkillModalClose");
+      await page.click('[data-remove-skill-id="codex-file-search"]');
+      await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(0);
+      await page.click("#settingsSkillMarketOpenModal");
+      await page.fill("#settingsSkillModalKeyword", "file search");
+      await page.click("#settingsSkillModalSearch");
+      await page.click('#settingsSkillModalResults [data-clawhub-download-skill="codex-file-search"]');
+      await expect(page.locator('[data-remove-skill-id="codex-file-search"]')).toHaveCount(1);
+      await expect(page.locator('[data-clawhub-download-skill="codex-file-search"]')).toHaveCount(0);
+      await expect(page.locator("#settingsSkillModalResults")).not.toContainText("File Search");
+      await expect(page.locator("#settingsSkillMarketPreview")).not.toContainText("File Search");
     });
 
     test("pal list includes roles and allows name/model/tool settings", async ({ page }) => {
       await page.click('[data-tab="pal"]');
-      await expect(page.locator("#palList")).toContainText(/Guide役|Guide/);
-      await expect(page.locator("#palList")).toContainText(/Gate役|Gate/);
-      await expect(page.locator("#palList")).toContainText(/通常Pal|Worker Pal/);
+      await expect(page.locator("#palList")).toContainText(/Guide蠖ｹ|Guide/);
+      await expect(page.locator("#palList")).toContainText(/Gate蠖ｹ|Gate/);
+      await expect(page.locator("#palList")).toContainText(/騾壼ｸｸPal|Worker Pal/);
 
-      await expect(page.locator('[data-pal-runtime-select="pal-guide"]')).toHaveValue("model");
-      await expect(page.locator('[data-pal-runtime-target-select="pal-guide"]')).toBeEnabled();
+      await page.click('[data-pal-open-id="guide-core"]');
+      await expect(page.locator('[data-pal-runtime-select="guide-core"]')).toHaveValue("model");
+      await expect(page.locator('[data-pal-runtime-target-select="guide-core"]')).toBeEnabled();
       await expect(
-        page.locator('[data-pal-skill-checkbox="pal-guide"][value="codex-file-search"]')
+        page.locator('[data-pal-skill-checkbox="guide-core"][value="codex-file-search"]')
       ).toBeEnabled();
       await expect(
-        page.locator('[data-pal-skill-checkbox="pal-guide"][value="browser-chrome"]')
+        page.locator('[data-pal-skill-checkbox="guide-core"][value="browser-chrome"]')
       ).toBeChecked();
 
-      await page.fill('[data-pal-name-input="pal-guide"]', "Guide Prime");
-      await page.selectOption('[data-pal-runtime-target-select="pal-guide"]', "gpt-4o-mini");
-      await page.uncheck('[data-pal-skill-checkbox="pal-guide"][value="codex-file-read"]');
-      await page.click('[data-pal-save-id="pal-guide"]');
+      await page.fill('[data-pal-name-input="guide-core"]', "Guide Prime");
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', "gpt-4o-mini");
+      await page.uncheck('[data-pal-skill-checkbox="guide-core"][value="codex-file-read"]');
+      await page.click("#palConfigSave");
       await expect(page.locator("#palList")).toContainText("Guide Prime");
       await expect(page.locator("#palList")).toContainText("gpt-4o-mini");
+
+      await page.click('[data-pal-open-id="guide-core"]');
       await expect(
-        page.locator('[data-pal-skill-checkbox="pal-guide"][value="codex-file-read"]')
+        page.locator('[data-pal-skill-checkbox="guide-core"][value="codex-file-read"]')
       ).not.toBeChecked();
 
-      await page.selectOption('[data-pal-runtime-select="pal-guide"]', "tool");
-      await expect(page.locator('[data-pal-runtime-select="pal-guide"]')).toHaveValue("tool");
-      await expect(page.locator('[data-pal-runtime-target-select="pal-guide"]')).toBeEnabled();
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "tool");
+      await expect(page.locator('[data-pal-runtime-select="guide-core"]')).toHaveValue("tool");
+      await expect(page.locator('[data-pal-runtime-target-select="guide-core"]')).toBeEnabled();
       await expect(
-        page.locator('[data-pal-skill-checkbox="pal-guide"][value="codex-file-search"]')
+        page.locator('[data-pal-skill-checkbox="guide-core"][value="codex-file-search"]')
       ).toBeDisabled();
-      await page.selectOption('[data-pal-runtime-target-select="pal-guide"]', "Codex");
-      await page.click('[data-pal-save-id="pal-guide"]');
+      await expect(
+        page.locator('[data-pal-skill-checkbox="guide-core"][value="codex-file-search"]')
+      ).not.toBeChecked();
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', "Codex");
+      await page.click("#palConfigSave");
       await expect(page.locator("#palList")).toContainText("Codex");
+    });
+
+    test("pal runtime save is blocked when tool target is not available", async ({ page }) => {
+      await page.click('[data-tab="settings"]');
+      while ((await page.locator("[data-remove-model-index]").count()) > 0) {
+        await page.locator("[data-remove-model-index]").first().click();
+      }
+      while ((await page.locator("[data-remove-tool-index]").count()) > 0) {
+        await page.locator("[data-remove-tool-index]").first().click();
+      }
+
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "tool");
+      await expect(page.locator('[data-pal-runtime-target-select="guide-core"]')).toBeDisabled();
+
+      await page.click("#palConfigSave");
+      await expect(page.locator("#errorToast")).toBeVisible();
+      await expect(page.locator("#errorToastCode")).toContainText("MSG-PPH-1001");
     });
 
     test("error toast appears from bottom on validation error", async ({ page }) => {
       await page.click('[data-tab="pal"]');
-      await page.fill('[data-pal-name-input="pal-guide"]', "");
-      await page.click('[data-pal-save-id="pal-guide"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.fill('[data-pal-name-input="guide-core"]', "");
+      await page.click("#palConfigSave");
 
       await expect(page.locator("#errorToast")).toBeVisible();
       await expect(page.locator("#errorToast")).toHaveClass(/is-visible/);
@@ -194,6 +1342,50 @@ for (const viewport of VIEWPORTS) {
       expect(metrics.viewportHeight - metrics.bottom).toBeLessThanOrEqual(40);
     });
 
+    test("pal config footer stays compact", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+
+      await expect(page.locator("#palConfigDelete")).toBeVisible();
+      await expect(page.locator("#palConfigSave")).toBeVisible();
+
+      const metrics = await page.locator(".pal-config-modal-footer").evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          height: rect.height,
+          paddingTop: window.getComputedStyle(el).paddingTop,
+          paddingBottom: window.getComputedStyle(el).paddingBottom,
+        };
+      });
+
+      expect(metrics.height).toBeLessThanOrEqual(40);
+      expect(metrics.paddingTop).toBe("4px");
+      expect(metrics.paddingBottom).toBe("4px");
+    });
+
+    test("pal config modal does not leave a large gap below footer", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.locator("#palConfigModalBody").evaluate((el) => {
+        el.scrollTop = el.scrollHeight;
+      });
+
+      const metrics = await page.evaluate(() => {
+        const modal = document.querySelector("#palConfigModal .pal-config-modal");
+        const footer = document.querySelector("#palConfigModal .pal-config-modal-footer");
+        const modalRect = modal.getBoundingClientRect();
+        const footerRect = footer.getBoundingClientRect();
+        return {
+          gapBelowFooter: modalRect.bottom - footerRect.bottom,
+          modalHeight: modalRect.height,
+          footerHeight: footerRect.height,
+        };
+      });
+
+      expect(metrics.gapBelowFooter).toBeLessThanOrEqual(12);
+      expect(metrics.modalHeight).toBeGreaterThan(metrics.footerHeight);
+    });
+
     test("pal list supports add and delete profile", async ({ page }) => {
       await page.click('[data-tab="pal"]');
       const rows = page.locator("[data-pal-row]");
@@ -206,9 +1398,269 @@ for (const viewport of VIEWPORTS) {
       const newRow = rows.nth(before);
       const palId = await newRow.getAttribute("data-pal-row");
       expect(palId).toBeTruthy();
+      await expect(page.locator(`[data-pal-name-input="${palId}"]`)).toHaveValue("New Pal");
+      await expect(page.locator(`[data-pal-runtime-select="${palId}"]`)).toHaveValue("model");
+      await expect(page.locator(`[data-pal-runtime-target-select="${palId}"]`)).toBeEnabled();
+      await expect(
+        page.locator(`[data-pal-skill-checkbox="${palId}"][value="codex-file-search"]`)
+      ).toBeChecked();
 
-      await newRow.locator(`[data-pal-delete-id="${palId}"]`).click();
+      await page.click(`[data-pal-delete-id="${palId}"]`);
       await expect(rows).toHaveCount(before);
+    });
+
+    test("guide and gate profiles can be added and selected", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+
+      await page.click("#palAddGuideProfile");
+      const guideRows = page.locator('[data-pal-role="guide"]');
+      const guideId = await guideRows.last().getAttribute("data-pal-row");
+      expect(guideId).toBeTruthy();
+      await expect(page.locator(`[data-pal-name-input="${guideId}"]`)).toHaveValue("New Guide");
+      await page.click("#closePalConfigModal");
+
+      await page.click("#palAddGateProfile");
+      const gateRows = page.locator('[data-pal-role="gate"]');
+      const gateId = await gateRows.last().getAttribute("data-pal-row");
+      expect(gateId).toBeTruthy();
+      await expect(page.locator(`[data-pal-name-input="${gateId}"]`)).toHaveValue("New Gate");
+      await page.click("#closePalConfigModal");
+
+      await page.click(`[data-pal-set-active-guide-id="${guideId}"]`);
+      await page.click(`[data-pal-set-default-gate-id="${gateId}"]`);
+      await expect(page.locator(`[data-pal-row="${guideId}"]`)).toHaveAttribute("data-guide-active", "true");
+      await expect(page.locator(`[data-pal-row="${gateId}"]`)).toHaveAttribute("data-gate-default", "true");
+
+      await page.reload();
+      await page.click('[data-tab="pal"]');
+      await expect(page.locator(`[data-pal-row="${guideId}"]`)).toHaveAttribute("data-guide-active", "true");
+      await expect(page.locator(`[data-pal-row="${gateId}"]`)).toHaveAttribute("data-gate-default", "true");
+    });
+
+    test("pal add initializes localized SOUL and ROLE templates", async ({ page }) => {
+      await page.evaluate(() => {
+        window.__palpalIdentitySaves = [];
+        window.PalpalAgentIdentity = {
+          load: async () => ({
+            agentType: "worker",
+            agentId: "",
+            soul: "",
+            role: "",
+            enabledSkillIds: [],
+            hasIdentityFiles: false,
+          }),
+          save: async (payload) => {
+            window.__palpalIdentitySaves.push(payload);
+            return {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: "# SOUL",
+              role: "# ROLE",
+              enabledSkillIds: Array.isArray(payload.enabledSkillIds) ? payload.enabledSkillIds : [],
+              hasIdentityFiles: true,
+            };
+          },
+        };
+      });
+
+      await page.click('[data-tab="settings"]');
+      await page.click("#settingsLocaleEn");
+      await page.click('[data-tab="pal"]');
+      await page.click("#palAddProfile");
+
+      const saves = await page.evaluate(() => window.__palpalIdentitySaves);
+      expect(saves).toHaveLength(1);
+      expect(saves[0].agentType).toBe("worker");
+      expect(saves[0].locale).toBe("en");
+      expect(saves[0].initializeTemplates).toBe(true);
+      expect(saves[0].enabledSkillIds).toContain("codex-file-search");
+    });
+
+    test("guide and gate add initialize role-aware identity templates", async ({ page }) => {
+      await page.evaluate(() => {
+        window.__palpalIdentitySaves = [];
+        window.PalpalAgentIdentity = {
+          load: async () => ({
+            agentType: "worker",
+            agentId: "",
+            soul: "",
+            role: "",
+            rubric: "",
+            enabledSkillIds: [],
+            hasIdentityFiles: false,
+          }),
+          save: async (payload) => {
+            window.__palpalIdentitySaves.push(payload);
+            return {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: "# SOUL",
+              role: payload.agentType === "gate" ? "" : "# ROLE",
+              rubric: payload.agentType === "gate" ? "# RUBRIC" : "",
+              enabledSkillIds: Array.isArray(payload.enabledSkillIds) ? payload.enabledSkillIds : [],
+              hasIdentityFiles: true,
+            };
+          },
+        };
+      });
+
+      await page.click('[data-tab="pal"]');
+      await page.click("#palAddGuideProfile");
+      await page.click("#closePalConfigModal");
+      await page.click("#palAddGateProfile");
+
+      const saves = await page.evaluate(() => window.__palpalIdentitySaves);
+      expect(saves).toHaveLength(2);
+      expect(saves[0].agentType).toBe("guide");
+      expect(saves[0].agentId).toMatch(/^guide-/);
+      expect(saves[0].initializeTemplates).toBe(true);
+      expect(saves[1].agentType).toBe("gate");
+      expect(saves[1].agentId).toMatch(/^gate-/);
+      expect(saves[1].initializeTemplates).toBe(true);
+    });
+
+    test("built-in debug identities are seeded on init when missing", async ({ page }) => {
+      await page.addInitScript(() => {
+        window.__palpalIdentitySaves = [];
+        window.__palpalIdentityStore = {};
+        window.PalpalAgentIdentity = {
+          load: async (payload) => {
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            const stored = window.__palpalIdentityStore[key];
+            if (stored) return { ...stored };
+            return {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: "",
+              role: "",
+              rubric: "",
+              enabledSkillIds: [],
+              hasIdentityFiles: false,
+            };
+          },
+          save: async (payload) => {
+            window.__palpalIdentitySaves.push(payload);
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            const next = {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: payload.soul || "",
+              role: payload.role || "",
+              rubric: payload.rubric || "",
+              enabledSkillIds: Array.isArray(payload.enabledSkillIds) ? payload.enabledSkillIds : [],
+              hasIdentityFiles: true,
+            };
+            window.__palpalIdentityStore[key] = next;
+            return next;
+          },
+        };
+      });
+
+      await page.goto(WIREFRAME_URL);
+
+      const saves = await page.evaluate(() => window.__palpalIdentitySaves);
+      expect(saves).toHaveLength(5);
+
+      const guide = saves.find((item) => item.agentId === "guide-core");
+      const gate = saves.find((item) => item.agentId === "gate-core");
+      const traceWorker = saves.find((item) => item.agentId === "pal-alpha");
+      const fixWorker = saves.find((item) => item.agentId === "pal-beta");
+      const verifyWorker = saves.find((item) => item.agentId === "pal-gamma");
+
+      expect(guide.role).toMatch(/trace \/ fix \/ verify/);
+      expect(gate.rubric).toMatch(/Decision Shape/);
+      expect(traceWorker.role).toMatch(/Trace Worker/);
+      expect(fixWorker.role).toMatch(/Fix Worker/);
+      expect(verifyWorker.role).toMatch(/Verify Worker/);
+      expect(traceWorker.enabledSkillIds).toContain("codex-file-search");
+      expect(verifyWorker.enabledSkillIds).toContain("codex-test-runner");
+    });
+
+    test("identity files can be edited from pal settings modal", async ({ page }) => {
+      await page.evaluate(() => {
+        window.__palpalIdentitySaves = [];
+        window.__palpalIdentityStore = {
+          "guide:guide-core": {
+            agentType: "guide",
+            agentId: "guide-core",
+            soul: "# SOUL\nGuide calmness",
+            role: "# ROLE\nGuide routing",
+            rubric: "",
+            enabledSkillIds: ["codex-file-search"],
+            hasIdentityFiles: true,
+          },
+          "gate:gate-core": {
+            agentType: "gate",
+            agentId: "gate-core",
+            soul: "# SOUL\nGate carefulness",
+            role: "",
+            rubric: "# RUBRIC\nCheck evidence",
+            enabledSkillIds: [],
+            hasIdentityFiles: true,
+          },
+        };
+        window.PalpalAgentIdentity = {
+          load: async (payload) => {
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            const stored = window.__palpalIdentityStore[key];
+            if (!stored) {
+              return {
+                agentType: payload.agentType,
+                agentId: payload.agentId || "",
+                soul: "",
+                role: "",
+                rubric: "",
+                enabledSkillIds: [],
+                hasIdentityFiles: false,
+              };
+            }
+            return { ...stored };
+          },
+          save: async (payload) => {
+            window.__palpalIdentitySaves.push(payload);
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            const next = {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: payload.soul || "",
+              role: payload.role || "",
+              rubric: payload.rubric || "",
+              enabledSkillIds: Array.isArray(payload.enabledSkillIds) ? payload.enabledSkillIds : [],
+              hasIdentityFiles: true,
+            };
+            window.__palpalIdentityStore[key] = next;
+            return next;
+          },
+        };
+      });
+
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.click('[data-pal-edit-identity="guide-core:soul"]');
+      await expect(page.locator("#identityEditorModal")).not.toHaveClass(/hidden/);
+      await expect(page.locator("#identityEditorTitle")).toContainText("SOUL.md");
+      await expect(page.locator("#identityEditorTextarea")).toHaveValue(/Guide calmness/);
+      await page.fill("#identityEditorTextarea", "# SOUL\nGuide curiosity");
+      await page.click("#identityEditorSave");
+
+      await page.click("#closePalConfigModal");
+      await page.click('[data-pal-open-id="gate-core"]');
+      await page.click('[data-pal-edit-identity="gate-core:rubric"]');
+      await expect(page.locator("#identityEditorTitle")).toContainText("RUBRIC.md");
+      await expect(page.locator("#identityEditorTextarea")).toHaveValue(/Check evidence/);
+      await page.fill("#identityEditorTextarea", "# RUBRIC\nCheck evidence and safety");
+      await page.click("#identityEditorSave");
+
+      const saves = await page.evaluate(() => window.__palpalIdentitySaves);
+      expect(saves).toHaveLength(2);
+      expect(saves[0].agentType).toBe("guide");
+      expect(saves[0].agentId).toBe("guide-core");
+      expect(saves[0].soul).toContain("Guide curiosity");
+      expect(saves[0].role).toContain("Guide routing");
+      expect(saves[1].agentType).toBe("gate");
+      expect(saves[1].agentId).toBe("gate-core");
+      expect(saves[1].rubric).toContain("safety");
+      expect(saves[1].soul).toContain("Gate carefulness");
     });
 
     test("language switch exists in settings tab", async ({ page }) => {
@@ -225,7 +1677,9 @@ for (const viewport of VIEWPORTS) {
 
       await page.click("#settingsLocaleJa");
       await expect(page.locator("html")).toHaveAttribute("lang", "ja");
-      await expect(page.locator("#settingsTabOpenAddItem")).toContainText("項目を追加");
+      await expect(page.locator("#settingsTabOpenAddItem")).toContainText("鬆・岼繧定ｿｽ蜉");
     });
   });
 }
+
+
