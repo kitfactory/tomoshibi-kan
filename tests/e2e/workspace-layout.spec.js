@@ -1756,21 +1756,23 @@ for (const viewport of VIEWPORTS) {
       await page.goto(WIREFRAME_URL);
 
       const saves = await page.evaluate(() => window.__palpalIdentitySaves);
-      expect(saves).toHaveLength(5);
+      expect(saves).toHaveLength(6);
 
       const guide = saves.find((item) => item.agentId === "guide-core");
       const gate = saves.find((item) => item.agentId === "gate-core");
-      const traceWorker = saves.find((item) => item.agentId === "pal-alpha");
-      const fixWorker = saves.find((item) => item.agentId === "pal-beta");
-      const verifyWorker = saves.find((item) => item.agentId === "pal-gamma");
+      const researchResident = saves.find((item) => item.agentId === "pal-alpha");
+      const makerResident = saves.find((item) => item.agentId === "pal-beta");
+      const arrangerResident = saves.find((item) => item.agentId === "pal-gamma");
+      const writerResident = saves.find((item) => item.agentId === "pal-delta");
 
       expect(guide.role).toMatch(/trace \/ fix \/ verify/);
       expect(gate.rubric).toMatch(/Decision Shape/);
-      expect(traceWorker.role).toMatch(/Trace Worker/);
-      expect(fixWorker.role).toMatch(/Fix Worker/);
-      expect(verifyWorker.role).toMatch(/Verify Worker/);
-      expect(traceWorker.enabledSkillIds).toContain("codex-file-search");
-      expect(verifyWorker.enabledSkillIds).toContain("codex-test-runner");
+      expect(researchResident.role).toMatch(/調べる人|researcher resident/);
+      expect(makerResident.role).toMatch(/作り手|maker resident/);
+      expect(arrangerResident.role).toMatch(/整える人|arranger resident/);
+      expect(writerResident.role).toMatch(/書く人|writer resident/);
+      expect(researchResident.enabledSkillIds).toContain("codex-file-search");
+      expect(arrangerResident.enabledSkillIds).toContain("codex-test-runner");
     });
 
     test("identity files can be edited from pal settings modal", async ({ page }) => {
@@ -1858,6 +1860,76 @@ for (const viewport of VIEWPORTS) {
       expect(saves[1].agentId).toBe("gate-core");
       expect(saves[1].rubric).toContain("safety");
       expect(saves[1].soul).toContain("Gate carefulness");
+    });
+
+    test("settings can sync built-in resident definitions to workspace", async ({ page }) => {
+      await page.addInitScript(() => {
+        const oldSnapshot = {
+          profiles: [
+            { id: "guide-core", role: "guide", runtimeKind: "model", displayName: "管理人 Guide", persona: "old guide", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-search"], status: "active" },
+            { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "古参住人 Gate", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
+            { id: "pal-alpha", role: "worker", runtimeKind: "tool", displayName: "Trace担当の住人", persona: "old trace", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-search"], status: "active" },
+            { id: "pal-beta", role: "worker", runtimeKind: "tool", displayName: "Fix担当の住人", persona: "old fix", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-edit"], status: "active" },
+            { id: "pal-gamma", role: "worker", runtimeKind: "tool", displayName: "Verify担当の住人", persona: "old verify", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-test-runner"], status: "active" },
+          ],
+          activeGuideId: "guide-core",
+          defaultGateId: "gate-core",
+        };
+        localStorage.setItem("tomoshibi-kan.agent-profiles.v1", JSON.stringify(oldSnapshot));
+        window.__palpalIdentitySaves = [];
+        window.__palpalIdentityStore = {
+          "guide:guide-core": { agentType: "guide", agentId: "guide-core", soul: "# SOUL\nold", role: "# ROLE\nold", rubric: "", enabledSkillIds: ["codex-file-search"], hasIdentityFiles: true },
+          "gate:gate-core": { agentType: "gate", agentId: "gate-core", soul: "# SOUL\nold", role: "", rubric: "# RUBRIC\nold", enabledSkillIds: ["codex-file-read"], hasIdentityFiles: true },
+          "worker:pal-alpha": { agentType: "worker", agentId: "pal-alpha", soul: "# SOUL\nold", role: "# ROLE\nold", rubric: "", enabledSkillIds: ["codex-file-search"], hasIdentityFiles: true },
+          "worker:pal-beta": { agentType: "worker", agentId: "pal-beta", soul: "# SOUL\nold", role: "# ROLE\nold", rubric: "", enabledSkillIds: ["codex-file-edit"], hasIdentityFiles: true },
+          "worker:pal-gamma": { agentType: "worker", agentId: "pal-gamma", soul: "# SOUL\nold", role: "# ROLE\nold", rubric: "", enabledSkillIds: ["codex-test-runner"], hasIdentityFiles: true },
+        };
+        window.TomoshibikanAgentIdentity = {
+          load: async (payload) => {
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            return window.__palpalIdentityStore[key] || {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: "",
+              role: "",
+              rubric: "",
+              enabledSkillIds: [],
+              hasIdentityFiles: false,
+            };
+          },
+          save: async (payload) => {
+            window.__palpalIdentitySaves.push(payload);
+            const key = `${payload.agentType}:${payload.agentId || ""}`;
+            const next = {
+              agentType: payload.agentType,
+              agentId: payload.agentId || "",
+              soul: payload.soul || "",
+              role: payload.role || "",
+              rubric: payload.rubric || "",
+              enabledSkillIds: Array.isArray(payload.enabledSkillIds) ? payload.enabledSkillIds : [],
+              hasIdentityFiles: true,
+            };
+            window.__palpalIdentityStore[key] = next;
+            return next;
+          },
+        };
+      });
+
+      await page.goto(WIREFRAME_URL);
+      await page.click('[data-tab="settings"]');
+      await page.click("#settingsSyncBuiltInResidents");
+
+      const saves = await page.evaluate(() => window.__palpalIdentitySaves);
+      expect(saves).toHaveLength(6);
+      expect(saves.some((item) => item.agentId === "pal-delta")).toBeTruthy();
+
+      await page.click('[data-tab="pal"]');
+      await expect(page.locator("#palList")).toContainText("書く人");
+      await expect(page.locator("#palList")).toContainText("調べる人");
+      await expect(page.locator("#palList")).toContainText("作り手");
+      await expect(page.locator("#palList")).toContainText("整える人");
+      await expect(page.locator("#palList")).toContainText("古参");
+      await expect(page.locator("#palList")).toContainText("管理人");
     });
 
     test("language switch exists in settings tab", async ({ page }) => {

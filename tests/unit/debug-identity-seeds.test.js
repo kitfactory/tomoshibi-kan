@@ -12,7 +12,7 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
 
   assert.ok(seed);
   assert.match(seed.soul, /Guide/);
-  assert.match(seed.role, /管理人 Guide/);
+  assert.match(seed.role, /管理人 Guide|管理人/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
   assert.match(seed.role, /debug work|debug work へ橋渡し/);
   assert.deepEqual(seed.enabledSkillIds, ["codex-file-search", "browser-chrome"]);
@@ -31,20 +31,24 @@ test("getBuiltInDebugIdentitySeed returns gate rubric content in English", () =>
   assert.match(seed.rubric, /Decision Shape/);
 });
 
-test("getBuiltInDebugIdentitySeed returns simple-role worker seeds", () => {
-  const trace = getBuiltInDebugIdentitySeed({ id: "pal-alpha", role: "worker", skills: [] }, "en");
-  const fix = getBuiltInDebugIdentitySeed({ id: "pal-beta", role: "worker", skills: [] }, "en");
-  const verify = getBuiltInDebugIdentitySeed({ id: "pal-gamma", role: "worker", skills: [] }, "en");
+test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
+  const researcher = getBuiltInDebugIdentitySeed({ id: "pal-alpha", role: "worker", skills: [] }, "en");
+  const maker = getBuiltInDebugIdentitySeed({ id: "pal-beta", role: "worker", skills: [] }, "en");
+  const arranger = getBuiltInDebugIdentitySeed({ id: "pal-gamma", role: "worker", skills: [] }, "en");
+  const writer = getBuiltInDebugIdentitySeed({ id: "pal-delta", role: "worker", skills: [] }, "en");
 
-  assert.match(trace.role, /Trace Worker|resident who specializes in Trace/);
-  assert.match(trace.role, /Do trace work only/);
-  assert.match(trace.role, /Do not edit files/);
-  assert.match(fix.role, /Fix Worker|resident who specializes in Fix/);
-  assert.match(fix.role, /Do fix work only/);
-  assert.match(fix.role, /Do not widen the task into broad tracing or final verification/);
-  assert.match(verify.role, /Verify Worker|resident who specializes in Verify/);
-  assert.match(verify.role, /Do verification work only/);
-  assert.match(verify.role, /Do not edit files/);
+  assert.match(researcher.role, /researcher resident/);
+  assert.match(researcher.role, /trace \/ research work first/);
+  assert.match(researcher.role, /Do not edit files/);
+  assert.match(maker.role, /maker resident/);
+  assert.match(maker.role, /make \/ fix work first/);
+  assert.match(maker.role, /Prefer simple fixes over broad refactors/);
+  assert.match(arranger.role, /arranger resident/);
+  assert.match(arranger.role, /verify \/ adjust work first/);
+  assert.match(arranger.role, /Do not edit files/);
+  assert.match(writer.role, /writer resident/);
+  assert.match(writer.role, /writing \/ naming \/ summary work first/);
+  assert.match(writer.role, /Do not widen the task into implementation or gate judgment/);
 });
 
 test("getBuiltInDebugIdentitySeed returns null for non built-in profile", () => {

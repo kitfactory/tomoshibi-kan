@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-built-in-resident-set-sync] `docs/tomoshibikan_resident_set_v0_1.md` を built-in 初期住人セットへ反映し、Settings から workspace 側 identity を同期できるようにする
+- [x] [DR-20260308-built-in-resident-set-sync] delta request/apply/verify/archive を実施し、resident set built-in 化と workspace 同期導線を archive まで閉じる
 - [x] [SEED-20260308-orchestrator-dispatch-extraction] task materialization / worker selection / dispatch 相当の責務を `PlanOrchestrator` モジュールへ抽出し、Guide send フローから分離する
 - [x] [DR-20260308-orchestrator-dispatch-extraction] delta request/apply/verify/archive を実施し、PlanOrchestrator への最小抽出を archive まで閉じる
 - [x] [SEED-20260308-plan-artifact-boundary] `Guide -> valid Plan -> persistent Plan` の境界を先に実装し、task materialization / dispatch を `approved Plan` 以降へ寄せる
@@ -129,6 +131,7 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260308-built-in-resident-set-sync] `docs/tomoshibikan_resident_set_v0_1.md` を built-in 初期住人セットへ反映し、Settings から current workspace の built-in identity を同期できるようにした
 - [x] [DR-20260308-orchestrator-dispatch-extraction] `PlanOrchestrator` module を追加し、Guide send フローから task materialization / worker selection / dispatch 相当の責務を分離した
 - [x] [DR-20260308-plan-artifact-boundary] valid `plan_ready` を persistent な `Plan artifact` として保存し、Guide send フローを `artifact 保存 -> artifact 経由 materialize` へ切り替えた
 - [x] [DR-20260307-guide-progress-query-minimal] Guide が progress log と board state を使って、task/job の進捗確認質問へローカルに答える minimal query を追加した

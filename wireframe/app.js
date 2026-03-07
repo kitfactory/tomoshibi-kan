@@ -1005,7 +1005,7 @@ const tasks = [
     id: "TASK-003",
     title: "i18n IDマッピング",
     description: "UI-PPH-xxxx の ja/en 文言セットを定義する",
-    palId: "pal-gamma",
+    palId: "pal-delta",
     status: "rejected",
     updatedAt: "2026-02-28 09:46",
     decisionSummary: "rejected",
@@ -1034,7 +1034,7 @@ const jobs = [
     id: "JOB-002",
     title: "E2E結果の週次サマリー",
     description: "毎週金曜に E2E の成功率と失敗パターンを集計して Gate へ提出する",
-    palId: "pal-beta",
+    palId: "pal-gamma",
     schedule: "Fri 17:00",
     instruction: "npm run test:e2e の実行結果を集計し、気になる点を1つ添えて報告する",
     status: "to_gate",
@@ -1050,8 +1050,8 @@ const INITIAL_PAL_PROFILES = [
     id: "guide-core",
     role: "guide",
     runtimeKind: "model",
-    displayName: "管理人 Guide",
-    persona: "Tomoshibi-kan の管理人として相談を受け止め、trace/fix/verify の住人へ橋渡しする。",
+    displayName: "管理人",
+    persona: "灯火館の管理人として来訪者を迎え、話を受け止め、住人たちへやわらかく橋渡しする。",
     provider: DEV_LMSTUDIO_PROVIDER_ID,
     models: [DEV_LMSTUDIO_MODEL_NAME],
     cliTools: [],
@@ -1062,8 +1062,8 @@ const INITIAL_PAL_PROFILES = [
     id: "gate-core",
     role: "gate",
     runtimeKind: "model",
-    displayName: "古参住人 Gate",
-    persona: "Tomoshibi-kan の古参住人として、証拠・検証・安全性を静かに見届ける。",
+    displayName: "古参",
+    persona: "灯火館の古参として、流れと仕上がりの違和感を静かに見届け、最後に重い一言を添える。",
     provider: "anthropic",
     models: ["claude-3-7-sonnet"],
     cliTools: [],
@@ -1074,8 +1074,8 @@ const INITIAL_PAL_PROFILES = [
     id: "pal-alpha",
     role: "worker",
     runtimeKind: "tool",
-    displayName: "Trace担当の住人 (Trace Worker)",
-    persona: "Tomoshibi-kan の住人として trace work だけを担当し、再現・観察・証拠収集を行う。",
+    displayName: "調べる人",
+    persona: "灯火館の住人として、違和感の正体を見に行き、再現・観察・証拠収集を多く担う。",
     provider: "openai",
     models: [],
     cliTools: ["Codex"],
@@ -1086,27 +1086,40 @@ const INITIAL_PAL_PROFILES = [
     id: "pal-beta",
     role: "worker",
     runtimeKind: "tool",
-    displayName: "Fix担当の住人 (Fix Worker)",
-    persona: "Tomoshibi-kan の住人として fix work だけを担当し、trace で見つかった問題へ最小修正を入れる。",
+    displayName: "作り手",
+    persona: "灯火館の住人として、実装・試作・修正を引き受け、手を動かしながら形を起こしていく。",
     provider: "anthropic",
     models: [],
     cliTools: ["Codex"],
-    skills: ["codex-file-read", "codex-file-edit"],
+    skills: ["codex-file-read", "codex-file-edit", "codex-shell-command"],
     status: "active",
   },
   {
     id: "pal-gamma",
     role: "worker",
     runtimeKind: "tool",
-    displayName: "Verify担当の住人 (Verify Worker)",
-    persona: "Tomoshibi-kan の住人として verification work だけを担当し、pass/fail evidence を返す。",
+    displayName: "整える人",
+    persona: "灯火館の住人として、見え方や使い心地を静かに整え、検証と調整で負担を減らす。",
     provider: "google",
     models: [],
     cliTools: ["Codex"],
-    skills: ["codex-test-runner", "codex-file-read"],
+    skills: ["codex-test-runner", "codex-file-read", "browser-chrome"],
+    status: "active",
+  },
+  {
+    id: "pal-delta",
+    role: "worker",
+    runtimeKind: "tool",
+    displayName: "書く人",
+    persona: "灯火館の住人として、説明・文書化・命名を整え、言葉で人と人をつなぐ。",
+    provider: "openai",
+    models: [],
+    cliTools: ["Codex"],
+    skills: ["codex-file-read", "codex-file-edit"],
     status: "active",
   },
 ];
+const BUILT_IN_PROFILE_IDS = new Set(INITIAL_PAL_PROFILES.map((pal) => pal.id));
 const DEFAULT_AGENT_SELECTION = {
   activeGuideId: "guide-core",
   defaultGateId: "gate-core",
@@ -1121,16 +1134,16 @@ const workspaceAgentSelection = { ...DEFAULT_AGENT_SELECTION };
 
 let events = [
   makeEvent("dispatch", "TASK-001", "ok", {
-    ja: "TASK-001 を pal-alpha に割り当てました。",
-    en: "TASK-001 dispatched to pal-alpha.",
+    ja: "TASK-001 を調べる人に割り当てました。",
+    en: "TASK-001 dispatched to the Research resident.",
   }, "09:24"),
   makeEvent("gate", "TASK-003", "rejected", {
     ja: "TASK-003 を差し戻しました。",
     en: "TASK-003 was rejected.",
   }, "09:46"),
   makeEvent("dispatch", "JOB-001", "ok", {
-    ja: "JOB-001 を pal-alpha に割り当てました。",
-    en: "JOB-001 dispatched to pal-alpha.",
+    ja: "JOB-001 を調べる人に割り当てました。",
+    en: "JOB-001 dispatched to the Research resident.",
   }, "09:52"),
 ];
 let progressLogEntries = [];
@@ -1466,6 +1479,40 @@ function applyPalProfilesSnapshot(snapshot) {
   palProfiles.splice(0, palProfiles.length, ...normalized.profiles.map((pal) => clonePalProfileRecord(pal)));
   workspaceAgentSelection.activeGuideId = normalized.activeGuideId;
   workspaceAgentSelection.defaultGateId = normalized.defaultGateId;
+  syncPalProfilesRegistryRefs();
+}
+
+function isBuiltInProfileId(profileId) {
+  return BUILT_IN_PROFILE_IDS.has(normalizeText(profileId));
+}
+
+function resolveBuiltInProfileDefinition(profileId) {
+  const normalizedId = normalizeText(profileId);
+  return INITIAL_PAL_PROFILES.find((profile) => profile.id === normalizedId) || null;
+}
+
+function syncBuiltInProfileMetadata() {
+  const nextProfiles = [];
+  INITIAL_PAL_PROFILES.forEach((builtInProfile) => {
+    const existing = palProfiles.find((profile) => profile.id === builtInProfile.id);
+    if (existing) {
+      nextProfiles.push({
+        ...clonePalProfileRecord(existing),
+        role: builtInProfile.role,
+        displayName: builtInProfile.displayName,
+        persona: builtInProfile.persona,
+      });
+      return;
+    }
+    nextProfiles.push(clonePalProfileRecord(builtInProfile));
+  });
+  palProfiles
+    .filter((profile) => !isBuiltInProfileId(profile.id))
+    .forEach((profile) => {
+      nextProfiles.push(clonePalProfileRecord(profile));
+    });
+  palProfiles.splice(0, palProfiles.length, ...nextProfiles);
+  syncWorkspaceAgentSelection();
   syncPalProfilesRegistryRefs();
 }
 
@@ -2992,6 +3039,43 @@ async function ensureBuiltInDebugPurposeIdentities() {
   }
 }
 
+async function syncBuiltInResidentIdentitiesToWorkspace() {
+  const identityApi = resolveAgentIdentityApi();
+  const seedApi = resolveDebugIdentitySeedsApi();
+  if (!identityApi || !seedApi) {
+    setMessage("MSG-PPH-1003");
+    return false;
+  }
+  syncBuiltInProfileMetadata();
+  for (const profile of INITIAL_PAL_PROFILES) {
+    const role = normalizePalRole(profile.role);
+    const agentType = role === "worker" ? "worker" : role;
+    if (!agentType) continue;
+    const seed = seedApi.getBuiltInDebugIdentitySeed(profile, locale);
+    if (!seed) continue;
+    const currentProfile = palProfiles.find((item) => item.id === profile.id) || profile;
+    try {
+      await identityApi.save({
+        agentType,
+        agentId: profile.id,
+        locale,
+        soul: seed.soul,
+        role: seed.role,
+        rubric: seed.rubric,
+        enabledSkillIds: Array.isArray(currentProfile.skills) ? currentProfile.skills : seed.enabledSkillIds,
+      });
+    } catch (error) {
+      setMessage("MSG-PPH-1003");
+      return false;
+    }
+  }
+  writePalProfilesSnapshotWithFallback();
+  renderPalList();
+  renderSettingsTab();
+  setMessage("MSG-PPH-0007");
+  return true;
+}
+
 function resolveAgentSkillResolverApi() {
   return typeof window !== "undefined" &&
     window.AgentSkillResolver &&
@@ -3961,7 +4045,7 @@ function buildFallbackGuidePlanOutputInstruction() {
       "If the user explicitly asks for a plan or task breakdown and gives the target, expected outcome, relevant files, or available tools, prefer status=plan_ready.",
       "When minor details are missing, make reasonable assumptions and put them in constraints instead of asking another confirmation question.",
       "Do not ask the user to pick the assignee Pal when suitable Pals and tools are already available in context; choose the best fit yourself.",
-      "In the debug workspace, prefer simple-role workers: trace work to Trace Worker, fix work to Fix Worker, and verification work to Verify Worker.",
+      "In the debug workspace, prefer resident specialists: trace work to the Research resident, fix work to the Maker resident, and verification work to the Arranger resident.",
       "Use status=plan_ready only when you have enough information to create an actionable plan.",
     ].join("\n")
     : [
@@ -3972,7 +4056,7 @@ function buildFallbackGuidePlanOutputInstruction() {
       "ユーザーが plan や task 分解を明示し、対象・期待結果・関連ファイル・使える tools を示しているなら status=plan_ready を優先する。",
       "細部が不足しているだけなら、確認質問を増やさず assumptions を constraints に入れる。",
       "文脈に suitable Pals and tools があるなら、ユーザーに assignee Pal を選ばせず自分で選ぶ。",
-      "debug workspace では simple-role worker を優先し、trace は Trace Worker、fix は Fix Worker、verification は Verify Worker に割り当てる。",
+      "debug workspace では住人の主担当を優先し、trace は調べる人、fix は作り手、verification は整える人に割り当てる。",
       "実行可能な計画が作れる時だけ status=plan_ready を返す。",
     ].join("\n");
 }
@@ -6360,6 +6444,10 @@ function renderSettingsTab() {
       handoffHint: "Guide から Worker/Gate へ渡す文脈量を制御します",
       guideAssistItem: "Guide controller assist",
       guideAssistHint: "既定は OFF。ON にすると planning trigger / readiness を controller が補助します",
+      residentSection: "Built-in 住人定義",
+      residentItem: "住人定義を同期",
+      residentHint: "管理人 / 古参 / 作り手 / 書く人 / 整える人 / 調べる人 の built-in 定義で workspace 側の identity を上書きします",
+      residentSync: "built-in 定義を workspace に同期",
       handoffMinimal: "Minimal",
       handoffBalanced: "Balanced",
       handoffVerbose: "Verbose",
@@ -6427,6 +6515,10 @@ function renderSettingsTab() {
       handoffHint: "Controls how much context Guide passes to Worker/Gate",
       guideAssistItem: "Guide controller assist",
       guideAssistHint: "Off by default. When enabled, the controller helps Guide with planning trigger/readiness cues",
+      residentSection: "Built-in Residents",
+      residentItem: "Sync resident definitions",
+      residentHint: "Overwrite workspace identities for caretaker, veteran, maker, writer, arranger, and researcher with the current built-in definitions",
+      residentSync: "Sync built-in definitions to workspace",
       handoffMinimal: "Minimal",
       handoffBalanced: "Balanced",
       handoffVerbose: "Verbose",
@@ -6507,6 +6599,10 @@ function renderSettingsTab() {
   const handoffSectionLabel = labels.handoffSection || "Execution Loop";
   const handoffItemLabel = labels.handoffItem || "Context Handoff Policy";
   const handoffHintLabel = labels.handoffHint || "Controls how much context Guide passes to Worker/Gate";
+  const residentSectionLabel = labels.residentSection || "Built-in Residents";
+  const residentItemLabel = labels.residentItem || "Sync resident definitions";
+  const residentHintLabel = labels.residentHint || "Overwrite workspace identities with the current built-in definitions";
+  const residentSyncLabel = labels.residentSync || "Sync built-in definitions to workspace";
   const installedSkillsPanelLabel = labels.installedSkillsPanel || "Installed Skills";
   const skillMarketPanelLabel = labels.skillMarketPanel || "ClawHub Search / Install";
   const summarySkillsLabel = labels.summarySkills || "skills";
@@ -6830,6 +6926,18 @@ function renderSettingsTab() {
         <span class="text-xs text-base-content/60">${escapeHtml(labels.guideAssistHint)}</span>
       </div>
     </section>
+    <section class="settings-section" data-settings-section="resident-sync">
+      <div class="settings-section-head">
+        <h3 class="settings-section-title">${residentSectionLabel}</h3>
+      </div>
+      <div class="field settings-subpanel">
+        <label class="label-text text-xs text-base-content/70">${residentItemLabel}</label>
+        <span class="text-xs text-base-content/60">${escapeHtml(residentHintLabel)}</span>
+        <div class="settings-inline">
+          <button id="settingsSyncBuiltInResidents" class="btn btn-sm btn-outline" type="button">${escapeHtml(residentSyncLabel)}</button>
+        </div>
+      </div>
+    </section>
     <section class="settings-section${settingsState.itemAddOpen ? " is-adding" : ""}" data-settings-section="model">
       <div class="settings-section-head">
         <h3 class="settings-section-title">${labels.modelSection}</h3>
@@ -6933,6 +7041,7 @@ function renderSettingsTab() {
   const localeEnEl = document.getElementById("settingsLocaleEn");
   const handoffPolicyEl = document.getElementById("settingsContextHandoffPolicy");
   const guideControllerAssistEl = document.getElementById("settingsGuideControllerAssistEnabled");
+  const syncBuiltInResidentsEl = document.getElementById("settingsSyncBuiltInResidents");
   const openAddModelEl = document.getElementById("settingsTabOpenAddItem");
   const entryTypeEl = document.getElementById("settingsTabEntryType");
   const addModelSubmitEl = document.getElementById("settingsTabAddItemSubmit");
@@ -6979,6 +7088,11 @@ function renderSettingsTab() {
     guideControllerAssistEl.addEventListener("change", () => {
       settingsState.guideControllerAssistEnabled = guideControllerAssistEl.checked;
       renderSettingsTab();
+    });
+  }
+  if (syncBuiltInResidentsEl) {
+    syncBuiltInResidentsEl.addEventListener("click", () => {
+      void syncBuiltInResidentIdentitiesToWorkspace();
     });
   }
 
