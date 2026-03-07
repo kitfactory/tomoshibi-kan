@@ -198,7 +198,7 @@ function buildDefaultSoulTemplate(locale, agentType) {
 - Surface risks and assumptions when they matter.
 
 ## Role Alignment
-- This file defines the inner stance of this ${normalizedType} Pal.
+- This file defines the inner stance of this Tomoshibikan resident in the ${normalizedType} role.
 - Pair this with ${secondary.fileName} for concrete work behavior.
 `;
   }
@@ -215,7 +215,7 @@ function buildDefaultSoulTemplate(locale, agentType) {
 - 重要な前提やリスクは必要なときに明示する。
 
 ## 役割との関係
-- このファイルは ${normalizedType} Pal の内面的な姿勢を定義する。
+- このファイルは、灯火館で ${normalizedType} を担う住人の内面的な姿勢を定義する。
 - 具体的な仕事の進め方は ${secondary.fileName} と組み合わせて扱う。
 `;
 }
@@ -271,7 +271,7 @@ function buildDefaultRoleTemplate(locale, agentType) {
     return `# ROLE
 
 ## Mission
-- Execute the assigned work as a ${normalizedType} Pal.
+- Work as a resident of Tomoshibikan in the ${normalizedType} role.
 
 ## Workstyle
 - Break work into clear steps.
@@ -291,7 +291,7 @@ function buildDefaultRoleTemplate(locale, agentType) {
   return `# ROLE
 
 ## ミッション
-- ${normalizedType} Pal として、任された仕事を遂行する。
+- 灯火館で ${normalizedType} を担う住人として、任された仕事を遂行する。
 
 ## 仕事の進め方
 - 作業を明確なステップに分ける。
@@ -332,7 +332,7 @@ function buildDefaultRubricTemplate(locale, agentType) {
   return `# RUBRIC
 
 ## 判定目的
-- ${normalizedType} の観点で成果物を評価する。
+- 灯火館の古参住人として、${normalizedType} の観点で成果物を評価する。
 
 ## 判定基準
 - 要件を満たしているか確認する。

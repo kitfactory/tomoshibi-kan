@@ -699,7 +699,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - task/job の進行確認のため、`task-centric progress log` を持つ。目的は、ユーザーが途中で「依頼した task は今どうなっているか」を確認できるようにすることにある。
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
-- `display_actor` は少なくとも `Guide | Pal | Gate` を取れる。
+- `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
 - `PlanExecutionOrchestrator` が内部で dispatch / retry / reroute / replan_required を起こした場合でも、表示上は Guide の進行コメントとして見せてよい。
 - progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。
 - progress log は task/job 単位で最新状態と直近イベント列を引けること。Guide はこのログを使って途中経過を自然文で説明してよい。

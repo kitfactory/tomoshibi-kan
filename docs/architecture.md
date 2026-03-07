@@ -766,7 +766,7 @@ CREATE TABLE orchestration_debug_runs (
 
 ```ts
 type ProgressActualActor = "orchestrator" | "guide" | "worker" | "gate";
-type ProgressDisplayActor = "Guide" | "Pal" | "Gate";
+type ProgressDisplayActor = "Guide" | "Resident" | "Gate";
 
 type TaskProgressLogEntry = {
   id: string;
@@ -799,7 +799,7 @@ type TaskProgressLogEntry = {
 
 ### Append points
 - `Guide -> Plan -> Task materialize` の dispatch で `actualActor=orchestrator`, `displayActor=Guide`, `actionType=dispatch` を残す。
-- worker runtime 完了/失敗時に `actualActor=worker`, `displayActor=Pal`, `actionType=worker_runtime` を残す。
+- worker runtime 完了/失敗時に `actualActor=worker`, `displayActor=Resident`, `actionType=worker_runtime` を残す。
 - Gate 提出待ちへ移した時に `actualActor=orchestrator`, `displayActor=Guide`, `actionType=to_gate` を残す。
 - Gate approve/reject 時に `actualActor=gate`, `displayActor=Gate`, `actionType=gate_review` を残す。
 - Gate reject のうち進め方や前提の見直しが必要と判断した場合、続けて `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replan_required`, `status=blocked` を残してよい。

@@ -41,7 +41,9 @@ test("serializeEnabledSkillIdsYaml and parseEnabledSkillIdsYaml round-trip", () 
 test("default identity templates switch by locale", () => {
   assert.match(buildDefaultSoulTemplate("ja", "worker"), /# SOUL/);
   assert.match(buildDefaultRoleTemplate("ja", "worker"), /# ROLE/);
+  assert.match(buildDefaultSoulTemplate("ja", "worker"), /住人/);
   assert.match(buildDefaultSoulTemplate("en", "worker"), /Core Stance/);
+  assert.match(buildDefaultRoleTemplate("en", "worker"), /resident of Tomoshibikan/);
   assert.match(buildDefaultRoleTemplate("en", "worker"), /Workstyle/);
   assert.match(buildDefaultSoulTemplate("ja", "guide"), /Guide/);
   assert.match(buildDefaultSoulTemplate("ja", "guide"), /安心して言葉にできる空気/);
@@ -49,6 +51,7 @@ test("default identity templates switch by locale", () => {
   assert.match(buildDefaultSoulTemplate("en", "guide"), /caretaker of Tomoshibikan/);
   assert.match(buildDefaultRoleTemplate("en", "guide"), /Daily conversation partner/);
   assert.match(buildDefaultRubricTemplate("ja", "gate"), /# RUBRIC/);
+  assert.match(buildDefaultRubricTemplate("ja", "gate"), /古参住人/);
   assert.match(buildDefaultRubricTemplate("en", "gate"), /Review Criteria/);
 });
 

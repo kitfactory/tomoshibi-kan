@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-resident-facing-default-seeds] built-in Guide/Gate/Worker の初期値を `管理人 / 住人 / 古参住人` に寄せ、技術用語 `worker` との境界を保ったまま世界観と揃える
+- [x] [DR-20260307-resident-facing-default-seeds] delta request/apply/verify/archive を実施し、初期 seed / template の user-facing naming を archive まで閉じる
 - [x] [SEED-20260307-guide-plan-ready-empty-reply-recovery] Guide が `status=plan_ready` を返しても `reply` が空の時に task materialization へ進める recovery を追加する
 - [x] [DR-20260307-guide-plan-ready-empty-reply-recovery] delta request/apply/verify/archive を実施し、empty `reply` の `plan_ready` を archive まで閉じる
 - [x] [SEED-20260307-orchestrator-cycle-recheck-after-progress-log] progress log / replan_required 追加後も `Trace / Fix / Verify` の 3 task cycle が worker/gate まで通ることを real runner で再確認する
@@ -183,6 +185,7 @@
 - [x] [SEED-20260301-context-builder-rollout] Gate/Worker へ Builder を展開し、Runtime=model 時のみ Skill を注入する方針を実装する
 
 # archive
+- [x] [DR-20260307-resident-facing-default-seeds] 初期表示と identity seed / default template を `管理人 / 住人 / 古参住人` の worldbuilding に寄せ、技術用語 `worker` との境界を固定した
 - [x] [DR-20260307-orchestrator-cycle-recheck-after-progress-log] progress log / `replan_required` 追加後も、Guide が生成した `Trace / Fix / Verify` 3 task が worker/gate まで一巡できることを real runner で再確認した
 - [x] [DR-20260307-guide-plan-ready-empty-reply-recovery] `plan_ready + valid plan + empty reply` の時だけ parser が minimal reply を補い、Guide task materialization を継続できるようにした
 - [x] [DR-20260307-replan-required-progress-log] Gate reject reason から `replan_required` を progress log へ追加し、Guide progress query が再計画待ちを自然文で説明できるようにした

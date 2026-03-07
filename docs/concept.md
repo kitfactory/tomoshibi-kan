@@ -118,7 +118,7 @@
 
 #11.用語集（Glossary）
 - Guide: ユーザー相談を受け、Planを作成・配布する窓口エージェント。家庭用/仕事用/研究用など複数 profile を切り替えて使える。
-- Pal: Task/Jobを実行し、Completion Ritualを添えてGateへ提出する実行エージェント。
+- Worker: Task/Jobを実行し、Completion Ritualを添えてGateへ提出する実行エージェント。ユーザーに見える文脈では「住人」と表現してよい。
 - Gate: palpal-core判定根拠でTask/JobをApprove/Rejectする承認エージェント。業務ごとに複数 profile を持ち、既定 gate または対象別 gate を使い分ける。
 - Plan Card: 目的・完了条件・制約を持つ実行計画カード。
 - Task Card: Palに配布される通常作業カード。
@@ -127,8 +127,8 @@
 - Skill: 主にモデル実行時に利用する能力単位。Settingsで登録しPalごとに有効化する。
 - ClawHub: Skillの検索・導入元として扱うカタログ。現段階では擬似Download導線のみ実装。
 
-- Execution Loop: `Guide -> Plan -> PlanExecutionOrchestrator -> (Pal -> Gate -> retry)* -> Guide completion` の実行ループ全体を指す概念名。
-- PlanExecutionOrchestrator: Plan承認後の Task/Job 配布、Pal 実行、Gate 判定、reject 後の再提出、完了通知までを束ねる実行系責務名。
+- Execution Loop: `Guide -> Plan -> PlanExecutionOrchestrator -> (Worker -> Gate -> retry)* -> Guide completion` の実行ループ全体を指す概念名。
+- PlanExecutionOrchestrator: Plan承認後の Task/Job 配布、Worker 実行、Gate 判定、reject 後の再提出、完了通知までを束ねる実行系責務名。
 - Guide Planning Boundary: Guide は valid な `Plan` オブジェクトを作れるまでユーザーとの対話を継続する。valid Plan がない間は後段へ進めない。
 - Guide Conversation Boundary: ユーザーが task 化や実行計画化を求めていない通常会話では、Guide は `conversation` 状態に留まり、Plan の内容や task 化を前に出さない。
 - Orchestrator Start Boundary: `PlanExecutionOrchestrator` は valid かつ `approved` な Plan を受け取った時だけ開始する。raw 会話文や未確定の計画案からは開始しない。
@@ -143,5 +143,5 @@
 
 - Guide-driven Orchestrator: `PlanExecutionOrchestrator` は独立モジュールとして動くが、replan や結果解釈のような LLM が必要な判断では active Guide と同じ model / `SOUL.md` を使う。実行制御は Orchestrator、意味判断は Guide の頭脳で支える。
 
-- Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / Pal / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
+- Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / 住人 / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
 
