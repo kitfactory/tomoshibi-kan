@@ -3568,10 +3568,26 @@ function resolveGuideModelStateWithFallback() {
       palProfiles,
       activeGuideId: workspaceAgentSelection.activeGuideId,
       registeredModels: settingsState.registeredModels,
+      registeredTools: settingsState.registeredTools,
     });
   }
   const guide = palProfiles.find((pal) => pal.id === workspaceAgentSelection.activeGuideId);
-  if (!guide || guide.runtimeKind !== "model" || !guide.models[0]) {
+  if (!guide) {
+    return { ready: false, errorCode: "MSG-PPH-1010" };
+  }
+  if (normalizePalRuntimeKind(guide.runtimeKind) === "tool") {
+    const toolName = Array.isArray(guide.cliTools) ? normalizeText(guide.cliTools[0]) : "";
+    if (!toolName || !settingsState.registeredTools.some((tool) => normalizeText(tool).toLowerCase() === toolName.toLowerCase())) {
+      return { ready: false, errorCode: "MSG-PPH-1010" };
+    }
+    return {
+      ready: true,
+      guideId: guide.id,
+      runtimeKind: "tool",
+      toolName,
+    };
+  }
+  if (guide.runtimeKind !== "model" || !guide.models[0]) {
     return { ready: false, errorCode: "MSG-PPH-1010" };
   }
   const model = settingsState.registeredModels.find((item) => item.name === guide.models[0]);
@@ -3581,6 +3597,7 @@ function resolveGuideModelStateWithFallback() {
   return {
     ready: true,
     guideId: guide.id,
+    runtimeKind: "model",
     modelName: model.name,
     provider: model.provider,
   };
@@ -3593,9 +3610,19 @@ function bindGuideToFirstRegisteredModelWithFallback() {
       palProfiles,
       activeGuideId: workspaceAgentSelection.activeGuideId,
       registeredModels: settingsState.registeredModels,
+      registeredTools: settingsState.registeredTools,
     });
   }
   const guide = palProfiles.find((pal) => pal.id === workspaceAgentSelection.activeGuideId);
+  const activeToolName = guide && Array.isArray(guide.cliTools) ? normalizeText(guide.cliTools[0]) : "";
+  if (
+    guide &&
+    normalizePalRuntimeKind(guide.runtimeKind) === "tool" &&
+    activeToolName &&
+    settingsState.registeredTools.some((tool) => normalizeText(tool).toLowerCase() === activeToolName.toLowerCase())
+  ) {
+    return { changed: false, guideId: guide.id };
+  }
   const firstModel = settingsState.registeredModels[0];
   if (!guide || !firstModel || !firstModel.name) return { changed: false };
   guide.runtimeKind = "model";
@@ -3607,19 +3634,24 @@ function bindGuideToFirstRegisteredModelWithFallback() {
 
 function buildGuideReplyWithFallback(userText, guideState) {
   const external = resolveGuideChatModelApi();
+  const runtimeKind = normalizeText(guideState?.runtimeKind) === "tool" ? "tool" : "model";
   const provider = guideState.provider || "";
   const providerText = providerLabel(provider);
+  const runtimeDisplay =
+    runtimeKind === "tool"
+      ? normalizeText(guideState?.toolName || guideState?.modelName || "CLI")
+      : `${providerText}/${guideState.modelName}`;
   if (external) {
     return external.buildGuideModelReply({
       userText,
-      modelName: guideState.modelName,
-      providerLabel: providerText,
+      modelName: runtimeKind === "tool" ? normalizeText(guideState?.toolName || guideState?.modelName) : guideState.modelName,
+      providerLabel: runtimeKind === "tool" ? normalizeText(guideState?.toolName || "CLI") : providerText,
     });
   }
   const clipped = userText.length > 28 ? `${userText.slice(0, 28)}...` : userText;
   return {
-    ja: `${providerText}/${guideState.modelName} で受け取りました。「${clipped}」をもとに次のTaskを組み立てます。`,
-    en: `Received via ${providerText}/${guideState.modelName}. I will draft next tasks from "${clipped}".`,
+    ja: `${runtimeDisplay} で受け取りました。「${clipped}」をもとに次のTaskを組み立てます。`,
+    en: `Received via ${runtimeDisplay}. I will draft next tasks from "${clipped}".`,
   };
 }
 
@@ -3629,8 +3661,8 @@ function buildGuideModelRequiredPromptWithFallback() {
     return external.buildGuideModelRequiredPrompt();
   }
   return {
-    ja: "Guideモデルが未設定です。Settingsタブでモデルを設定してください。",
-    en: "Guide model is not configured. Configure a model in Settings tab.",
+    ja: "Guide の実行設定が未完了です。SettingsタブでモデルまたはCLIツールを設定してください。",
+    en: "Guide runtime is not configured. Configure a model or CLI tool in Settings tab.",
   };
 }
 
@@ -3697,8 +3729,9 @@ function extractGuideAssistantText(payload) {
 }
 
 async function requestGuideModelReplyWithFallback(userText, guideState, contextBuild) {
-  const runtime = resolveGuideApiRuntimeConfig(guideState);
-  if (!runtime || !runtime.modelName) return null;
+  const isToolRuntime = normalizeText(guideState?.runtimeKind) === "tool";
+  const runtime = isToolRuntime ? null : resolveGuideApiRuntimeConfig(guideState);
+  if (!isToolRuntime && (!runtime || !runtime.modelName)) return null;
   const contextMessages = normalizeGuideContextMessages(contextBuild?.messages, userText);
   const guideOperatingRules = buildOperatingRulesPrompt("guide", locale);
   const promptEnvelope = splitSystemPromptFromContextMessages(
@@ -3743,11 +3776,15 @@ async function requestGuideModelReplyWithFallback(userText, guideState, contextB
   const coreRuntimeApi = resolveTomoshibikanCoreRuntimeApi();
   if (coreRuntimeApi) {
     try {
-      const resolvedApiKey = await resolveStoredModelApiKeyWithFallback(runtime.modelName, runtime.apiKey);
+      const resolvedApiKey = !isToolRuntime
+        ? await resolveStoredModelApiKeyWithFallback(runtime.modelName, runtime.apiKey)
+        : "";
       const payload = await coreRuntimeApi.guideChat({
-        provider: runtime.provider,
-        modelName: runtime.modelName,
-        baseUrl: runtime.baseUrl,
+        runtimeKind: isToolRuntime ? "tool" : "model",
+        toolName: isToolRuntime ? normalizeText(guideState?.toolName) : "",
+        provider: runtime?.provider || "",
+        modelName: runtime?.modelName || "",
+        baseUrl: runtime?.baseUrl || "",
         apiKey: resolvedApiKey,
         userText,
         systemPrompt: planningSystemPrompt,
@@ -3771,8 +3808,8 @@ async function requestGuideModelReplyWithFallback(userText, guideState, contextB
       if (!text) return null;
       return {
         text,
-        provider: payload?.provider || runtime.provider,
-        modelName: payload?.modelName || runtime.modelName,
+        provider: payload?.provider || runtime?.provider || "codex-cli",
+        modelName: payload?.modelName || runtime?.modelName || normalizeText(guideState?.toolName),
         toolCalls: Array.isArray(payload?.toolCalls) ? payload.toolCalls : [],
       };
     } catch (error) {
@@ -3780,6 +3817,7 @@ async function requestGuideModelReplyWithFallback(userText, guideState, contextB
     }
   }
 
+  if (isToolRuntime) return null;
   if (typeof fetch !== "function") return null;
   const resolvedApiKey = await resolveStoredModelApiKeyWithFallback(runtime.modelName, runtime.apiKey);
   const endpoint = buildGuideChatCompletionsUrl(runtime.baseUrl);

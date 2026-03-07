@@ -28,6 +28,8 @@ function normalizeString(value) {
 
 function sanitizeRuntimePayloadForDebug(input = {}) {
   return {
+    runtimeKind: normalizeString(input.runtimeKind || "model"),
+    toolName: normalizeString(input.toolName),
     userText: typeof input.userText === "string" ? input.userText : "",
     systemPrompt: typeof input.systemPrompt === "string" ? input.systemPrompt : "",
     messages: Array.isArray(input.messages) ? input.messages : [],
@@ -307,6 +309,8 @@ function bindIpc(settings, identity) {
     const explicitApiKey = normalizeString(input.apiKey);
     const storedApiKey = modelName ? normalizeString(await settings.resolveModelApiKey(modelName)) : "";
     const runtimeInput = {
+      runtimeKind: normalizeString(input.runtimeKind || "model"),
+      toolName: normalizeString(input.toolName),
       provider: input.provider,
       modelName,
       baseUrl: input.baseUrl,

@@ -32,6 +32,15 @@ function resolveTurnTimeout(args) {
   return 120000;
 }
 
+function resolveGuideRuntimeKind(args) {
+  const raw = normalizeString(getOptionValue(args, "--guide-runtime", "model")).toLowerCase();
+  return raw === "tool" ? "tool" : "model";
+}
+
+function resolveGuideToolName(args) {
+  return normalizeString(getOptionValue(args, "--guide-tool", "Codex")) || "Codex";
+}
+
 function createWorkspaceRoot(args) {
   const explicit = normalizeString(getOptionValue(args, "--workspace"));
   if (explicit) {
@@ -102,6 +111,24 @@ async function addGuideModel(page) {
   }, { timeout: 30000 });
 }
 
+async function ensureGuideTool(page, toolName) {
+  await page.click('[data-tab="settings"]');
+  const existingTools = await page.locator("[data-remove-tool-index]").count();
+  const toolListText = await page.locator("#settingsTabToolList").textContent().catch(() => "");
+  if (existingTools > 0 && String(toolListText || "").includes(toolName)) {
+    return;
+  }
+  await page.click("#settingsTabOpenAddItem");
+  await page.selectOption("#settingsTabEntryType", "tool");
+  await page.selectOption("#settingsTabToolName", toolName);
+  await page.click("#settingsTabAddItemSubmit");
+  await page.click("#settingsTabSave");
+  await page.waitForFunction(() => {
+    const button = document.getElementById("settingsTabSave");
+    return !button || button.getAttribute("aria-busy") !== "true";
+  }, { timeout: 30000 });
+}
+
 async function readGuideControllerAssistState(page) {
   await page.click('[data-tab="settings"]');
   const checked = await page.locator("#settingsGuideControllerAssistEnabled").isChecked().catch(() => false);
@@ -114,6 +141,22 @@ async function bindGuideProfileToModel(page) {
   await page.click('[data-pal-open-id="guide-core"]');
   await page.selectOption('[data-pal-runtime-select="guide-core"]', "model");
   await page.selectOption('[data-pal-runtime-target-select="guide-core"]', "openai/gpt-oss-20b");
+  await page.click("#palConfigSave");
+  const closeButton = page.locator("#closePalConfigModal");
+  if (await closeButton.isVisible().catch(() => false)) {
+    await closeButton.click();
+  }
+  await page.waitForFunction(() => {
+    const modal = document.getElementById("palConfigModal");
+    return !modal || modal.hidden === true || modal.classList.contains("hidden");
+  }, { timeout: 30000 }).catch(() => {});
+}
+
+async function bindGuideProfileToTool(page, toolName) {
+  await page.click('[data-tab="pal"]');
+  await page.click('[data-pal-open-id="guide-core"]');
+  await page.selectOption('[data-pal-runtime-select="guide-core"]', "tool");
+  await page.selectOption('[data-pal-runtime-target-select="guide-core"]', toolName);
   await page.click("#palConfigSave");
   const closeButton = page.locator("#closePalConfigModal");
   if (await closeButton.isVisible().catch(() => false)) {
@@ -207,6 +250,8 @@ async function runCheck(args) {
   const workspaceRoot = createWorkspaceRoot(args);
   const prompts = resolvePrompts(args);
   const turnTimeoutMs = resolveTurnTimeout(args);
+  const guideRuntimeKind = resolveGuideRuntimeKind(args);
+  const guideToolName = resolveGuideToolName(args);
   const appRoot = path.resolve(__dirname, "..");
   console.log(`workspace_root=${workspaceRoot}`);
 
@@ -229,7 +274,12 @@ async function runCheck(args) {
     await resetPrototypeLocalState(page);
     assistEnabled = await readGuideControllerAssistState(page);
     await addGuideModel(page);
-    await bindGuideProfileToModel(page);
+    if (guideRuntimeKind === "tool") {
+      await ensureGuideTool(page, guideToolName);
+      await bindGuideProfileToTool(page, guideToolName);
+    } else {
+      await bindGuideProfileToModel(page);
+    }
     for (const prompt of prompts) {
       const turn = await runGuideTurn(page, prompt, turnTimeoutMs);
       scenario.turns.push({
@@ -260,6 +310,10 @@ async function runCheck(args) {
 
   console.log(`guide_run_count=${guideRuns.length}`);
   console.log(`assist_enabled=${String(Boolean(assistEnabled))}`);
+  console.log(`guide_runtime=${guideRuntimeKind}`);
+  if (guideRuntimeKind === "tool") {
+    console.log(`guide_tool=${guideToolName}`);
+  }
 
   scenario.turns.forEach((turn, index) => {
     console.log(`turn=${index + 1}`);

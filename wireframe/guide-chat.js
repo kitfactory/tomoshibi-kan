@@ -15,6 +15,7 @@
   function resolveGuideModelState(input) {
     const palProfiles = Array.isArray(input?.palProfiles) ? input.palProfiles : [];
     const registeredModels = Array.isArray(input?.registeredModels) ? input.registeredModels : [];
+    const registeredTools = Array.isArray(input?.registeredTools) ? input.registeredTools : [];
     const guide = findGuideProfile(palProfiles, input?.activeGuideId);
     if (!guide) {
       return {
@@ -25,6 +26,35 @@
     }
 
     const runtimeKind = normalizeString(guide.runtimeKind);
+    if (runtimeKind === "tool") {
+      const toolName = normalizeString(Array.isArray(guide.cliTools) ? guide.cliTools[0] : "");
+      if (!toolName) {
+        return {
+          ready: false,
+          errorCode: "MSG-PPH-1010",
+          reason: "guide_tool_missing",
+          guideId: normalizeString(guide.id),
+        };
+      }
+      const matchedTool =
+        registeredTools.find((tool) => normalizeString(tool).toLowerCase() === toolName.toLowerCase()) || null;
+      if (!matchedTool) {
+        return {
+          ready: false,
+          errorCode: "MSG-PPH-1010",
+          reason: "registered_tool_missing",
+          guideId: normalizeString(guide.id),
+          toolName,
+        };
+      }
+      return {
+        ready: true,
+        guideId: normalizeString(guide.id),
+        runtimeKind: "tool",
+        toolName,
+      };
+    }
+
     if (runtimeKind !== "model") {
       return {
         ready: false,
@@ -59,6 +89,7 @@
     return {
       ready: true,
       guideId: normalizeString(guide.id),
+      runtimeKind: "model",
       modelName,
       provider: normalizeString(matchedModel.provider),
     };
@@ -67,8 +98,21 @@
   function bindGuideToFirstRegisteredModel(input) {
     const palProfiles = Array.isArray(input?.palProfiles) ? input.palProfiles : [];
     const registeredModels = Array.isArray(input?.registeredModels) ? input.registeredModels : [];
+    const registeredTools = Array.isArray(input?.registeredTools) ? input.registeredTools : [];
     const guide = findGuideProfile(palProfiles, input?.activeGuideId);
     const firstModel = registeredModels[0] || null;
+    const currentRuntimeKind = normalizeString(guide?.runtimeKind);
+    const currentToolName = normalizeString(Array.isArray(guide?.cliTools) ? guide.cliTools[0] : "");
+    const hasRegisteredTool =
+      currentRuntimeKind === "tool" &&
+      currentToolName &&
+      registeredTools.some((tool) => normalizeString(tool).toLowerCase() === currentToolName.toLowerCase());
+    if (guide && hasRegisteredTool) {
+      return {
+        changed: false,
+        guideId: normalizeString(guide.id),
+      };
+    }
     if (!guide || !firstModel || !normalizeString(firstModel.name)) {
       return {
         changed: false,
@@ -116,8 +160,8 @@
 
   function buildGuideModelRequiredPrompt() {
     return {
-      ja: "Guideモデルが未設定です。Settingsタブでモデルを登録し、Guideに割り当ててください。",
-      en: "Guide model is not configured. Register a model in Settings and assign it to Guide.",
+      ja: "Guide の実行設定が未完了です。SettingsタブでモデルまたはCLIツールを登録し、Guideに割り当ててください。",
+      en: "Guide runtime is not configured. Register a model or CLI tool in Settings and assign it to Guide.",
     };
   }
 

@@ -338,6 +338,9 @@ for (const viewport of VIEWPORTS) {
       while ((await page.locator("[data-remove-model-index]").count()) > 0) {
         await page.locator("[data-remove-model-index]").first().click();
       }
+      while ((await page.locator("[data-remove-tool-index]").count()) > 0) {
+        await page.locator("[data-remove-tool-index]").first().click();
+      }
       await page.click("#settingsTabSave");
 
       await page.click('[data-tab="guide"]');
@@ -346,7 +349,7 @@ for (const viewport of VIEWPORTS) {
 
       await expect(page.locator("#errorToastCode")).toContainText("MSG-PPH-1010");
       await expect(page.locator('[data-tab="settings"]')).toHaveClass(/active/);
-      await expect(page.locator("#guideChat")).toContainText(/Guideモデルが未設定|Guide model is not configured/);
+      await expect(page.locator("#guideChat")).toContainText(/Guide の実行設定が未完了|Guide runtime is not configured/);
     });
 
     test("guide chat resumes after registering model in settings", async ({ page }) => {
@@ -363,6 +366,12 @@ for (const viewport of VIEWPORTS) {
       await page.click("#settingsTabAddItemSubmit");
       await page.click("#settingsTabSave");
 
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "model");
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', "gpt-4.1");
+      await page.click("#palConfigSave");
+
       await page.click('[data-tab="guide"]');
       const messages = page.locator("#guideChat .chat");
       const before = await messages.count();
@@ -370,6 +379,50 @@ for (const viewport of VIEWPORTS) {
       await page.click("#guideSend");
       await expect(messages).toHaveCount(before + 2);
       await expect(page.locator("#guideChat")).toContainText(/gpt-4\.1|openai\/gpt-oss-20b/);
+    });
+
+    test("guide chat accepts Codex CLI runtime", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "tool");
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', "Codex");
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        window.__lastGuideChatInput = null;
+        const runtime = window.TomoshibikanCoreRuntime || {};
+        const originalGuideChat = runtime.guideChat;
+        runtime.guideChat = async (input) => {
+          window.__lastGuideChatInput = input;
+          return {
+            provider: "codex-cli",
+            modelName: "Codex",
+            text: JSON.stringify({
+              status: "conversation",
+              reply: "tool-guide-ok",
+            }),
+            toolCalls: [],
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
+        window.__restoreGuideChat = () => {
+          runtime.guideChat = originalGuideChat;
+        };
+      });
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "住人たちの作業の進め方を相談したい");
+      await page.click("#guideSend");
+
+      await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.runtimeKind || "")).toBe("tool");
+      await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.toolName || "")).toBe("Codex");
+      await expect(page.locator("#guideChat")).toContainText("tool-guide-ok");
+
+      await page.evaluate(() => {
+        if (typeof window.__restoreGuideChat === "function") {
+          window.__restoreGuideChat();
+        }
+      });
     });
 
     test("guide chat reflects focus and sending state in UI", async ({ page }) => {

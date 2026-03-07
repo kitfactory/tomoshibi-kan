@@ -566,6 +566,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - valid な `Plan` オブジェクトが存在しない間、Task/Job の materialize、dispatch、worker routing、gate routing を開始してはならない。
 - `PlanExecutionOrchestrator` は raw user request や Guide の自然文応答を入力として開始せず、valid かつ `approved` な `Plan` オブジェクトを受け取った時だけ開始する。
 - したがって、現行 prototype に存在する task draft 生成補助は正本の planning 主体ではなく、将来は `Plan` の parse / validate / normalize 補助へ置き換える前提とする。
+- Guide runtime は `runtimeKind=model | tool` を取りうる。first step では `tool` runtime として `Codex` を許可する。
+- `tool` runtime の Guide には skill/tool を動的注入しない。Guide/Orchestrator には事前 probe で得た capability summary を渡してよいが、CLI tool 自体の内包能力は実行時に再構成しない。
+- `tool` runtime の Guide で `response_format` / schema を指定しても、それは強い保証ではなく hint として扱う。`plan_ready` の採用条件は引き続き parser / repair / validate を通過した valid object とする。
 
 ## 追加仕様 (2026-03-06): Execution Loop Context Handoff Policy
 

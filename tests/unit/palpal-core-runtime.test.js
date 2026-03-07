@@ -9,6 +9,7 @@ const originalFetch = global.fetch;
 
 test.afterEach(() => {
   coreRuntime.__resetCoreRuntimeBindingsForTest();
+  coreRuntime.__resetCliToolRuntimeBindingsForTest();
   global.fetch = originalFetch;
 });
 
@@ -218,6 +219,47 @@ test("requestGuideChatCompletion uses native structured output when responseForm
   assert.equal(result.text.includes('"status":"plan_ready"'), true);
   assert.equal(capturedPayload.response_format.type, "json_schema");
   assert.equal(capturedPayload.response_format.json_schema.name, "guide_plan_response");
+});
+
+test("requestGuideChatCompletion delegates to Codex CLI when runtimeKind=tool", async () => {
+  let capturedCall = null;
+  coreRuntime.__setCliToolRuntimeBindingsForTest({
+    shouldUsePwshCodexWrapper: () => false,
+    spawnCommand: async (_command, args) => {
+      capturedCall = args;
+      const outputIndex = args.indexOf("-o");
+      const outputPath = outputIndex >= 0 ? args[outputIndex + 1] : "";
+      fs.writeFileSync(outputPath, '{"status":"conversation","reply":"tool-ok"}', "utf8");
+      return { ok: true, code: 0, stdout: "", stderr: "", errorText: "" };
+    },
+  });
+
+  const result = await coreRuntime.requestGuideChatCompletion({
+    runtimeKind: "tool",
+    toolName: "Codex",
+    workspaceRoot: process.cwd(),
+    userText: "say ok",
+    systemPrompt: "system-rules",
+    responseFormat: {
+      type: "json_schema",
+      json_schema: {
+        name: "guide_plan_response",
+        schema: {
+          type: "object",
+          properties: {
+            status: { type: "string" },
+            reply: { type: "string" },
+          },
+        },
+      },
+    },
+  });
+
+  assert.ok(Array.isArray(capturedCall));
+  assert.ok(capturedCall.includes("exec"));
+  assert.equal(result.provider, "codex-cli");
+  assert.equal(result.modelName, "Codex");
+  assert.equal(result.text, '{"status":"conversation","reply":"tool-ok"}');
 });
 
 test("requestGuideChatCompletion falls back to existing model path when structured output request fails", async () => {

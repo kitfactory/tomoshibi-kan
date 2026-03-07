@@ -1,6 +1,11 @@
 ﻿const fs = require("fs");
 const path = require("path");
 const palpalCore = require("palpal-core");
+const {
+  runCodexGuideCliCompletion,
+  __setCliToolRuntimeBindingsForTest,
+  __resetCliToolRuntimeBindingsForTest,
+} = require("./cli-tool-runtime");
 
 let coreGetProvider = palpalCore.getProvider;
 let coreListProviderModels = palpalCore.listProviderModels;
@@ -1260,6 +1265,17 @@ async function requestGuideChatCompletion(input = {}) {
 }
 
 async function requestPalChatCompletion(input = {}) {
+  const runtimeKind = normalizeText(input.runtimeKind || "model").toLowerCase() === "tool" ? "tool" : "model";
+  const toolName = normalizeText(input.toolName);
+  if (runtimeKind === "tool") {
+    if (normalizeText(input.agentName) !== "guide") {
+      throw new Error("CLI tool runtime is currently supported only for Guide");
+    }
+    if (toolName.toLowerCase() !== "codex") {
+      throw new Error(`Unsupported CLI tool runtime: ${toolName || "unknown"}`);
+    }
+    return runCodexGuideCliCompletion(input);
+  }
   const provider = normalizeProviderName(input.provider || "lmstudio");
   const modelName = normalizeText(input.modelName);
   const baseUrl = normalizeText(input.baseUrl || standardEnvValue(provider, "baseUrl"));
@@ -1365,4 +1381,6 @@ module.exports = {
   requestPalChatCompletion,
   __setCoreRuntimeBindingsForTest,
   __resetCoreRuntimeBindingsForTest,
+  __setCliToolRuntimeBindingsForTest,
+  __resetCliToolRuntimeBindingsForTest,
 };

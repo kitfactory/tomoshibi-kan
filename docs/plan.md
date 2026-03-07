@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-guide-codex-cli-autonomous-check] Guide を `Codex` CLI runtime に固定した real runner を回し、Plan 作成と task materialization の可否を観測する
+- [x] [DR-20260307-guide-codex-cli-autonomous-check] delta request/apply/verify/archive を実施し、Guide Codex CLI autonomous check を archive まで閉じる
+- [x] [SEED-20260307-guide-codex-cli-runtime] Guide が `Codex` CLI tool runtime を設定した時に send 前 validation で落ちず、core runtime bridge 経由で実行できるようにする
+- [x] [DR-20260307-guide-codex-cli-runtime] delta request/apply/verify/archive を実施し、Guide CLI runtime の最小実装を archive まで閉じる
 - [x] [SEED-20260307-resident-set-file-add] `docs/tomoshibikan_resident_set_v0_1.md` を git 管理対象へ追加する
 - [x] [DR-20260307-resident-set-file-add] delta request/apply/verify/archive を実施し、resident set file の git add を archive まで閉じる
 - [x] [SEED-20260307-worldbuilding-file-git-check] `docs/tomoshibikan_worldbuilding_jp.md` の git 追跡状態を確認し、必要なら add する
@@ -464,6 +468,10 @@
 - [ ] [SEED-20260306-full-loop-autonomous-check] Guide -> Orchestrator -> Pal -> Gate の自律ループを通しで確認する
 
 # archive
+- [x] [SEED-20260307-guide-codex-cli-autonomous-check] Guide を `Codex` CLI runtime に固定した real runner を回し、Plan 作成と task materialization の可否を観測した
+- [x] [DR-20260307-guide-codex-cli-autonomous-check] delta request/apply/verify/archive を実施し、Guide Codex CLI autonomous check を archive まで閉じた
+- [x] [SEED-20260307-guide-codex-cli-runtime] Guide が `Codex` CLI tool runtime を設定した時に send 前 validation で落ちず、core runtime bridge 経由で実行できるようにした
+- [x] [DR-20260307-guide-codex-cli-runtime] delta request/apply/verify/archive を実施し、Guide CLI runtime の最小実装を archive まで閉じた
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
 - [x] [DR-20260307-guide-controller-assist-default-off] controller assist を標準OFFにし、Settings checkbox で明示ONした時だけ Guide planning cue を注入するようにした

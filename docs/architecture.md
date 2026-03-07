@@ -563,6 +563,7 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` は planning の唯一の主体であり、valid な `Plan` オブジェクトを作れるまで対話を継続する。
 - `GuideConversationUseCase` は `conversation | needs_clarification | plan_ready` を内部状態として扱える。`conversation` では通常対話のみを行い、Plan / Task / routing は開始しない。
 - `GuideConversationUseCase` の runtime adapter は `response_format: json_schema` を使った native structured output を優先し、provider 非対応や失敗時のみ prompt-based JSON + parser hardening へ fallback する。
+- `GuideConversationUseCase` は `runtimeKind=model | tool` を取りうる。first step では `toolName=Codex` のみを許可し、CLI bridge は `TomoshibikanCoreRuntime.guideChat` の I/F を維持したまま `runtimeKind` と `toolName` を受け取る。
 - `GuideConversationUseCase` の output instruction は schema と形式制約だけを持ち、`conversation / needs_clarification / plan_ready` の使い分け判断は `OPERATING_RULES` 側へ集約する。
 - `GuideConversationUseCase` の prompt contract は、ユーザーが明示的に plan / task 分解を依頼し、対象・期待結果・関連ファイル・利用 tool の主要情報が揃っている場合、軽微な不足は `constraints` の assumption として補って `plan_ready` を優先させる。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、latest user turn が仕事の依頼へ進もうとしているかどうかを判定し、plan / task 分解 / trace-fix-verify 分割 / 進め方の確定 / 調査 / 修正 / 確認依頼を `work intent` として扱う。
@@ -574,6 +575,8 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` の controller は latest user text を planning trigger として再評価できる。trigger が立つ場合は runtime adapter に assist prompt を追加し、`conversation` に留まらず `needs_clarification` か `plan_ready` へ進める。
 - `GuideConversationUseCase` の controller は planning trigger に加えて planning readiness も判定できる。`explicit_breakdown` かつ再現手順・期待結果が揃う時は readiness assist を追加し、軽微な不足を assumption に寄せて `plan_ready` を優先させる。
 - `GuidePlan` parser は debug-purpose の explicit breakdown (`trace / fix / verify`) を含む `plan_ready` で task 配列が壊れている場合、reply と controller cue (`planningIntent` / `planningReadiness`) を参照して simple-role 3 task に recovery する。
+- `tool` runtime の Guide には外部 skill/tool を動的注入しない。CLI tool へ渡すのは `systemPrompt`, history, userText, response schema hint までとし、routing 用の capability snapshot は Guide/Orchestrator 側の判断材料としてだけ使う。
+- CLI tool の structured output は弱いものとして扱う。`output-schema` や response format を渡しても、accept 条件は parser / repair / validate を通過した valid object で固定する。
 - controller assist は `guideControllerAssistEnabled=true` の時だけ有効にする。既定では Guide 自身の判断に任せ、controller は planning cue を注入しない。
 - Guide の応答が valid な `Plan` として parse / validate できない場合、`GuideConversationUseCase` から抜けず、Task/Job の materialize や routing は開始しない。
 - `PlanExecutionOrchestrator` は Guide 会話履歴をそのまま downstream へ渡さず、`Task/Job/HandoffSummary/GateReviewInput` へ正規化して受け渡す。

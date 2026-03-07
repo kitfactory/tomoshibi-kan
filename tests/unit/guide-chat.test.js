@@ -43,6 +43,25 @@ test("resolveGuideModelState returns ready when guide model exists in settings",
   assert.equal(state.provider, "openai");
 });
 
+test("resolveGuideModelState returns ready when guide tool exists in settings", () => {
+  const state = resolveGuideModelState({
+    palProfiles: [
+      {
+        id: "guide-core",
+        role: "guide",
+        runtimeKind: "tool",
+        cliTools: ["Codex"],
+      },
+    ],
+    activeGuideId: "guide-core",
+    registeredModels: [],
+    registeredTools: ["Codex"],
+  });
+  assert.equal(state.ready, true);
+  assert.equal(state.runtimeKind, "tool");
+  assert.equal(state.toolName, "Codex");
+});
+
 test("bindGuideToFirstRegisteredModel forces guide to model runtime", () => {
   const palProfiles = [
     {
@@ -64,6 +83,28 @@ test("bindGuideToFirstRegisteredModel forces guide to model runtime", () => {
   assert.deepEqual(palProfiles[0].models, ["claude-3-7-sonnet"]);
   assert.deepEqual(palProfiles[0].cliTools, []);
   assert.equal(palProfiles[0].provider, "anthropic");
+});
+
+test("bindGuideToFirstRegisteredModel keeps valid guide tool runtime", () => {
+  const palProfiles = [
+    {
+      id: "guide-core",
+      role: "guide",
+      runtimeKind: "tool",
+      models: [],
+      cliTools: ["Codex"],
+      provider: "",
+    },
+  ];
+  const result = bindGuideToFirstRegisteredModel({
+    palProfiles,
+    activeGuideId: "guide-core",
+    registeredModels: [{ name: "claude-3-7-sonnet", provider: "anthropic" }],
+    registeredTools: ["Codex"],
+  });
+  assert.equal(result.changed, false);
+  assert.equal(palProfiles[0].runtimeKind, "tool");
+  assert.deepEqual(palProfiles[0].cliTools, ["Codex"]);
 });
 
 test("resolveGuideModelState uses activeGuideId when multiple guides exist", () => {
@@ -131,5 +172,7 @@ test("buildGuideModelReply includes provider/model context", () => {
 test("buildGuideModelRequiredPrompt returns settings guidance", () => {
   const prompt = buildGuideModelRequiredPrompt();
   assert.match(prompt.ja, /Settings/);
+  assert.match(prompt.ja, /CLI/);
   assert.match(prompt.en, /Settings/);
+  assert.match(prompt.en, /CLI/);
 });
