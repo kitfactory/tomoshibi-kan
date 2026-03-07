@@ -16,7 +16,7 @@ const {
 } = require("../../runtime/agent-identity-store.js");
 
 test("resolveAgentDirectory maps guide/gate/worker to expected paths", () => {
-  const wsRoot = path.resolve("/tmp/palpal-workspace");
+  const wsRoot = path.resolve("/tmp/tomoshibikan-workspace");
   assert.equal(
     resolveAgentDirectory(wsRoot, { agentType: "guide", agentId: "guide-core" }),
     path.join(wsRoot, "guides", "guide-core")
@@ -39,11 +39,11 @@ test("serializeEnabledSkillIdsYaml and parseEnabledSkillIdsYaml round-trip", () 
 });
 
 test("default identity templates switch by locale", () => {
-  assert.match(buildDefaultSoulTemplate("ja", "worker"), /基本姿勢/);
-  assert.match(buildDefaultRoleTemplate("ja", "worker"), /仕事の進め方/);
+  assert.match(buildDefaultSoulTemplate("ja", "worker"), /# SOUL/);
+  assert.match(buildDefaultRoleTemplate("ja", "worker"), /# ROLE/);
   assert.match(buildDefaultSoulTemplate("en", "worker"), /Core Stance/);
   assert.match(buildDefaultRoleTemplate("en", "worker"), /Workstyle/);
-  assert.match(buildDefaultRubricTemplate("ja", "gate"), /判定基準/);
+  assert.match(buildDefaultRubricTemplate("ja", "gate"), /# RUBRIC/);
   assert.match(buildDefaultRubricTemplate("en", "gate"), /Review Criteria/);
 });
 
@@ -63,7 +63,7 @@ test("secondary identity config uses ROLE for worker and RUBRIC for gate", () =>
 });
 
 test("AgentIdentityStore load returns empty defaults when files are missing", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     const loaded = await store.loadAgentIdentity({ agentType: "guide", agentId: "guide-core" });
@@ -79,7 +79,7 @@ test("AgentIdentityStore load returns empty defaults when files are missing", as
 });
 
 test("AgentIdentityStore saves and loads worker identity files", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     const saved = await store.saveAgentIdentity({
@@ -108,7 +108,7 @@ test("AgentIdentityStore saves and loads worker identity files", async () => {
 });
 
 test("AgentIdentityStore initializes localized templates when requested", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     const saved = await store.saveAgentIdentity({
@@ -130,7 +130,7 @@ test("AgentIdentityStore initializes localized templates when requested", async 
 });
 
 test("AgentIdentityStore saves and loads gate identity files with RUBRIC", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     const saved = await store.saveAgentIdentity({
@@ -154,7 +154,7 @@ test("AgentIdentityStore saves and loads gate identity files with RUBRIC", async
 });
 
 test("AgentIdentityStore initializes localized rubric template for gate", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     const saved = await store.saveAgentIdentity({
@@ -164,16 +164,16 @@ test("AgentIdentityStore initializes localized rubric template for gate", async 
       initializeTemplates: true,
       enabledSkillIds: [],
     });
-    assert.match(saved.soul, /基本姿勢/);
+    assert.match(saved.soul, /# SOUL/);
     assert.equal(saved.role, "");
-    assert.match(saved.rubric, /判定基準/);
+    assert.match(saved.rubric, /# RUBRIC/);
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 });
 
 test("AgentIdentityStore rejects worker identity save without agentId", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     await assert.rejects(
@@ -192,7 +192,7 @@ test("AgentIdentityStore rejects worker identity save without agentId", async ()
 });
 
 test("AgentIdentityStore rejects guide identity save without agentId", async () => {
-  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-agent-identity-"));
+  const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-agent-identity-"));
   const store = new AgentIdentityStore({ workspaceRoot: tmpRoot });
   try {
     await assert.rejects(

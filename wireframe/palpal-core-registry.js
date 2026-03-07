@@ -1,14 +1,14 @@
-(function initPalpalCoreProviderRegistry(global) {
+(function initTomoshibikanCoreProviderRegistry(global) {
   if (
-    global.PalpalCoreRuntime &&
-    typeof global.PalpalCoreRuntime.listProviderModels === "function"
+    global.TomoshibikanCoreRuntime &&
+    typeof global.TomoshibikanCoreRuntime.listProviderModels === "function"
   ) {
     return;
   }
 
   if (
-    Array.isArray(global.PALPAL_CORE_PROVIDERS) &&
-    Array.isArray(global.PALPAL_CORE_MODELS)
+    Array.isArray(global.TOMOSHIBIKAN_CORE_PROVIDERS) &&
+    Array.isArray(global.TOMOSHIBIKAN_CORE_MODELS)
   ) {
     return;
   }
@@ -36,6 +36,8 @@
     { name: "openrouter/auto", provider: "openrouter" },
   ];
 
+  global.TOMOSHIBIKAN_CORE_PROVIDERS = providers;
   global.PALPAL_CORE_PROVIDERS = providers;
+  global.TOMOSHIBIKAN_CORE_MODELS = models;
   global.PALPAL_CORE_MODELS = models;
 })(window);

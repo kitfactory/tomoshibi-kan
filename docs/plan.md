@@ -1,5 +1,11 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree に含めて commit する
+- [x] [DR-20260307-brand-key-visual-commit] delta request/apply/verify/archive を実施し、キービジュアル採用と commit を archive まで閉じる
+- [x] [SEED-20260307-technical-identifier-rename-tomoshibi] first-class の `pal/palpal` 技術識別子を `tomoshibi*` 側へ寄せ、互換 alias/fallback は維持する
+- [x] [DR-20260307-technical-identifier-rename-tomoshibi] delta request/apply/verify/archive を実施し、safe rename を archive まで閉じる
+- [x] [SEED-20260307-remaining-tomoshibi-rename-audit] current code/docs に残る `pal/palpal` 系識別子と `Pal / Guide / Gate` 用語の残件を棚卸しし、次の rename 対象と要判断項目を整理する
+- [x] [DR-20260307-remaining-tomoshibi-rename-audit] delta request/apply/verify/archive を実施し、残件 inventory と名称見直し方針を archive まで閉じる
 - [x] [SEED-20260307-brand-tomoshibikan-and-origin-commit] 表示名を `Tomoshibi-kan / 灯火館` へ更新し、コアコンセプトへブランド世界観を取り込んだうえで current worktree を commit する
 - [x] [DR-20260307-brand-tomoshibikan-and-origin-commit] delta request/apply/verify/archive を実施し、brand rename・origin 設定・commit を archive まで閉じる
 - [x] [SEED-20260307-guide-few-shot-three-option-recommendation] Guide の `OPERATING_RULES` だけで弱い `3案提示 + 1案推薦 + 短い締め` を few-shot 例で補強し、assist OFF の実モデルで再観測する
@@ -152,6 +158,9 @@
 - [x] [SEED-20260301-job-scheduler-spec] Job 定期実行スケジューラ（cron/interval）と実行履歴保持の仕様を確定する
 
 # archive
+- [x] [DR-20260307-brand-key-visual-commit] `Tomoshibi-kan` キービジュアルを current worktree とともに commit し、採用を履歴化した
+- [x] [DR-20260307-technical-identifier-rename-tomoshibi] first-class の bridge / IPC / registry / helper 識別子を `tomoshibi*` へ寄せ、旧 alias/fallback は維持した
+- [x] [DR-20260307-remaining-tomoshibi-rename-audit] 残っている `pal/palpal` first-party 識別子と `Pal / Guide / Gate` 用語の棚卸しを行い、safe rename と concept rename に分離した
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
 - [x] [DR-20260301-job-scheduler-spec] Job定期実行スケジューラと実行履歴保持の仕様を spec/architecture に確定した

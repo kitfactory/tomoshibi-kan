@@ -69,7 +69,7 @@ const runtimeConfigBridge = {
 };
 
 const coreRuntimeBridge = {
-  listProviderModels: () => ipcRenderer.invoke("palpal-core:list-provider-models"),
+  listProviderModels: () => ipcRenderer.invoke("tomoshibikan-core:list-provider-models"),
   guideChat: (payload) => ipcRenderer.invoke("guide:chat", payload),
   palChat: (payload) => ipcRenderer.invoke("pal:chat", payload),
 };

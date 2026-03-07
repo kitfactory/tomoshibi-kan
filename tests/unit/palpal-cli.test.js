@@ -65,7 +65,7 @@ async function seedDebugRuns(wsRoot) {
     output: {
       text: JSON.stringify({
         status: "needs_clarification",
-        reply: "どのファイルで保存処理を実装していますか？",
+        reply: "Need target file and save steps.",
         plan: null,
       }),
     },
@@ -87,7 +87,7 @@ async function seedDebugRuns(wsRoot) {
   await store.close();
 }
 
-test("palpal debug runs lists filtered debug records", async () => {
+test("tomoshibikan debug runs lists filtered debug records", async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);
@@ -113,7 +113,7 @@ test("palpal debug runs lists filtered debug records", async () => {
   }
 });
 
-test("palpal debug show prints one debug record detail", async () => {
+test("tomoshibikan debug show prints one debug record detail", async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);
@@ -140,7 +140,7 @@ test("palpal debug show prints one debug record detail", async () => {
   }
 });
 
-test("palpal help includes debug smoke command", () => {
+test("tomoshibikan help includes debug smoke command", () => {
   const result = spawnSync(
     process.execPath,
     ["cli/palpal.js", "--help"],
@@ -154,7 +154,7 @@ test("palpal help includes debug smoke command", () => {
   assert.match(result.stdout, /Legacy alias: palpal/);
 });
 
-test("palpal debug guide-failures summarizes guide statuses and cues", async () => {
+test("tomoshibikan debug guide-failures summarizes guide statuses and cues", async () => {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-cli-"));
   try {
     await seedDebugRuns(tmpDir);

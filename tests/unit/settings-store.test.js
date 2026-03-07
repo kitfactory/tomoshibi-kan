@@ -29,7 +29,7 @@ async function createStore(tmpDir) {
 }
 
 test("SqliteSettingsStore saves and loads settings without exposing api key", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-settings-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
   const store = await createStore(tmpDir);
   try {
     const saved = await store.save({
@@ -62,7 +62,7 @@ test("SqliteSettingsStore saves and loads settings without exposing api key", as
 });
 
 test("SqliteSettingsStore keeps existing api key when saving without apiKeyInput", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-settings-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
   const store = await createStore(tmpDir);
   try {
     await store.save({
@@ -102,7 +102,7 @@ test("SqliteSettingsStore keeps existing api key when saving without apiKeyInput
 });
 
 test("SqliteSettingsStore appends and lists orchestration debug runs", async () => {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "palpal-settings-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
   const store = await createStore(tmpDir);
   try {
     await store.appendOrchestrationDebugRun({

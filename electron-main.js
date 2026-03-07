@@ -247,7 +247,7 @@ function bindIpc(settings, identity) {
   ipcMain.handle("agent-identity:save", async (_event, payload) => {
     return identity.saveAgentIdentity(payload);
   });
-  ipcMain.handle("palpal-core:list-provider-models", async () => {
+  const listProviderModelsHandler = async () => {
     const latest = await listCoreProviderModels({
       lmstudioBaseUrl: runtimeDefaults?.baseUrl,
       lmstudioApiKey: runtimeDefaults?.apiKey,
@@ -255,7 +255,9 @@ function bindIpc(settings, identity) {
     });
     coreCatalog = latest;
     return latest;
-  });
+  };
+  ipcMain.handle("tomoshibikan-core:list-provider-models", listProviderModelsHandler);
+  ipcMain.handle("palpal-core:list-provider-models", listProviderModelsHandler);
   ipcMain.handle("guide:chat", async (_event, payload) => {
     const input = payload && typeof payload === "object" ? payload : {};
     const modelName = normalizeString(input.modelName);
