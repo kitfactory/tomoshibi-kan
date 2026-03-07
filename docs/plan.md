@@ -1,5 +1,13 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-opencode-capability-audit] `OpenCode` CLI に問い合わせ、command / skill 相当の能力・設定・補助機構を棚卸しする
+- [x] [DR-20260307-opencode-capability-audit] delta request/apply/verify/archive を実施し、OpenCode capability audit を archive まで閉じる
+- [x] [SEED-20260307-opencode-skill-install-reobserve] OpenCode skills の導入場所・frontmatter・発見条件を確認し、一時 skill を置いて `debug skill` の再観測を行う
+- [x] [DR-20260307-opencode-skill-install-reobserve] delta request/apply/verify/archive を実施し、OpenCode skill 導入方法と実観測結果を archive まで閉じる
+- [x] [SEED-20260307-opencode-lmstudio-run-check] `OpenCode` を `192.168.11.16:1234/v1` の `openai/gpt-oss-20b` へ向け、temp workspace で `models` と `run` を実行確認する
+- [x] [DR-20260307-opencode-lmstudio-run-check] delta request/apply/verify/archive を実施し、OpenCode の LM Studio 実行可否と必要設定を archive まで閉じる
+- [x] [SEED-20260307-opencode-capability-probe-impl] `OpenCode` の command / agent / skill / MCP / built-in tool を capability snapshot として取得し、既存の CLI tool probe 枠へ追加する
+- [x] [DR-20260307-opencode-capability-probe-impl] delta request/apply/verify/archive を実施し、OpenCode capability probe 実装と unit/docs 同期を archive まで閉じる
 - [x] [SEED-20260307-cli-tool-capability-probe] CLIツール利用時に `Codex` へ問い合わせて capability snapshot を取得し、tool runtime の routing/context に反映する
 - [x] [DR-20260307-cli-tool-capability-probe] delta request/apply/verify/archive を実施し、CLI capability probe と tool runtime capability 反映を archive まで閉じる
 - [x] [SEED-20260307-mojibake-repair-and-encoding-guard] `app.js` と `debug-identity-seeds.js` の日本語文字化けを修復し、AGENTS に再発防止ルールを追加する
@@ -91,6 +99,10 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260307-opencode-capability-probe-impl] `OpenCode` の command / agent / skill / MCP / built-in tool probe を実装し、既存 settings persistence / tool runtime routing/context で利用できるようにした
+- [x] [DR-20260307-opencode-lmstudio-run-check] temp workspace の custom provider で `OpenCode` を LM Studio (`192.168.11.16:1234/v1`) の `openai/gpt-oss-20b` に向け、`models` と `run` が通ることを確認した
+- [x] [DR-20260307-opencode-skill-install-reobserve] OpenCode skills の導入場所を docs と実観測で確認し、project-local と `OPENCODE_CONFIG_DIR` の両方で一時 skill を検出できることを確認した
+- [x] [DR-20260307-opencode-capability-audit] `OpenCode` CLI の command / agent / skill / MCP / config / db 周りを audit し、probe 実装時の最小候補コマンドを整理した
 - [x] [DR-20260307-cli-tool-capability-probe] `Codex` first-class の CLI capability probe を追加し、tool runtime の capability summaries を settings persistence と routing/context に反映した
 - [x] [DR-20260307-mojibake-repair-and-encoding-guard] `app.js` / `debug-identity-seeds.js` の日本語文字化けを修復し、AGENTS に UTF-8 / apply_patch 優先 / verify での文字化け確認ルールを追加した
 - [x] [DR-20260307-guide-soul-role-real-check] Guide の `SOUL.md` / `ROLE.md` 更新後も assist OFF の実モデルで `plan_ready` と `Trace / Fix / Verify` 3 task materialization が成立することを確認した

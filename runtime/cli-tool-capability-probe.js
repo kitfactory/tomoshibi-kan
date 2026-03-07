@@ -4,6 +4,10 @@ function normalizeString(value) {
   return String(value || "").trim();
 }
 
+function stripAnsi(value) {
+  return String(value || "").replace(/\x1B\[[0-9;]*m/g, "");
+}
+
 function uniqueBy(values, getKey) {
   const seen = new Set();
   const result = [];
@@ -152,19 +156,151 @@ function parseCodexFeatures(outputText) {
     }));
 }
 
+function parseOpenCodeCommandHelp(helpText) {
+  const source = stripAnsi(helpText);
+  const lines = source.split(/\r?\n/);
+  const commands = [];
+  let inCommands = false;
+  lines.forEach((line) => {
+    const trimmed = normalizeString(line);
+    if (!inCommands) {
+      if (/^Commands:\s*$/.test(trimmed)) {
+        inCommands = true;
+      }
+      return;
+    }
+    if (!trimmed) return;
+    if (/^(Positionals|Options):/.test(trimmed)) {
+      inCommands = false;
+      return;
+    }
+    const match = trimmed.match(/^opencode(?:\s+\[project\]|\s+<[^>]+>|\s+\[[^\]]+\])?\s+([a-z0-9-]+)(?:\s+[^\s].*?)?\s{2,}(.+?)$/i);
+    if (!match) return;
+    const name = normalizeString(match[1]);
+    const description = normalizeString(match[2]);
+    if (!name || !description) return;
+    commands.push({
+      id: `opencode.command.${name}`,
+      name,
+      kind: "command",
+      description,
+    });
+  });
+  return uniqueBy(commands, (entry) => entry.id);
+}
+
+function parseOpenCodeAgentList(outputText) {
+  const source = stripAnsi(outputText);
+  return uniqueBy(
+    source
+      .split(/\r?\n/)
+      .map((line) => normalizeString(line))
+      .map((line) => line.match(/^([a-z0-9_-]+)\s+\((primary|subagent)\)$/i))
+      .filter(Boolean)
+      .map((match) => ({
+        id: `opencode.agent.${normalizeString(match[1]).toLowerCase()}`,
+        name: normalizeString(match[1]),
+        kind: "agent",
+        mode: normalizeString(match[2]).toLowerCase(),
+        description: `${normalizeString(match[2]).toLowerCase()} agent`,
+      })),
+    (entry) => entry.id
+  );
+}
+
+function parseOpenCodeSkills(outputText) {
+  try {
+    const parsed = JSON.parse(String(outputText || "[]"));
+    return uniqueBy(
+      (Array.isArray(parsed) ? parsed : [])
+        .map((entry) => {
+          const name = normalizeString(entry?.name);
+          if (!name) return null;
+          return {
+            id: `opencode.skill.${name.toLowerCase()}`,
+            name,
+            kind: "skill",
+            description: normalizeString(entry?.description) || "Installed OpenCode skill",
+          };
+        })
+        .filter(Boolean),
+      (entry) => entry.id
+    );
+  } catch (_error) {
+    return [];
+  }
+}
+
+function parseOpenCodeMcpList(outputText) {
+  const source = stripAnsi(outputText);
+  if (!source || /No MCP servers configured/i.test(source)) return [];
+  return uniqueBy(
+    source
+      .split(/\r?\n/)
+      .map((line) => normalizeString(line))
+      .filter(Boolean)
+      .map((line) => line.match(/^([a-z0-9_-]+)\b/i))
+      .filter(Boolean)
+      .map((match) => ({
+        id: `opencode.mcp.${normalizeString(match[1]).toLowerCase()}`,
+        name: normalizeString(match[1]),
+        kind: "mcp_server",
+        description: "Configured MCP server",
+      })),
+    (entry) => entry.id
+  );
+}
+
+function parseOpenCodeDebugAgent(outputText) {
+  try {
+    const parsed = JSON.parse(String(outputText || "{}"));
+    const tools = parsed && typeof parsed === "object" && parsed.tools && typeof parsed.tools === "object"
+      ? parsed.tools
+      : {};
+    return uniqueBy(
+      Object.entries(tools)
+        .filter(([, enabled]) => enabled === true)
+        .map(([name]) => ({
+          id: `opencode.tool.${normalizeString(name).toLowerCase()}`,
+          name: normalizeString(name),
+          kind: "builtin_tool",
+          description: "Enabled built-in tool",
+        })),
+      (entry) => entry.id
+    );
+  } catch (_error) {
+    return [];
+  }
+}
+
+function resultLooksUsable(result) {
+  if (!result || typeof result !== "object") return false;
+  if (result.ok) return true;
+  return Boolean(normalizeString(result.stdout));
+}
+
 function buildCapabilitySummaries(snapshot) {
   const capabilities = Array.isArray(snapshot?.capabilities) ? snapshot.capabilities : [];
   const commandSummaries = capabilities
     .filter((entry) => entry.kind === "command")
     .map((entry) => normalizeString(entry.description) ? `${entry.name}: ${entry.description}` : entry.name);
+  const agentSummaries = capabilities
+    .filter((entry) => entry.kind === "agent")
+    .map((entry) => `${entry.name}: ${entry.description || "agent"}`);
+  const skillSummaries = capabilities
+    .filter((entry) => entry.kind === "skill")
+    .map((entry) => `${entry.name}: ${entry.description || "skill"}`);
   const featureSummaries = capabilities
     .filter((entry) => entry.kind === "feature" && entry.enabled)
     .map((entry) => `${entry.name}: ${entry.stage || "feature"} enabled`);
   const mcpSummaries = capabilities
     .filter((entry) => entry.kind === "mcp_server")
     .map((entry) => `MCP ${entry.name}: configured`);
+  const builtinToolSummaries = capabilities
+    .filter((entry) => entry.kind === "builtin_tool")
+    .map((entry) => `${entry.name}: built-in tool enabled`);
   return uniqueBy(
-    [...commandSummaries, ...featureSummaries, ...mcpSummaries]
+    [...commandSummaries, ...agentSummaries, ...skillSummaries, ...featureSummaries, ...mcpSummaries, ...builtinToolSummaries]
       .map((value) => normalizeString(value))
       .filter(Boolean),
     (value) => value.toLowerCase()
@@ -211,6 +347,51 @@ async function probeCodexCli(options = {}) {
   return snapshot;
 }
 
+async function probeOpenCodeCli(options = {}) {
+  const run = typeof options.runCommand === "function" ? options.runCommand : runCommand;
+  const fetchedAt = new Date().toISOString();
+  const probeOptions = { ...options, timeoutMs: Math.max(Number(options.timeoutMs) || 0, 20000) || 20000 };
+  const versionResult = await run("opencode", ["--version"], probeOptions);
+  const helpResult = await run("opencode", ["--help"], probeOptions);
+  const skillResult = await run("opencode", ["debug", "skill"], probeOptions);
+  const agentListResult = await run("opencode", ["agent", "list"], probeOptions);
+  const mcpResult = await run("opencode", ["mcp", "list"], probeOptions);
+  const debugAgentResult = await run("opencode", ["debug", "agent", "build"], probeOptions);
+  if (!resultLooksUsable(versionResult) || !resultLooksUsable(helpResult)) {
+    return {
+      toolName: "OpenCode",
+      status: "unavailable",
+      fetchedAt,
+      commandName: "opencode",
+      versionText: normalizeString(versionResult.stdout || versionResult.stderr),
+      capabilities: [],
+      capabilitySummaries: [],
+      errorText: normalizeString(helpResult.errorText || versionResult.errorText || "opencode probe failed"),
+    };
+  }
+  const commandCapabilities = parseOpenCodeCommandHelp(helpResult.stdout);
+  const skillCapabilities = resultLooksUsable(skillResult) ? parseOpenCodeSkills(skillResult.stdout) : [];
+  const agentCapabilities = resultLooksUsable(agentListResult) ? parseOpenCodeAgentList(agentListResult.stdout) : [];
+  const mcpCapabilities = resultLooksUsable(mcpResult) ? parseOpenCodeMcpList(mcpResult.stdout) : [];
+  const builtinToolCapabilities = resultLooksUsable(debugAgentResult) ? parseOpenCodeDebugAgent(debugAgentResult.stdout) : [];
+  const capabilities = uniqueBy(
+    [...commandCapabilities, ...skillCapabilities, ...agentCapabilities, ...mcpCapabilities, ...builtinToolCapabilities],
+    (entry) => normalizeString(entry?.id).toLowerCase()
+  );
+  const snapshot = {
+    toolName: "OpenCode",
+    status: "available",
+    fetchedAt,
+    commandName: "opencode",
+    versionText: normalizeString(versionResult.stdout || versionResult.stderr),
+    capabilities,
+    capabilitySummaries: [],
+    errorText: "",
+  };
+  snapshot.capabilitySummaries = buildCapabilitySummaries(snapshot);
+  return snapshot;
+}
+
 async function probeCliToolCapabilities(toolNames, options = {}) {
   const names = uniqueBy(
     (Array.isArray(toolNames) ? toolNames : [])
@@ -222,6 +403,10 @@ async function probeCliToolCapabilities(toolNames, options = {}) {
   for (const toolName of names) {
     if (toolName === "Codex") {
       snapshots.push(await probeCodexCli(options));
+      continue;
+    }
+    if (toolName === "OpenCode") {
+      snapshots.push(await probeOpenCodeCli(options));
       continue;
     }
     snapshots.push({
@@ -244,7 +429,13 @@ module.exports = {
   parseCodexCommandHelp,
   parseCodexMcpList,
   parseCodexFeatures,
+  parseOpenCodeCommandHelp,
+  parseOpenCodeAgentList,
+  parseOpenCodeSkills,
+  parseOpenCodeMcpList,
+  parseOpenCodeDebugAgent,
   buildCapabilitySummaries,
   probeCodexCli,
+  probeOpenCodeCli,
   probeCliToolCapabilities,
 };

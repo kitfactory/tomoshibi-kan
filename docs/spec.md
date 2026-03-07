@@ -641,7 +641,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 ### Worker routing rules
 - Task/Job が要求する能力は、まず `enabled skills` で充足可否を判定する。
 - 複数 Worker が候補になる場合、`ROLE.md` に書かれた責務・進め方・期待アウトプットが Task/Job の性質に最も合う Worker を優先する。
-- `runtimeKind="tool"` の Worker は `ROLE.md` に加えて、CLI へ問い合わせて取得した capability snapshot（command / MCP / feature summaries）を routing/context の判断材料として使う。
+- `runtimeKind="tool"` の Worker は `ROLE.md` に加えて、CLI へ問い合わせて取得した capability snapshot（command / agent / skill / built-in tool / MCP / feature summaries）を routing/context の判断材料として使う。
 - CLI capability snapshot は `registeredToolCapabilities[]` として保持し、tool 名、取得時刻、status、capabilities、capability summaries を含む。
 - routing 時に必要 skill が存在しない場合は、無理に近い Worker へ割り当てず、Guide に確認または Plan 修正を返せること。
 

@@ -6,6 +6,12 @@ const {
   parseCodexMcpList,
   parseCodexFeatures,
   probeCodexCli,
+  parseOpenCodeCommandHelp,
+  parseOpenCodeAgentList,
+  parseOpenCodeSkills,
+  parseOpenCodeMcpList,
+  parseOpenCodeDebugAgent,
+  probeOpenCodeCli,
 } = require("../../runtime/cli-tool-capability-probe.js");
 
 test("parseCodexCommandHelp extracts command capabilities", () => {
@@ -151,5 +157,163 @@ test("probeCodexCli returns unavailable snapshot when codex is missing", async (
 
   assert.equal(snapshot.status, "unavailable");
   assert.equal(snapshot.toolName, "Codex");
+  assert.equal(snapshot.capabilities.length, 0);
+});
+
+test("parseOpenCodeCommandHelp extracts top-level commands with ANSI stripped", () => {
+  const commands = parseOpenCodeCommandHelp(`
+\u001b[90mT\u001b[39m
+Commands:
+  opencode run [message..]     run opencode with a message
+  opencode debug               debugging and troubleshooting tools
+  opencode models [provider]   list all available models
+
+Positionals:
+  project  path to start opencode in
+`);
+
+  assert.deepEqual(commands, [
+    {
+      id: "opencode.command.run",
+      name: "run",
+      kind: "command",
+      description: "run opencode with a message",
+    },
+    {
+      id: "opencode.command.debug",
+      name: "debug",
+      kind: "command",
+      description: "debugging and troubleshooting tools",
+    },
+    {
+      id: "opencode.command.models",
+      name: "models",
+      kind: "command",
+      description: "list all available models",
+    },
+  ]);
+});
+
+test("parseOpenCodeAgentList extracts agent rows from mixed output", () => {
+  const agents = parseOpenCodeAgentList(`
+build (primary)
+  [
+    { "permission": "*", "action": "allow" }
+  ]
+explore (subagent)
+  [
+    { "permission": "bash", "action": "allow" }
+  ]
+`);
+
+  assert.deepEqual(agents, [
+    {
+      id: "opencode.agent.build",
+      name: "build",
+      kind: "agent",
+      mode: "primary",
+      description: "primary agent",
+    },
+    {
+      id: "opencode.agent.explore",
+      name: "explore",
+      kind: "agent",
+      mode: "subagent",
+      description: "subagent agent",
+    },
+  ]);
+});
+
+test("parseOpenCodeSkills and parseOpenCodeDebugAgent extract capabilities", () => {
+  assert.deepEqual(parseOpenCodeSkills('[{"name":"probe-skill","description":"Test skill"}]'), [
+    {
+      id: "opencode.skill.probe-skill",
+      name: "probe-skill",
+      kind: "skill",
+      description: "Test skill",
+    },
+  ]);
+  assert.deepEqual(parseOpenCodeMcpList('\u001b[33m!\u001b[39m  No MCP servers configured'), []);
+  assert.deepEqual(parseOpenCodeDebugAgent('{"tools":{"bash":true,"read":true,"skill":false}}'), [
+    {
+      id: "opencode.tool.bash",
+      name: "bash",
+      kind: "builtin_tool",
+      description: "Enabled built-in tool",
+    },
+    {
+      id: "opencode.tool.read",
+      name: "read",
+      kind: "builtin_tool",
+      description: "Enabled built-in tool",
+    },
+  ]);
+});
+
+test("probeOpenCodeCli builds capability snapshot from command outputs", async () => {
+  const calls = [];
+  const snapshot = await probeOpenCodeCli({
+    runCommand: async (command, args) => {
+      calls.push([command, ...args]);
+      const key = `${command} ${args.join(" ")}`;
+      if (key === "opencode --version") {
+        return { ok: true, stdout: "1.2.20\n", stderr: "", code: 0 };
+      }
+      if (key === "opencode --help") {
+        return {
+          ok: false,
+          stdout: "Commands:\n  opencode run [message..]     run opencode with a message\n  opencode debug               debugging and troubleshooting tools\n\nOptions:\n  -h, --help        show help\n",
+          stderr: "",
+          code: -1,
+          errorText: "timeout",
+        };
+      }
+      if (key === "opencode debug skill") {
+        return { ok: true, stdout: '[{"name":"probe-skill","description":"Test skill"}]', stderr: "", code: 0 };
+      }
+      if (key === "opencode agent list") {
+        return { ok: true, stdout: "build (primary)\nexplore (subagent)\n", stderr: "", code: 0 };
+      }
+      if (key === "opencode mcp list") {
+        return { ok: true, stdout: "No MCP servers configured", stderr: "", code: 0 };
+      }
+      if (key === "opencode debug agent build") {
+        return {
+          ok: true,
+          stdout: '{"name":"build","tools":{"bash":true,"read":true,"skill":true}}',
+          stderr: "",
+          code: 0,
+        };
+      }
+      return { ok: false, stdout: "", stderr: "unexpected", code: 1, errorText: "unexpected" };
+    },
+  });
+
+  assert.deepEqual(calls, [
+    ["opencode", "--version"],
+    ["opencode", "--help"],
+    ["opencode", "debug", "skill"],
+    ["opencode", "agent", "list"],
+    ["opencode", "mcp", "list"],
+    ["opencode", "debug", "agent", "build"],
+  ]);
+  assert.equal(snapshot.toolName, "OpenCode");
+  assert.equal(snapshot.status, "available");
+  assert.equal(snapshot.versionText, "1.2.20");
+  assert.ok(snapshot.capabilities.some((entry) => entry.id === "opencode.command.run"));
+  assert.ok(snapshot.capabilities.some((entry) => entry.id === "opencode.agent.build"));
+  assert.ok(snapshot.capabilities.some((entry) => entry.id === "opencode.skill.probe-skill"));
+  assert.ok(snapshot.capabilities.some((entry) => entry.id === "opencode.tool.bash"));
+  assert.ok(snapshot.capabilitySummaries.includes("probe-skill: Test skill"));
+  assert.ok(snapshot.capabilitySummaries.includes("bash: built-in tool enabled"));
+});
+
+test("probeOpenCodeCli returns unavailable snapshot when version/help are unusable", async () => {
+  const snapshot = await probeOpenCodeCli({
+    runCommand: async () => ({ ok: false, stdout: "", stderr: "not found", code: -1, errorText: "not found" }),
+  });
+
+  assert.equal(snapshot.status, "unavailable");
+  assert.equal(snapshot.toolName, "OpenCode");
   assert.equal(snapshot.capabilities.length, 0);
 });

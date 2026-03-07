@@ -693,7 +693,9 @@ type GateRoutingInput = {
 
 ### CLI Capability Probe
 - Electron main は Settings load/save 時に登録済み CLI ツールへ問い合わせ、`registeredToolCapabilities[]` を補完する。
-- first step では `Codex` を first-class 対象とし、`codex --help`, `codex mcp list`, `codex features list`, `codex --version` の結果から snapshot を生成する。
+- first step では `Codex` と `OpenCode` を first-class 対象とする。
+- `Codex` は `codex --help`, `codex mcp list`, `codex features list`, `codex --version` の結果から snapshot を生成する。
+- `OpenCode` は `opencode --help`, `opencode agent list`, `opencode debug skill`, `opencode debug agent build`, `opencode mcp list`, `opencode --version` の結果から snapshot を生成する。
 - probe 失敗時も Settings save 自体は失敗させず、tool capability status を `unavailable` として保持する。
 
 ### Compaction 適用順
