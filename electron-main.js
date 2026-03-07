@@ -275,6 +275,15 @@ function bindIpc(settings, identity) {
   ipcMain.handle("debug-runs:list", async (_event, options) => {
     return settings.listOrchestrationDebugRuns(options);
   });
+  ipcMain.handle("progress-log:append", async (_event, payload) => {
+    return settings.appendTaskProgressLogEntry(payload);
+  });
+  ipcMain.handle("progress-log:list", async (_event, options) => {
+    return settings.listTaskProgressLogEntries(options);
+  });
+  ipcMain.handle("progress-log:latest", async (_event, options) => {
+    return settings.getLatestTaskProgressLogEntry(options);
+  });
   ipcMain.handle("agent-identity:load", async (_event, payload) => {
     return identity.loadAgentIdentity(payload);
   });

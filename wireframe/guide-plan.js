@@ -189,6 +189,21 @@
     };
   }
 
+  function buildRecoveredPlanReadyReply(plan, localeValue = "ja") {
+    const taskTitles = Array.isArray(plan?.tasks)
+      ? plan.tasks.map((task) => normalizeString(task?.title)).filter(Boolean)
+      : [];
+    const joined = taskTitles.join(" / ");
+    if (normalizeString(localeValue).toLowerCase() === "en") {
+      return joined
+        ? `I prepared a plan with ${joined}.`
+        : "I prepared a plan.";
+    }
+    return joined
+      ? `${joined} の計画を用意しました。`
+      : "計画を用意しました。";
+  }
+
   function parseGuidePlanResponse(text, options = {}) {
     const jsonResult = parseJsonWithRepairs(text);
     if (!jsonResult.ok) {
@@ -196,18 +211,18 @@
     }
     const parsed = jsonResult.parsed;
     const status = normalizeString(parsed.status).toLowerCase();
-    const reply = normalizeString(parsed.reply);
-    if (!reply) {
-      return {
-        ok: false,
-        error: "reply_required",
-      };
-    }
+    const rawReply = normalizeString(parsed.reply);
     if (status === "conversation" || status === "needs_clarification") {
+      if (!rawReply) {
+        return {
+          ok: false,
+          error: "reply_required",
+        };
+      }
       return {
         ok: true,
         status,
-        reply,
+        reply: rawReply,
         plan: null,
       };
     }
@@ -217,7 +232,7 @@
         error: "status_invalid",
       };
     }
-    const plan = normalizeGuidePlan(parsed.plan, reply, options);
+    const plan = normalizeGuidePlan(parsed.plan, rawReply, options);
     if (!plan) {
       return {
         ok: false,
@@ -227,7 +242,7 @@
     return {
       ok: true,
       status,
-      reply,
+      reply: rawReply || buildRecoveredPlanReadyReply(plan, options?.locale || "ja"),
       plan,
     };
   }

@@ -141,3 +141,7 @@
 
 - Gate Routing: 提出物をどの Gate profile へ回すかを決める判断。主に `RUBRIC.md` を見て、その業務・完了条件・評価観点に最も合う Gate を選ぶ。
 
+- Guide-driven Orchestrator: `PlanExecutionOrchestrator` は独立モジュールとして動くが、replan や結果解釈のような LLM が必要な判断では active Guide と同じ model / `SOUL.md` を使う。実行制御は Orchestrator、意味判断は Guide の頭脳で支える。
+
+- Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / Pal / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
+

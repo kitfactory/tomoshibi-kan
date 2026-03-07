@@ -341,12 +341,12 @@ for (const viewport of VIEWPORTS) {
       await page.click("#settingsTabSave");
 
       await page.click('[data-tab="guide"]');
-      await page.fill("#guideInput", "„É¢„ÉÅEÉ´„Å™„Åó„ÅßÈÄÅ‰ø°");
+      await page.fill("#guideInput", "„É¢„Éá„É´„Å™„Åó„ÅßÈÄÅ‰ø°");
       await page.click("#guideSend");
 
       await expect(page.locator("#errorToastCode")).toContainText("MSG-PPH-1010");
       await expect(page.locator('[data-tab="settings"]')).toHaveClass(/active/);
-      await expect(page.locator("#guideChat")).toContainText(/Guide„É¢„ÉÅEÉ´„ÅåÊú™Ë®≠ÂÆö|Guide model is not configured/);
+      await expect(page.locator("#guideChat")).toContainText(/Guide„É¢„Éá„É´„ÅåÊú™Ë®≠ÂÆö|Guide model is not configured/);
     });
 
     test("guide chat resumes after registering model in settings", async ({ page }) => {
@@ -366,7 +366,7 @@ for (const viewport of VIEWPORTS) {
       await page.click('[data-tab="guide"]');
       const messages = page.locator("#guideChat .chat");
       const before = await messages.count();
-      await page.fill("#guideInput", "éüÇÃê›åvÇÇ®äËÇ¢ÇµÇ‹Ç∑");
+      await page.fill("#guideInput", "„Åì„ÅÆË®≠Ë®à„Çí„ÅäÈ°ò„ÅÑ„Åó„Åæ„Åô");
       await page.click("#guideSend");
       await expect(messages).toHaveCount(before + 2);
       await expect(page.locator("#guideChat")).toContainText(/gpt-4\.1|openai\/gpt-oss-20b/);
@@ -388,7 +388,7 @@ for (const viewport of VIEWPORTS) {
         };
       });
 
-      await page.fill("#guideInput", "Guide ÇÃëóêMèÛë‘ÇämîFÇµÇ‹Ç∑");
+      await page.fill("#guideInput", "Guide „ÅÆÈÄÅ‰ø°Áä∂ÊÖã„ÇíÁ¢∫Ë™ç„Åó„Åæ„Åô");
       await page.click("#guideSend");
 
       await expect(page.locator(".app-shell")).toHaveClass(/guide-busy/);
@@ -411,25 +411,25 @@ for (const viewport of VIEWPORTS) {
           modelName: "gpt-4.1",
           text: JSON.stringify({
             status: "plan_ready",
-            reply: "é¿çsåvâÊÇçÏê¨ÇµÇ‹ÇµÇΩÅB3Ç¬ÇÃ Task Ç…ï™âÇµÇ‹Ç∑ÅB",
+            reply: "ÂÆüË°å„Éó„É©„É≥„Çí‰ΩúÊàê„Åó„Åæ„Åó„Åü„ÄÇ3„Å§„ÅÆ Task „Å´ÂàÜ„Åë„Åæ„Åô„ÄÇ",
             plan: {
-              goal: "ê›íËâÊñ ÇÃï€ë∂ïsãÔçáÇèCê≥Ç∑ÇÈ",
-              completionDefinition: "ï€ë∂Ç∆çƒì«Ç›çûÇ›Ç™àÍívÇ∑ÇÈ",
-              constraints: ["ä˘ë∂ê›íËÉtÉçÅ[ÇÕâÛÇ≥Ç»Ç¢"],
+              goal: "Ë®≠ÂÆöÁîªÈù¢„ÅÆ‰øùÂ≠ò‰∏çÂÖ∑Âêà„ÇíËß£Ê∂à„Åô„Çã",
+              completionDefinition: "‰øùÂ≠ò„Å®ÂÜçË™≠„ÅøËæº„Åø„ÅåÊàêÂäü„Åô„Çã",
+              constraints: ["Êó¢Â≠òË®≠ÂÆö„Éï„É≠„Éº„ÅØÂ£ä„Åï„Å™„ÅÑ"],
               tasks: [
                 {
-                  title: "çƒåªämîF",
-                  description: "ï€ë∂ïsãÔçáÇÃçƒåªéËèáÇämîFÇµÅAå¥àˆåÛï‚ÇêÆóùÇ∑ÇÈ",
+                  title: "ÂÜçÁèæÁ¢∫Ë™ç",
+                  description: "‰øùÂ≠ò‰∏çÂÖ∑Âêà„ÅÆÂÜçÁèæÊâãÈ†Ü„ÇíÁ¢∫Ë™ç„Åó„ÄÅÁóáÁä∂„ÇíÊï¥ÁêÜ„Åô„Çã",
                   requiredSkills: ["browser-chrome", "codex-file-search"],
                 },
                 {
-                  title: "èCê≥é¿ëï",
-                  description: "å¥àˆÇèCê≥ÇµÅAï€ë∂èàóùÇÃêÆçáÇâÒïúÇ∑ÇÈ",
+                  title: "‰øÆÊ≠£ÂÆüË£Ö",
+                  description: "ÂéüÂõ†„Çí‰øÆÊ≠£„Åó„ÄÅ‰øùÂ≠òÂá¶ÁêÜ„ÅÆÊ≠£Â∏∏ÊÄß„ÇíÂõûÂæ©„Åô„Çã",
                   requiredSkills: ["codex-file-edit"],
                 },
                 {
-                  title: "åüèÿ",
-                  description: "âÒãAÉeÉXÉgÇé¿çsÇµÅAèCê≥äÆóπÇämîFÇ∑ÇÈ",
+                  title: "Ê§úË®º",
+                  description: "ÂõûÂ∏∞„ÉÜ„Çπ„Éà„ÇíÂõû„Åó„ÄÅ‰øÆÊ≠£ÂÆüË£Ö„ÇíÁ¢∫Ë™ç„Åô„Çã",
                   requiredSkills: ["codex-test-runner"],
                 },
               ],
@@ -438,13 +438,13 @@ for (const viewport of VIEWPORTS) {
           toolCalls: [],
         });
       });
-      await page.fill("#guideInput", "Ë®≠ÂÆöÁîªÈù¢„ÅÆ‰øùÂ≠ò„ÇíÊîπÂñÅEÅó„Å¶„ÄÅ„É¢„ÉÅEÉ´ÁôªÈå≤„Å®Ê§úË®º„ÇíÈÄ≤„ÇÅ„Å¶„Åè„Å†„Åï„ÅÑ");
+      await page.fill("#guideInput", "Ë®≠ÂÆöÁîªÈù¢„ÅÆ‰øùÂ≠ò„ÇíÊîπÂñÑ„Åó„Å¶„ÄÅ„É¢„Éá„É´ÁôªÈå≤„Å®Ê§úË®º„ÇíÈÄ≤„ÇÅ„Å¶„Åè„Å†„Åï„ÅÑ");
       await page.click("#guideSend");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
       const latestTask = page.locator('[data-task-row="TASK-004"]');
       await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-gamma/);
-      await expect(latestTask).toContainText(/Assigned|äÑÇËìñÇƒçœÇ›/);
+      await expect(latestTask).toContainText(/Assigned|Ââ≤„ÇäÂΩì„Å¶Ê∏à„Åø/);
     });
 
     test("guide chat keeps dialog open when plan is not ready", async ({ page }) => {
@@ -459,15 +459,15 @@ for (const viewport of VIEWPORTS) {
           modelName: "gpt-4.1",
           text: JSON.stringify({
             status: "needs_clarification",
-            reply: "ëŒè€ÅAçƒåªéËèáÅAä˙ë“åãâ ÇêÊÇ…ã≥Ç¶ÇƒÇ≠ÇæÇ≥Ç¢ÅB",
+            reply: "ÂØæË±°„ÄÅÂÜçÁèæÊâãÈ†Ü„ÄÅÊúüÂæÖÁµêÊûú„ÅåË¶ã„Åà„Çã„Å®ÁµÑ„ÅøÁ´ã„Å¶„ÇÑ„Åô„ÅÑ„Åß„Åô„ÄÇ",
             plan: null,
           }),
           toolCalls: [],
         });
       });
-      await page.fill("#guideInput", "ê›íËâÊñ ÇíºÇµÇΩÇ¢");
+      await page.fill("#guideInput", "Ë®≠ÂÆöÁîªÈù¢„ÇíÁõ¥„Åó„Åü„ÅÑ");
       await page.click("#guideSend");
-      await expect(page.locator("#guideChat")).toContainText(/çƒåªéËèá|ä˙ë“åãâ /);
+      await expect(page.locator("#guideChat")).toContainText(/ÂÜçÁèæÊâãÈ†Ü|ÊúüÂæÖÁµêÊûú/);
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
     });
@@ -484,15 +484,15 @@ for (const viewport of VIEWPORTS) {
           modelName: "gpt-4.1",
           text: JSON.stringify({
             status: "conversation",
-            reply: "ÇªÇÃäœì_ÇÕèdóvÇ≈Ç∑ÅBÇ‹Ç∏ç°Ç«ÇÒÇ»ì_Ç™ãCÇ…Ç»Ç¡ÇƒÇ¢ÇÈÇ©ÇêÆóùÇµÇ‹ÇµÇÂÇ§ÅB",
+            reply: "„Åù„ÅÆË¶≥ÁÇπ„ÅØÈáçË¶Å„Åß„Åô„ÄÇ„Åæ„Åö„ÅØ„Å©„ÅÆÁÇπ„ÅåÊ∞ó„Å´„Å™„Å£„Å¶„ÅÑ„Çã„Åã„ÇíÊï¥ÁêÜ„Åó„Åæ„Åó„Çá„ÅÜ„ÄÇ",
             plan: null,
           }),
           toolCalls: [],
         });
       });
-      await page.fill("#guideInput", "ç≈ãﬂÇ±ÇÃÉAÉvÉäÇÃégÇ¢êSínÇ«Ç§évÇ§ÅH");
+      await page.fill("#guideInput", "ÊúÄËøë„Åì„ÅÆ„Ç¢„Éó„É™„ÅÆ‰Ωø„ÅÑÂøÉÂú∞„Å©„ÅÜÊÄù„ÅÜÔºü");
       await page.click("#guideSend");
-      await expect(page.locator("#guideChat")).toContainText(/ãCÇ…Ç»Ç¡ÇƒÇ¢ÇÈ|êÆóùÇµÇ‹ÇµÇÂÇ§/);
+      await expect(page.locator("#guideChat")).toContainText(/Ê∞ó„Å´„Å™„Å£„Å¶„ÅÑ„Çã|Êï¥ÁêÜ„Åó„Åæ„Åó„Çá„ÅÜ/);
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
     });
@@ -510,13 +510,13 @@ for (const viewport of VIEWPORTS) {
         await dialog.accept();
       });
       await page.click("#projectPickDirectory");
-      expect(duplicateMessage).toMatch(/„Éó„É≠„Ç∏„Çß„ÇØ„Éà„ÅEÊó¢„Å´Âê´„Åæ„Çå„Å¶„ÅÅEÅæ„Åô|Project is already included/);
+      expect(duplicateMessage).toMatch(/„Éó„É≠„Ç∏„Çß„ÇØ„Éà„ÅØÊó¢„Å´Âê´„Åæ„Çå„Å¶„ÅÑ„Åæ„Åô|Project is already included/);
       await expect(page.locator('#projectList .badge:has-text("@hive-docs")')).toHaveCount(1);
 
       while ((await page.locator("[data-project-remove-id]").count()) > 0) {
         await page.locator("[data-project-remove-id]").first().click();
       }
-      await expect(page.locator("#projectList")).toContainText(/„Éó„É≠„Ç∏„Çß„ÇØ„Éà„ÅE„ÅÇ„Çä„Åæ„Åõ„Çì|No projects/);
+      await expect(page.locator("#projectList")).toContainText(/„Éó„É≠„Ç∏„Çß„ÇØ„Éà„ÅØ„ÅÇ„Çä„Åæ„Åõ„Çì|No projects/);
 
       await page.click("#projectPickDirectory");
       await expect(page.locator("#projectTabContent")).toContainText("@alpha-work");
@@ -561,9 +561,144 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#gatePanel")).not.toHaveClass(/hidden/);
       await page.click("#approveTask");
       await expect(page.locator("#gatePanel")).toHaveClass(/hidden/);
-      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText(/Done|äÆóπ/);
+      await expect(page.locator('[data-job-row="JOB-001"]')).toContainText(/Done|ÂÆå‰∫Ü/);
       await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-last-run-state", "recorded");
       await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-gate-decision", "approved");
+    });
+
+    test("task progress log stores dispatch and gate flow entries", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "plan_ready",
+            reply: "ÂÆüË°å„Éó„É©„É≥„Çí‰ΩúÊàê„Åó„Åæ„Åó„Åü„ÄÇ",
+            plan: {
+              goal: "‰øùÂ≠ò‰∏çÂÖ∑Âêà„ÇíËß£Ê∂à„Åô„Çã",
+              completionDefinition: "‰øùÂ≠ò„Å®ÂÜçË™≠„ÅøËæº„Åø„ÅåÊàêÂäü„Åô„Çã",
+              constraints: ["Êó¢Â≠ò„Éï„É≠„Éº„ÇíÂ£ä„Åï„Å™„ÅÑ"],
+              tasks: [
+                {
+                  title: "ÂÜçÁèæÁ¢∫Ë™ç",
+                  description: "‰øùÂ≠ò‰∏çÂÖ∑Âêà„ÅÆÂÜçÁèæÊâãÈ†Ü„ÇíÁ¢∫Ë™ç„Åô„Çã",
+                  requiredSkills: ["browser-chrome", "codex-file-search"],
+                },
+                {
+                  title: "‰øÆÊ≠£ÂÆüË£Ö",
+                  description: "ÂéüÂõ†„Çí‰øÆÊ≠£„Åô„Çã",
+                  requiredSkills: ["codex-file-edit"],
+                },
+                {
+                  title: "Ê§úË®º",
+                  description: "ÂõûÂ∏∞„ÉÜ„Çπ„Éà„ÇíÂÆüË°å„Åô„Çã",
+                  requiredSkills: ["codex-test-runner"],
+                },
+              ],
+            },
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "Ë®≠ÂÆö‰øùÂ≠ò„ÅÆ‰∏çÂÖ∑Âêà„Çí trace / fix / verify „Å´ÂàÜ„Åë„Å¶ÈÄ≤„ÇÅ„Åü„ÅÑ");
+      await page.click("#guideSend");
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
+
+      await expect.poll(async () => {
+        return page.evaluate(async () => {
+          const rows = await window.listTaskProgressLogEntriesWithFallback({
+            targetKind: "task",
+            targetId: "TASK-004",
+            limit: 10,
+          });
+          return rows.map((row) => row.actionType).join(",");
+        });
+      }).toContain("dispatch");
+
+      await page.click('[data-tab="job"]');
+      await page.click('[data-job-action="start"][data-job-id="JOB-001"]');
+      await expect(page.locator('[data-job-row="JOB-001"]')).toHaveAttribute("data-last-run-state", "recorded");
+      await page.click('[data-job-action="submit"][data-job-id="JOB-001"]');
+      await page.click('[data-job-action="gate"][data-job-id="JOB-001"]');
+      await page.click("#approveTask");
+
+      await expect.poll(async () => {
+        return page.evaluate(async () => {
+          const rows = await window.listTaskProgressLogEntriesWithFallback({
+            targetKind: "job",
+            targetId: "JOB-001",
+            limit: 10,
+          });
+          return rows.map((row) => `${row.actionType}:${row.actualActor}:${row.displayActor}:${row.status}`).join("|");
+        });
+      }).toContain("to_gate:orchestrator:Guide:pending");
+
+      await expect.poll(async () => {
+        return page.evaluate(async () => {
+          const latest = await window.getLatestTaskProgressLogEntryWithFallback({
+            targetKind: "job",
+            targetId: "JOB-001",
+          });
+          return latest ? `${latest.actionType}:${latest.actualActor}:${latest.displayActor}:${latest.status}` : "";
+        });
+      }).toContain("gate_review:gate:Gate:approved");
+    });
+
+    test("guide progress query reports completed task without model call", async ({ page }) => {
+      await page.evaluate(() => {
+        window.__guideProgressModelCalled = false;
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        const original = window.requestGuideModelReplyWithFallback;
+        window.requestGuideModelReplyWithFallback = async (...args) => {
+          window.__guideProgressModelCalled = true;
+          return original(...args);
+        };
+      });
+
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+      await page.click('[data-action="gate"][data-task-id="TASK-001"]');
+      await page.click("#approveTask");
+      await expect(page.locator('[data-task-row="TASK-001"]')).toContainText(/Done|ÂÆå‰∫Ü/);
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "TASK-001 „ÅØ„Å©„ÅÜ„Å™„Å£„ÅüÔºü");
+      await page.click("#guideSend");
+
+      await expect(page.locator("#guideChat")).toContainText(/ÂÆå‰∫Ü„Åó„Å¶„ÅÑ„Åæ„Åô|Gate „ÅåÊâøË™ç„Åó„Åæ„Åó„Åü/);
+      await expect.poll(async () => page.evaluate(() => window.__guideProgressModelCalled)).toBe(false);
+    });
+
+    test("guide progress query explains replan required after gate reject", async ({ page }) => {
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+      await page.click('[data-action="gate"][data-task-id="TASK-001"]');
+      await page.fill("#gateReason", "„Åì„ÅÆ‰ª∂„ÅØÂÜçË®àÁîª„ÅåÂøÖË¶Å„Åß„Åô„ÄÇÈÄ≤„ÇÅÊñπ„Å®ÂâçÊèê„ÇíË¶ãÁõ¥„Åó„Å¶„Åè„Å†„Åï„ÅÑ„ÄÇ");
+      await page.click("#rejectTask");
+
+      await expect.poll(async () => {
+        return page.evaluate(async () => {
+          const latest = await window.getLatestTaskProgressLogEntryWithFallback({
+            targetKind: "task",
+            targetId: "TASK-001",
+          });
+          return latest ? `${latest.actionType}:${latest.actualActor}:${latest.displayActor}:${latest.status}` : "";
+        });
+      }).toContain("replan_required:orchestrator:Guide:blocked");
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "TASK-001 „ÅØ„Å©„ÅÜ„Å™„Å£„ÅüÔºü");
+      await page.click("#guideSend");
+
+      await expect(page.locator("#guideChat")).toContainText(/ÂÜçË®àÁîª„ÅåÂøÖË¶Å|ÈÄ≤„ÇÅÊñπ„Å®ÂâçÊèê„ÇíË¶ãÁõ¥„Åô/);
     });
 
     test("worker runtime receives structured handoff payload", async ({ page }) => {
@@ -712,7 +847,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#settingsGuideControllerAssistEnabled")).not.toBeChecked();
 
       await page.click('[data-tab="guide"]');
-      await page.fill("#guideInput", "SettingsÉ^ÉuÇÃï€ë∂É{É^ÉìÇ™âüÇπÇÈÇÃÇ…ï€ë∂Ç™îΩâfÇ≥ÇÍÇ»Ç¢ÅBçƒåªéËèáÇÕ Settings ÇäJÇ¢Çƒ model Çí«â¡Çµ Save ÇâüÇµÇƒ reloadÅAä˙ë“åãâ ÇÕ reload å„Ç‡ model Ç™écÇÈÇ±Ç∆ÅBtrace / fix / verify ÇÃ Task Ç…ï™ÇØÇƒêiÇﬂÇΩÇ¢ÅB");
+      await page.fill("#guideInput", "Settings„Çø„Éñ„ÅÆ‰øùÂ≠ò„Éú„Çø„É≥„ÇíÊäº„Åó„Åü„ÅÆ„Å´‰øùÂ≠òÁµêÊûú„ÅåÂèçÊò†„Åï„Çå„Å™„ÅÑ„ÄÇÂÜçÁèæÊâãÈ†Ü„ÅØ Settings „ÇíÈñã„ÅÑ„Å¶ model „ÇíËøΩÂä†„Åó Save „ÇíÊäº„Åó„Å¶ reload„ÄÅÊúüÂæÖÁµêÊûú„ÅØ reload Âæå„ÇÇ model „ÅåÊÆã„Çã„Åì„Å®„ÄÇtrace / fix / verify „ÅÆ Task „Å´ÂàÜ„Åë„Å¶ÈÄ≤„ÇÅ„Åü„ÅÑ„ÄÇ");
       await page.click("#guideSend");
       await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.debugMeta?.planningIntent || "")).toBe("none");
       let payload = await page.evaluate(() => window.__lastGuideChatInput);
@@ -749,7 +884,7 @@ for (const viewport of VIEWPORTS) {
         };
       });
       await page.click('[data-tab="guide"]');
-      await page.fill("#guideInput", "SettingsÉ^ÉuÇÃï€ë∂É{É^ÉìÇ™âüÇπÇÈÇÃÇ…ï€ë∂Ç™îΩâfÇ≥ÇÍÇ»Ç¢ÅBçƒåªéËèáÇÕ Settings ÇäJÇ¢Çƒ model Çí«â¡Çµ Save ÇâüÇµÇƒ reloadÅAä˙ë“åãâ ÇÕ reload å„Ç‡ model Ç™écÇÈÇ±Ç∆ÅBtrace / fix / verify ÇÃ Task Ç…ï™ÇØÇƒêiÇﬂÇΩÇ¢ÅB");
+      await page.fill("#guideInput", "Settings„Çø„Éñ„ÅÆ‰øùÂ≠ò„Éú„Çø„É≥„ÇíÊäº„Åó„Åü„ÅÆ„Å´‰øùÂ≠òÁµêÊûú„ÅåÂèçÊò†„Åï„Çå„Å™„ÅÑ„ÄÇÂÜçÁèæÊâãÈ†Ü„ÅØ Settings „ÇíÈñã„ÅÑ„Å¶ model „ÇíËøΩÂä†„Åó Save „ÇíÊäº„Åó„Å¶ reload„ÄÅÊúüÂæÖÁµêÊûú„ÅØ reload Âæå„ÇÇ model „ÅåÊÆã„Çã„Åì„Å®„ÄÇtrace / fix / verify „ÅÆ Task „Å´ÂàÜ„Åë„Å¶ÈÄ≤„ÇÅ„Åü„ÅÑ„ÄÇ");
       await page.click("#guideSend");
       await expect.poll(async () => page.evaluate(() => window.__lastGuideChatInput?.debugMeta?.planningIntent || "")).toBe("explicit_breakdown");
       payload = await page.evaluate(() => window.__lastGuideChatInput);
@@ -770,7 +905,7 @@ for (const viewport of VIEWPORTS) {
 
       await expect(page.locator("#gatePanel")).not.toHaveClass(/hidden/);
       await page.click('[data-gate-template-id="missing-test"]');
-      await expect(page.locator("#gateReason")).toHaveValue(/„ÉÅEÇπ„Éà‰∏çË∂≥|Insufficient tests/);
+      await expect(page.locator("#gateReason")).toHaveValue(/„ÉÜ„Çπ„Éà‰∏çË∂≥|Insufficient tests/);
 
       await page.click("#rejectTask");
       await expect(page.locator("#gatePanel")).toHaveClass(/hidden/);
@@ -980,7 +1115,7 @@ for (const viewport of VIEWPORTS) {
       while ((await page.locator("[data-remove-tool-index]").count()) > 0) {
         await page.locator("[data-remove-tool-index]").first().click();
       }
-      await expect(page.locator("#settingsTabModelEmpty")).toContainText("„É¢„ÉÅEÉ´„ÅØ„ÅÇ„Çä„Åæ„Åõ„Çì");
+      await expect(page.locator("#settingsTabModelEmpty")).toContainText("„É¢„Éá„É´„ÅØ„ÅÇ„Çä„Åæ„Åõ„Çì");
       await page.click("#settingsTabOpenAddItem");
       await expect(page.locator('#settingsTabModelProvider option[value="lmstudio"]')).toHaveCount(1);
       await page.selectOption("#settingsTabModelProvider", "anthropic");
@@ -1040,7 +1175,7 @@ for (const viewport of VIEWPORTS) {
       await page.click('[data-remove-skill-id="codex-file-search"]');
       await expect(saveButton).toBeEnabled();
       await expect(footer).toHaveAttribute("data-settings-state", "dirty");
-      await expect(dirtyHint).toContainText(/Êú™‰øùÂ≠ò„ÅEÂ§âÊõ¥„Åå„ÅÇ„Çä„Åæ„Åô|Unsaved changes/);
+      await expect(dirtyHint).toContainText(/Êú™‰øùÂ≠ò„ÅÆÂ§âÊõ¥„Åå„ÅÇ„Çä„Åæ„Åô|Unsaved changes/);
       const enabledBackground = await saveButton.evaluate((el) => getComputedStyle(el).backgroundColor);
       expect(enabledBackground).not.toBe(disabledBackground);
 
@@ -1140,12 +1275,12 @@ for (const viewport of VIEWPORTS) {
     test("settings skill search normalizes full-width ddg keyword", async ({ page }) => {
       await page.click('[data-tab="settings"]');
       await page.click("#settingsSkillMarketOpenModal");
-      await page.fill("#settingsSkillModalKeyword", "ÇcÇÑÇá");
+      await page.fill("#settingsSkillModalKeyword", "ÔΩÑÔΩÑÔΩá");
       await page.click("#settingsSkillModalSearch");
 
       await expect(page.locator("#settingsSkillModalNoResults")).toHaveCount(0);
       await expect(page.locator("#settingsSkillModalResults")).toContainText("Ddg");
-      await expect(page.locator("#settingsSkillModalResults")).not.toContainText("ÂÆâÂÅEÊÄß:");
+      await expect(page.locator("#settingsSkillModalResults")).not.toContainText("ÂÆâÂÖ®ÊÄß:");
       await expect(page.locator("#settingsSkillModalResults")).toContainText("Downloads: 1,900");
       await expect(page.locator("#settingsSkillModalResults")).toContainText("Stars: 0");
       await expect(page.locator("#settingsSkillModalResults")).toContainText("Installs: 18");
@@ -1677,7 +1812,7 @@ for (const viewport of VIEWPORTS) {
 
       await page.click("#settingsLocaleJa");
       await expect(page.locator("html")).toHaveAttribute("lang", "ja");
-      await expect(page.locator("#settingsTabOpenAddItem")).toContainText("È†ÅEõÆ„ÇíËøΩÂä†");
+      await expect(page.locator("#settingsTabOpenAddItem")).toContainText("È†ÖÁõÆ„ÇíËøΩÂä†");
     });
   });
 }

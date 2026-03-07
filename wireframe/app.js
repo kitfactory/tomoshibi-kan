@@ -8,21 +8,21 @@ const STATUS_UI_ID = {
 
 const UI_TEXT = {
   ja: {
-    "UI-PPH-0001": "���[�N�X�y�[�X",
+    "UI-PPH-0001": "ワークスペース",
     "UI-PPH-0002": "Guide Chat",
     "UI-PPH-0003": "Task Board",
     "UI-PPH-0004": "Event Log",
-    "UI-PPH-0005": "���蓖�čς�",
-    "UI-PPH-0006": "���s��",
-    "UI-PPH-0007": "����҂�",
-    "UI-PPH-0008": "�����߂�",
-    "UI-PPH-0009": "����",
-    "UI-PPH-0010": "�ݒ�",
-    "UI-PPH-0011": "Agent�ݒ�",
-    "UI-PPH-0012": "Workspace�ݒ�",
-    "UI-PPH-0201": "Sort: updated_at desc (�Œ�)",
+    "UI-PPH-0005": "割り当て済み",
+    "UI-PPH-0006": "実行中",
+    "UI-PPH-0007": "Gate待ち",
+    "UI-PPH-0008": "差し戻し",
+    "UI-PPH-0009": "完了",
+    "UI-PPH-0010": "設定",
+    "UI-PPH-0011": "Agent設定",
+    "UI-PPH-0012": "Workspace設定",
+    "UI-PPH-0201": "Sort: updated_at desc (固定)",
     "UI-PPH-0202": "Filter: none (MVP)",
-    "UI-PPH-0203": "Limit: 50 (�b��)",
+    "UI-PPH-0203": "Limit: 50 (暫定)",
     "UI-PPH-0204": "Task Detail",
     "UI-PPH-0205": "Gate Panel",
     "UI-PPH-0206": "Reject Reason",
@@ -69,55 +69,55 @@ const UI_TEXT = {
 
 const DYNAMIC_TEXT = {
   ja: {
-    detail: "�ڍ�",
-    start: "����",
-    submit: "��o",
-    gate: "Gate����",
-    resubmit: "�Ē�o",
-    selectedTask: "�I��Task",
-    description: "���",
-    constraints: "����`�F�b�N",
+    detail: "詳細",
+    start: "開始",
+    submit: "提出",
+    gate: "Gate審査",
+    resubmit: "再提出",
+    selectedTask: "選択Task",
+    description: "説明",
+    constraints: "制約チェック",
     evidence: "Evidence",
     replay: "Replay",
-    gateDecision: "Gate����",
-    gateReason: "���藝�R",
-    gateFixes: "�C������",
-    fixCondition: "�C�����",
-    openGate: "Gate Panel��J��",
-    close: "����",
-    noTaskSelected: "Task��I����Ă��������B",
-    noTask: "Task������܂���B",
-    noJob: "Cron������܂���B",
-    schedule: "���s����",
-    instruction: "�w��",
-    lastRun: "�ŏI���s",
+    gateDecision: "Gate判定",
+    gateReason: "判定理由",
+    gateFixes: "修正項目",
+    fixCondition: "修正条件",
+    openGate: "Gate Panelを開く",
+    close: "閉じる",
+    noTaskSelected: "Taskを選択してください。",
+    noTask: "Taskはまだありません。",
+    noJob: "Cronはまだありません。",
+    schedule: "実行間隔",
+    instruction: "指示",
+    lastRun: "最終実行",
     gateProfile: "Gate",
-    gateReviewBy: "Gate����",
-    gateOnlyToGate: "���݂̏�Ԃł�Gate����͎��s�ł��܂���B",
-    rejectReasonPlaceholder: "�����߂����R�i�ő�3���ځj",
-    gateReasonTemplateLabel: "���R�e���v���[�g",
-    settingsReadonly: "MVP: �ݒ�͉{���̂�",
-    view: "�\��",
-    guideHint: "Guide�Ɖ�b���Ȃ���^�X�N���E�i���X�V�ł��܂��B",
-    guideInputPlaceholder: "Guide�փ��b�Z�[�W����́iEnter�ő��M / Shift+Enter�ŉ��s�j",
-    guideSend: "���M",
-    guideSending: "���M��",
+    gateReviewBy: "Gate審査",
+    gateOnlyToGate: "現在の状態ではGate審査は実行できません。",
+    rejectReasonPlaceholder: "差し戻し理由（最大3項目）",
+    gateReasonTemplateLabel: "理由テンプレート",
+    settingsReadonly: "MVP: 設定は閲覧のみ",
+    view: "表示",
+    guideHint: "Guideと会話しながらタスク化と進捗更新ができます。",
+    guideInputPlaceholder: "Guideへメッセージを入力（Enterで送信 / Shift+Enterで改行）",
+    guideSend: "送信",
+    guideSending: "送信中",
     senderGuide: "guide",
     senderYou: "you",
     senderSystem: "system",
     errorToastTitle: "Error",
     errorToastClose: "close",
-    eventSearchPlaceholder: "�C�x���g�����iID/�v��/��ʁj",
-    eventTypeAll: "���: ���ׂ�",
-    eventTypeDispatch: "���: dispatch",
-    eventTypeGate: "���: gate",
-    eventTypeTask: "���: task",
-    eventTypeJob: "���: cron",
-    eventTypeResubmit: "���: resubmit",
-    eventTypePlan: "���: plan",
-    pagePrev: "�O��",
-    pageNext: "����",
-    eventNoMatch: "����Ɉ�v����C�x���g������܂���B",
+    eventSearchPlaceholder: "イベント検索（ID/概要/種別）",
+    eventTypeAll: "種別: すべて",
+    eventTypeDispatch: "種別: dispatch",
+    eventTypeGate: "種別: gate",
+    eventTypeTask: "種別: task",
+    eventTypeJob: "種別: cron",
+    eventTypeResubmit: "種別: resubmit",
+    eventTypePlan: "種別: plan",
+    pagePrev: "前へ",
+    pageNext: "次へ",
+    eventNoMatch: "条件に一致するイベントはありません。",
   },
   en: {
     detail: "Detail",
@@ -174,67 +174,67 @@ const DYNAMIC_TEXT = {
 
 const MESSAGE_TEXT = {
   "MSG-PPH-0001": {
-    ja: "Plan Card��쐬���܂����B",
+    ja: "Plan Cardを作成しました。",
     en: "Plan card created.",
   },
   "MSG-PPH-0002": {
-    ja: "Task��Pal�֔z�z���܂����B",
+    ja: "TaskをPalへ割り当てました。",
     en: "Tasks dispatched to Pal.",
   },
   "MSG-PPH-0003": {
-    ja: "Completion Ritual��ۑ�����Gate�֒�o���܂����B",
+    ja: "Completion Ritualを保存してGateへ提出しました。",
     en: "Completion ritual saved and submitted to Gate.",
   },
   "MSG-PPH-0004": {
-    ja: "Gate�����L�^���܂����B",
+    ja: "Gate判定を記録しました。",
     en: "Gate decision recorded.",
   },
   "MSG-PPH-0005": {
-    ja: "�����߂�Task��Ē�o���܂����B",
+    ja: "差し戻しTaskを再提出しました。",
     en: "Rejected task resubmitted.",
   },
   "MSG-PPH-0007": {
-    ja: "Pal�����K�p���܂����B",
+    ja: "Pal設定を適用しました。",
     en: "Pal constraints applied.",
   },
   "MSG-PPH-0008": {
-    ja: "Plan������ʒm���܂����B",
+    ja: "Plan完了を通知しました。",
     en: "Plan completion was posted.",
   },
   "MSG-PPH-0009": {
-    ja: "Guide�`���b�g��X�V���܂����B",
+    ja: "Guideチャットを更新しました。",
     en: "Guide chat updated.",
   },
   "MSG-PPH-1001": {
-    ja: "���͓�e��m�F���Ă��������B",
+    ja: "入力内容を確認してください。",
     en: "Check your input.",
   },
   "MSG-PPH-1002": {
-    ja: "�������^�C���A�E�g���܂����B�Ď��s���Ă��������B",
+    ja: "処理がタイムアウトしました。再試行してください。",
     en: "Operation timed out. Please retry.",
   },
   "MSG-PPH-1003": {
-    ja: "�ۑ��Ɏ��s���܂����B�ۑ����m�F���Ă��������B",
+    ja: "保存に失敗しました。保存先を確認してください。",
     en: "Failed to save. Check storage destination.",
   },
   "MSG-PPH-1004": {
-    ja: "�Ώۃf�[�^��������܂���B",
+    ja: "対象データが見つかりません。",
     en: "Target data not found.",
   },
   "MSG-PPH-1005": {
-    ja: "�Z�[�t�e�B����ɂ�葀���u���b�N���܂����B",
+    ja: "セーフティ制約により操作をブロックしました。",
     en: "Operation blocked by safety constraints.",
   },
   "MSG-PPH-1006": {
-    ja: "���݂̏�Ԃł͂��̑���͎��s�ł��܂���B",
+    ja: "現在の状態ではこの操作は実行できません。",
     en: "This action is not available in the current state.",
   },
   "MSG-PPH-1007": {
-    ja: "Reject���͂��������𒴂��Ă��܂��B",
+    ja: "Reject入力が上限を超えています。",
     en: "Reject input exceeds limit.",
   },
   "MSG-PPH-1008": {
-    ja: "��������ɕs����������܂��B��Ԃ�Ċm�F���Ă��������B",
+    ja: "完了状態に不整合があります。状態を確認してください。",
     en: "Completion state is inconsistent. Check statuses.",
   },
   "MSG-PPH-1010": {
@@ -320,22 +320,22 @@ const LEGACY_SETTINGS_LOCAL_STORAGE_KEYS = ["palpal-hive.settings.v1"];
 const GATE_REASON_TEMPLATES = [
   {
     id: "missing-evidence",
-    ja: "Evidence�s��",
+    ja: "Evidence不足",
     en: "Missing evidence",
   },
   {
     id: "missing-test",
-    ja: "�e�X�g�s��",
+    ja: "テスト不足",
     en: "Insufficient tests",
   },
   {
     id: "spec-mismatch",
-    ja: "�d�l�Ƃ̍�������",
+    ja: "仕様との整合不足",
     en: "Spec mismatch",
   },
   {
     id: "needs-retry-steps",
-    ja: "�Č��菇�𖾊m��",
+    ja: "再現手順を明確化",
     en: "Clarify repro steps",
   },
 ];
@@ -960,7 +960,7 @@ let guideMessages = [
     timestamp: "09:20",
     sender: "guide",
     text: {
-      ja: "Plan Card���Ă��܂��BTask��3���ɕ������܂��B",
+      ja: "Plan Cardを立てます。Taskを3件に分解します。",
       en: "I propose a plan card. Splitting into 3 tasks.",
     },
   },
@@ -968,7 +968,7 @@ let guideMessages = [
     timestamp: "09:23",
     sender: "system",
     text: {
-      ja: "Plan�͏��F�ς݂ł��BTask�z�z�ς݁B",
+      ja: "Planは承認済みです。Task配布済み。",
       en: "Plan approved. Tasks dispatched.",
     },
   },
@@ -1121,18 +1121,19 @@ const workspaceAgentSelection = { ...DEFAULT_AGENT_SELECTION };
 
 let events = [
   makeEvent("dispatch", "TASK-001", "ok", {
-    ja: "TASK-001 ��pal-alpha �ɔz�z���܂����B",
+    ja: "TASK-001 を pal-alpha に割り当てました。",
     en: "TASK-001 dispatched to pal-alpha.",
   }, "09:24"),
   makeEvent("gate", "TASK-003", "rejected", {
-    ja: "TASK-003 ������߂��܂����B",
+    ja: "TASK-003 を差し戻しました。",
     en: "TASK-003 was rejected.",
   }, "09:46"),
   makeEvent("dispatch", "JOB-001", "ok", {
-    ja: "JOB-001 ��pal-alpha �ɔz�z���܂����B",
+    ja: "JOB-001 を pal-alpha に割り当てました。",
     en: "JOB-001 dispatched to pal-alpha.",
   }, "09:52"),
 ];
+let progressLogEntries = [];
 
 function makeEvent(type, targetId, result, summary, timestamp) {
   eventSeq += 1;
@@ -1502,7 +1503,7 @@ function buildGateResultRecord(decision, reasonText) {
   return {
     decision: normalizedDecision,
     reason: reason || (normalizedDecision === "approved"
-      ? (locale === "ja" ? "�����𖞂��������ߏ��F" : "Approved because the evidence is sufficient.")
+      ? (locale === "ja" ? "根拠を満たしているため承認" : "Approved because the evidence is sufficient.")
       : "-"),
     fixes,
   };
@@ -1612,11 +1613,11 @@ function applyBoardStateSnapshot(snapshot) {
 function projectFocusLabel(project) {
   if (!project) {
     return locale === "ja"
-      ? "�t�H�[�J�X: ���ݒ�"
+      ? "フォーカス: 未設定"
       : "Focus: Not set";
   }
   return locale === "ja"
-    ? `�t�H�[�J�X: ${project.name} (${project.directory})`
+    ? `フォーカス: ${project.name} (${project.directory})`
     : `Focus: ${project.name} (${project.directory})`;
 }
 
@@ -1675,7 +1676,7 @@ function addProjectByDirectory(directory) {
   }
   if (projectByDirectory(normalizedDirectory)) {
     showProjectInfoDialog(
-      "�v���W�F�N�g�͊��Ɋ܂܂�Ă��܂��B",
+      "プロジェクトは既に含まれています。",
       "Project is already included."
     );
     setMessage("MSG-PPH-1006");
@@ -1732,13 +1733,13 @@ function renderProjectTab() {
   ensureProjectStateConsistency();
   const labels = locale === "ja"
     ? {
-      name: "�v���W�F�N�g��",
-      directory: "�f�B���N�g��",
-      add: "�v���W�F�N�g��ǉ�",
-      remove: "�ꗗ����O��",
-      empty: "�v���W�F�N�g�͂���܂���",
-      note: "@project / @project:file �Q�ƁA/use project �Ńt�H�[�J�X�X�V�i�ꗗ����O���Ă�t�H���_�͍폜����܂���j",
-      pickerHelp: "�f�B���N�g����I�����ƁA�����t�H���_����v���W�F�N�g���Ƃ��Ēǉ����܂�",
+      name: "プロジェクト名",
+      directory: "ディレクトリ",
+      add: "プロジェクトを追加",
+      remove: "一覧から外す",
+      empty: "プロジェクトはありません",
+      note: "@project / @project:file 参照、/use project でフォーカス切替（一覧から外してもフォルダは削除されません）",
+      pickerHelp: "ディレクトリを選ぶと、最後のフォルダ名をプロジェクト名として追加します",
     }
     : {
       name: "Project Name",
@@ -3102,7 +3103,7 @@ function splitSystemPromptFromContextMessages(messages, fallbackSystemPrompt, la
 function buildFallbackLanguagePrompt() {
   return locale === "en"
     ? "Unless the user explicitly requests another language, answer in English."
-    : "���[�U�[�������I�ɕʌ����v�����Ȃ�����A�K�����{��ŉ񓚂���B";
+    : "ユーザーから明示的な言語指定がない限り、日本語で応答する。";
 }
 
 function buildFallbackIdentitySystemPrompt(basePrompt, identity) {
@@ -3440,8 +3441,8 @@ async function createPlannedTasksFromGuideRequest(userText) {
     created.push(task);
     const routingExplanation = formatWorkerRoutingExplanation(assignment?.explanation);
     const summaryJa = routingExplanation.ja
-      ? `${task.id} ��${palId} �ɔz�z���܂��� (${routingExplanation.ja})�B`
-      : `${task.id} ��${palId} �ɔz�z���܂����B`;
+      ? `${task.id} を ${palId} に割り当てました (${routingExplanation.ja})。`
+      : `${task.id} を ${palId} に割り当てました。`;
     const summaryEn = routingExplanation.en
       ? `${task.id} dispatched to ${palId} (${routingExplanation.en}).`
       : `${task.id} dispatched to ${palId}.`;
@@ -3452,6 +3453,17 @@ async function createPlannedTasksFromGuideRequest(userText) {
       summaryJa,
       summaryEn
     );
+    void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: summaryJa,
+      messageEn: summaryEn,
+      payload: {
+        workerId: palId,
+        routingExplanation,
+      },
+    });
   });
   if (created.length > 0 && !selectedTaskId) {
     selectedTaskId = created[0].id;
@@ -3522,12 +3534,23 @@ async function createPlannedTasksFromGuidePlan(plan) {
     created.push(task);
     const routingExplanation = formatWorkerRoutingExplanation(explanation);
     const summaryJa = routingExplanation.ja
-      ? `${task.id} ��${workerId} �ɔz�z���܂��� (${routingExplanation.ja})�B`
-      : `${task.id} ��${workerId} �ɔz�z���܂����B`;
+      ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
+      : `${task.id} を ${workerId} に割り当てました。`;
     const summaryEn = routingExplanation.en
       ? `${task.id} dispatched to ${workerId} (${routingExplanation.en}).`
       : `${task.id} dispatched to ${workerId}.`;
     appendEvent("dispatch", task.id, "ok", summaryJa, summaryEn);
+    void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: summaryJa,
+      messageEn: summaryEn,
+      payload: {
+        workerId,
+        routingExplanation,
+      },
+    });
   });
 
   if (created.length > 0 && !selectedTaskId) {
@@ -3595,7 +3618,7 @@ function buildGuideReplyWithFallback(userText, guideState) {
   }
   const clipped = userText.length > 28 ? `${userText.slice(0, 28)}...` : userText;
   return {
-    ja: `${providerText}/${guideState.modelName} �Ŏ󂯎��܂����B�u${clipped}�v����Ɏ���Task�Ă�쐬���܂��B`,
+    ja: `${providerText}/${guideState.modelName} で受け取りました。「${clipped}」をもとに次のTaskを組み立てます。`,
     en: `Received via ${providerText}/${guideState.modelName}. I will draft next tasks from "${clipped}".`,
   };
 }
@@ -3606,7 +3629,7 @@ function buildGuideModelRequiredPromptWithFallback() {
     return external.buildGuideModelRequiredPrompt();
   }
   return {
-    ja: "Guide���f�������ݒ�ł��BSettings�^�u�Ń��f����ݒ肵�Ă��������B",
+    ja: "Guideモデルが未設定です。Settingsタブでモデルを設定してください。",
     en: "Guide model is not configured. Configure a model in Settings tab.",
   };
 }
@@ -3829,15 +3852,15 @@ function buildFallbackGuidePlanOutputInstruction() {
       "Use status=plan_ready only when you have enough information to create an actionable plan.",
     ].join("\n")
     : [
-      "JSON�݂̂ŕԂ��BMarkdown �� code fence �͎g��Ȃ��B",
+      "JSONのみで返す。Markdown や code fence は使わない。",
       'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
-      "�G�k�E�Ǒł��E���k�i�K�ŁA�܂��^�X�N������߂��Ă��Ȃ����� status=conversation ��Ԃ��B",
-      "task ����~�߂�B��̌�����񂪂��鎞���� status=needs_clarification ��Ԃ��B",
-      "���[�U�[�� plan �� task ����𖾎����A�ΏہE���Ҍ��ʁE�֘A�t�@�C���E�g���� tool �̑�����n���Ă���ꍇ�́A�c��� assumptions �Ƃ��� constraints �ɓ���� status=plan_ready ��Ԃ��B",
-      "�y���ȕs�����ł���΁A�ǉ��m�F�ł͂Ȃ� constraints �ɉ����c���� plan_ready ��D�悷��B",
-      "��� Pal ��g���� tool �������ɂ��鎞�́A�S�� Pal ����[�U�[�֕����Ԃ��� Guide ���g���I�ԁB",
-      "debug workspace �ł� simple-role worker ��D�悵�Atrace �� Trace Worker�Afix �� Fix Worker�Averification �� Verify Worker �Ɋ񂹂�B",
-      "���s�\�Ȍv�����鎞���� status=plan_ready ��Ԃ��B",
+      "ユーザーが雑談中、壁打ち中、またはまだtask分解を求めていないなら status=conversation を返す。",
+      "task 作成を妨げる欠落情報がある時だけ status=needs_clarification を返す。",
+      "ユーザーが plan や task 分解を明示し、対象・期待結果・関連ファイル・使える tools を示しているなら status=plan_ready を優先する。",
+      "細部が不足しているだけなら、確認質問を増やさず assumptions を constraints に入れる。",
+      "文脈に suitable Pals and tools があるなら、ユーザーに assignee Pal を選ばせず自分で選ぶ。",
+      "debug workspace では simple-role worker を優先し、trace は Trace Worker、fix は Fix Worker、verification は Verify Worker に割り当てる。",
+      "実行可能な計画が作れる時だけ status=plan_ready を返す。",
     ].join("\n");
 }
 
@@ -3892,9 +3915,9 @@ function syncGuideVisualState() {
 function palRoleLabel(role) {
   const normalized = normalizePalRole(role);
   if (locale === "ja") {
-    if (normalized === "guide") return "Guide��";
-    if (normalized === "gate") return "Gate��";
-    return "�ʏ�Pal";
+    if (normalized === "guide") return "Guide役";
+    if (normalized === "gate") return "Gate役";
+    return "通常Pal";
   }
   if (normalized === "guide") return "Guide";
   if (normalized === "gate") return "Gate";
@@ -4200,12 +4223,93 @@ function formatNow() {
   return `${y}-${m}-${day} ${h}:${min}`;
 }
 
+function resolveProgressLogApi() {
+  if (window.TomoshibikanProgressLog && typeof window.TomoshibikanProgressLog === "object") {
+    return window.TomoshibikanProgressLog;
+  }
+  if (window.PalpalProgressLog && typeof window.PalpalProgressLog === "object") {
+    return window.PalpalProgressLog;
+  }
+  return null;
+}
+
+function appendTaskProgressLogEntryLocal(payload) {
+  const entry = {
+    entryId: normalizeText(payload?.entryId) || `progress-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: normalizeText(payload?.createdAt) || new Date().toISOString(),
+    planId: normalizeText(payload?.planId),
+    targetKind: normalizeText(payload?.targetKind),
+    targetId: normalizeText(payload?.targetId),
+    actionType: normalizeText(payload?.actionType),
+    status: normalizeText(payload?.status) || "ok",
+    actualActor: normalizeText(payload?.actualActor) || "orchestrator",
+    displayActor: normalizeText(payload?.displayActor) || "Guide",
+    messageForUser: normalizeText(payload?.messageForUser),
+    payload: payload?.payload && typeof payload.payload === "object" ? payload.payload : {},
+    sourceRunId: normalizeText(payload?.sourceRunId),
+  };
+  progressLogEntries.unshift(entry);
+  progressLogEntries = progressLogEntries.slice(0, 200);
+  return entry;
+}
+
+async function appendTaskProgressLogEntryWithFallback(payload) {
+  const api = resolveProgressLogApi();
+  if (api && typeof api.append === "function") {
+    return api.append(payload);
+  }
+  return appendTaskProgressLogEntryLocal(payload);
+}
+
+async function listTaskProgressLogEntriesWithFallback(options = {}) {
+  const api = resolveProgressLogApi();
+  if (api && typeof api.list === "function") {
+    return api.list(options);
+  }
+  const targetKind = normalizeText(options.targetKind);
+  const targetId = normalizeText(options.targetId);
+  const planId = normalizeText(options.planId);
+  const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+  return progressLogEntries
+    .filter((entry) => (!targetKind || entry.targetKind === targetKind))
+    .filter((entry) => (!targetId || entry.targetId === targetId))
+    .filter((entry) => (!planId || entry.planId === planId))
+    .slice(0, limit);
+}
+
+async function getLatestTaskProgressLogEntryWithFallback(options = {}) {
+  const api = resolveProgressLogApi();
+  if (api && typeof api.latest === "function") {
+    return api.latest(options);
+  }
+  const rows = await listTaskProgressLogEntriesWithFallback({ ...options, limit: 1 });
+  return rows[0] || null;
+}
+
 function appendEvent(type, targetId, result, summaryJa, summaryEn) {
   events.unshift(
     makeEvent(type, targetId, result, { ja: summaryJa, en: summaryEn }, formatNow().slice(11))
   );
   events = events.slice(0, 50);
   eventPage = 1;
+}
+
+function appendTaskProgressLogForTarget(targetKind, targetId, actionType, options = {}) {
+  const messageForUser = locale === "ja"
+    ? normalizeText(options.messageJa)
+    : normalizeText(options.messageEn || options.messageJa);
+  return appendTaskProgressLogEntryWithFallback({
+    planId: normalizeText(options.planId || "PLAN-001"),
+    targetKind,
+    targetId,
+    actionType,
+    status: normalizeText(options.status || "ok"),
+    actualActor: normalizeText(options.actualActor || "orchestrator"),
+    displayActor: normalizeText(options.displayActor || "Guide"),
+    messageForUser,
+    payload: options.payload && typeof options.payload === "object" ? options.payload : {},
+    sourceRunId: normalizeText(options.sourceRunId),
+  });
 }
 
 function formatWorkerRoutingExplanation(explanation) {
@@ -4415,7 +4519,7 @@ function resolveGuideFocusCommandTarget(text) {
   if (!trimmed) return "";
   const slashUse = trimmed.match(/^\/use\s+(.+)$/i);
   if (slashUse && slashUse[1]) return normalizeProjectName(slashUse[1]);
-  const openJa = trimmed.match(/^(.+?)��J����$/);
+  const openJa = trimmed.match(/^(.+?)を開いて$/);
   if (openJa && openJa[1]) return normalizeProjectName(openJa[1]);
   const openEn = trimmed.match(/^open\s+(.+)$/i);
   if (openEn && openEn[1]) return normalizeProjectName(openEn[1]);
@@ -4425,14 +4529,14 @@ function resolveGuideFocusCommandTarget(text) {
 function buildGuideProjectFocusUpdatedText(project) {
   if (!project) return "";
   if (locale === "ja") {
-    return `�v���W�F�N�g�t�H�[�J�X�� ${project.name} �ɐ؂�ւ��܂����B`;
+    return `プロジェクトフォーカスを ${project.name} に切り替えました。`;
   }
   return `Project focus switched to ${project.name}.`;
 }
 
 function buildGuideProjectNotFoundText(projectName) {
   if (locale === "ja") {
-    return `�v���W�F�N�g�u${projectName}�v��������܂���BProject�^�u�œo�^���Ă��������B`;
+    return `プロジェクト「${projectName}」が見つかりません。Projectタブで登録してください。`;
   }
   return `Project "${projectName}" was not found. Add it from the Project tab.`;
 }
@@ -4468,6 +4572,189 @@ function handleGuideFocusCommand(userText) {
   setMessage("MSG-PPH-0009");
   renderGuideChat();
   return { handled: true, ok: true };
+}
+
+function isGuideProgressQuery(text) {
+  const normalized = normalizeText(text).toLowerCase();
+  if (!normalized) return false;
+  const patterns = [
+    "どうなった",
+    "進捗",
+    "状況",
+    "今どこ",
+    "終わった",
+    "完了",
+    "さっきお願い",
+    "いまどう",
+    "status",
+    "progress",
+    "how is",
+    "what happened",
+    "done yet",
+  ];
+  return patterns.some((pattern) => normalized.includes(pattern));
+}
+
+function resolveGuideProgressQueryTarget(text) {
+  const normalized = normalizeText(text);
+  const explicitTask = normalized.match(/\b(TASK-\d{3})\b/i);
+  if (explicitTask && explicitTask[1]) {
+    return {
+      targetKind: "task",
+      targetId: explicitTask[1].toUpperCase(),
+    };
+  }
+  const explicitJob = normalized.match(/\b(JOB-\d{3})\b/i);
+  if (explicitJob && explicitJob[1]) {
+    return {
+      targetKind: "job",
+      targetId: explicitJob[1].toUpperCase(),
+    };
+  }
+  return null;
+}
+
+function resolveBoardTargetRecord(targetKind, targetId) {
+  if (targetKind === "job") {
+    return jobs.find((job) => job.id === targetId) || null;
+  }
+  if (targetKind === "task") {
+    return tasks.find((task) => task.id === targetId) || null;
+  }
+  return null;
+}
+
+function shouldRequireReplanFromGateResult(gateResult) {
+  const decision = normalizeText(gateResult?.decision);
+  if (decision !== "rejected") return false;
+  const reason = normalizeText(gateResult?.reason).toLowerCase();
+  const fixCondition = normalizeText(gateResult?.fixCondition).toLowerCase();
+  const fixes = Array.isArray(gateResult?.fixes)
+    ? gateResult.fixes.map((item) => normalizeText(item).toLowerCase()).filter(Boolean)
+    : [];
+  const haystacks = [reason, fixCondition, ...fixes].filter(Boolean);
+  if (haystacks.length === 0) return false;
+  const keywords = [
+    "再計画",
+    "再プラン",
+    "進め方",
+    "方針",
+    "前提",
+    "要件",
+    "スコープ",
+    "plan",
+    "replan",
+    "scope",
+    "requirement",
+    "requirements",
+    "assumption",
+    "approach",
+  ];
+  return haystacks.some((text) => keywords.some((keyword) => text.includes(keyword)));
+}
+
+function buildGuideReplanRequiredText(targetKind, target, latestEntry) {
+  const label = targetKind === "job" ? "Job" : "Task";
+  const display = normalizeText(target?.title) || normalizeText(target?.id) || label;
+  const payload = latestEntry?.payload || {};
+  const gateReason = normalizeText(payload?.gateResult?.reason);
+  if (locale === "ja") {
+    const suffix = gateReason ? ` Gate では「${gateReason}」という判断でした。` : "";
+    return `${display} は再計画が必要な状態です。いまの進め方と前提を見直す段階に入っています。${suffix}`.trim();
+  }
+  const suffix = gateReason ? ` Gate noted: "${gateReason}".` : "";
+  return `${display} requires replanning. The current approach and assumptions need to be revisited.${suffix}`.trim();
+}
+
+function buildGuideProgressStatusText(targetKind, target) {
+  const label = targetKind === "job" ? "Job" : "Task";
+  const display = normalizeText(target?.title) || normalizeText(target?.id) || label;
+  const status = normalizeText(target?.status);
+  if (locale === "ja") {
+    if (status === "done") {
+      return `${display} は完了しています。直近では Gate が承認しました。`;
+    }
+    if (status === "to_gate") {
+      return `${display} は Gate の確認待ちです。`;
+    }
+    if (status === "rejected") {
+      return `${display} は差し戻しになっています。修正条件を確認して再提出が必要です。`;
+    }
+    if (status === "in_progress") {
+      return `${display} は実行中です。住人が作業を進めています。`;
+    }
+    if (status === "assigned") {
+      return `${display} は割り当て済みです。これから着手できます。`;
+    }
+    return `${display} の最新状態を確認中です。`;
+  }
+  if (status === "done") {
+    return `${display} is complete. The latest gate review approved it.`;
+  }
+  if (status === "to_gate") {
+    return `${display} is waiting for gate review.`;
+  }
+  if (status === "rejected") {
+    return `${display} was rejected and needs fixes before resubmission.`;
+  }
+  if (status === "in_progress") {
+    return `${display} is in progress. A resident is working on it.`;
+  }
+  if (status === "assigned") {
+    return `${display} is assigned and ready to start.`;
+  }
+  return `Checking the latest state for ${display}.`;
+}
+
+function buildGuideProgressLogSuffix(latestEntry) {
+  const actor = normalizeText(latestEntry?.displayActor);
+  const actionType = normalizeText(latestEntry?.actionType);
+  if (!actionType) return "";
+  if (locale === "ja") {
+    if (actor && latestEntry?.messageForUser) {
+      return ` 直近の記録: ${actor} が「${latestEntry.messageForUser}」と残しています。`;
+    }
+    if (latestEntry?.messageForUser) {
+      return ` 直近の記録: ${latestEntry.messageForUser}`;
+    }
+    return "";
+  }
+  if (actor && latestEntry?.messageForUser) {
+    return ` Latest note: ${actor} recorded "${latestEntry.messageForUser}".`;
+  }
+  if (latestEntry?.messageForUser) {
+    return ` Latest note: ${latestEntry.messageForUser}`;
+  }
+  return "";
+}
+
+async function buildGuideProgressQueryReply(text) {
+  if (!isGuideProgressQuery(text)) return null;
+  const explicitTarget = resolveGuideProgressQueryTarget(text);
+  let latestEntry = null;
+  if (explicitTarget) {
+    latestEntry = await getLatestTaskProgressLogEntryWithFallback(explicitTarget);
+  } else {
+    const rows = await listTaskProgressLogEntriesWithFallback({ limit: 1 });
+    latestEntry = rows[0] || null;
+  }
+  if (!latestEntry) return {
+    handled: true,
+    text: locale === "ja"
+      ? "まだ進捗記録がありません。これから受け付けた依頼がある場合は、その task が動き出すと記録されます。"
+      : "There are no progress records yet. Once a request starts moving, it will appear here.",
+  };
+  const targetKind = normalizeText(latestEntry.targetKind);
+  const targetId = normalizeText(latestEntry.targetId);
+  const target = resolveBoardTargetRecord(targetKind, targetId);
+  const summary = normalizeText(latestEntry.actionType) === "replan_required"
+    ? buildGuideReplanRequiredText(targetKind, target || { id: targetId }, latestEntry)
+    : buildGuideProgressStatusText(targetKind, target || { id: targetId });
+  const suffix = buildGuideProgressLogSuffix(latestEntry);
+  return {
+    handled: true,
+    text: `${summary}${suffix}`.trim(),
+  };
 }
 
 function normalizeGuideReferenceToken(rawToken) {
@@ -4773,7 +5060,7 @@ function handleGuideMentionMenuKeydown(event) {
 
 function buildGuideModelFailedPrompt() {
   return {
-    ja: "Guide���f���̉����擾�Ɏ��s���܂����BSettings�̐ڑ�����m�F���Ă��������B",
+    ja: "Guideモデルの応答取得に失敗しました。Settings の接続設定を確認してください。",
     en: "Failed to get response from Guide model. Check model settings and connectivity.",
   };
 }
@@ -4820,6 +5107,22 @@ async function sendGuideMessage() {
     sender: "you",
     text: { ja: text, en: text },
   });
+  const progressReply = await buildGuideProgressQueryReply(text);
+  if (progressReply?.handled) {
+    guideMessages.push({
+      timestamp: formatNow().slice(11),
+      sender: "guide",
+      text: {
+        ja: progressReply.text,
+        en: progressReply.text,
+      },
+    });
+    input.value = "";
+    closeGuideMentionMenu();
+    renderGuideChat();
+    setMessage("MSG-PPH-0009");
+    return;
+  }
   guideSendInFlight = true;
   setGuideComposerBusy(true);
   try {
@@ -5261,15 +5564,15 @@ function renderIdentityEditorModal() {
   const isJa = locale === "ja";
   titleEl.textContent = `${pal.displayName} / ${fileName}`;
   metaEl.textContent = isJa
-    ? `${palRoleLabel(pal.role)} �� ${fileName} ��ҏW`
+    ? `${palRoleLabel(pal.role)} の ${fileName} を編集`
     : `Edit ${fileName} for ${palRoleLabel(pal.role)}`;
   statusEl.textContent = identityEditorState.loading
-    ? (isJa ? "�ǂݍ��ݒ�..." : "Loading...")
-    : (identityEditorState.saving ? (isJa ? "�ۑ���..." : "Saving...") : "");
+    ? (isJa ? "読み込み中..." : "Loading...")
+    : (identityEditorState.saving ? (isJa ? "保存中..." : "Saving...") : "");
   textareaEl.value = identityEditorState.text;
   textareaEl.disabled = identityEditorState.loading || identityEditorState.saving;
-  saveEl.textContent = isJa ? "�ۑ�" : "Save";
-  cancelEl.textContent = isJa ? "�L�����Z��" : "Cancel";
+  saveEl.textContent = isJa ? "保存" : "Save";
+  cancelEl.textContent = isJa ? "キャンセル" : "Cancel";
   saveEl.disabled = identityEditorState.loading || identityEditorState.saving;
   cancelEl.disabled = identityEditorState.saving;
 
@@ -5581,38 +5884,38 @@ function renderPalList() {
 
   const labels = locale === "ja"
     ? {
-      role: "�^�C�v",
-      runtime: "�g�p�����^�C��",
+      role: "タイプ",
+      runtime: "使用ランタイム",
       runtimeModel: "Model",
       runtimeTool: "CLI",
-      runtimeType: "���s����",
-      runtimeTargetModel: "LLM���f��",
-      runtimeTargetTool: "CLI�c�[��",
-      categoryName: "���O",
+      runtimeType: "実行方式",
+      runtimeTargetModel: "LLMモデル",
+      runtimeTargetTool: "CLIツール",
+      categoryName: "名前",
       categoryRuntime: "Runtime",
       categorySkills: "Skills",
       categoryIdentity: "Identity Files",
-      name: "�\����",
-      save: "�ۑ�",
-      addGuide: "Guide��ǉ�",
-      addGate: "Gate��ǉ�",
-      addPal: "Pal��ǉ�",
-      setActiveGuide: "Guide�ɐؑ�",
-      setDefaultGate: "Gate�ɐݒ�",
+      name: "表示名",
+      save: "保存",
+      addGuide: "Guideを追加",
+      addGate: "Gateを追加",
+      addPal: "Palを追加",
+      setActiveGuide: "Guideに切替",
+      setDefaultGate: "Gateに設定",
       activeGuideBadge: "Active Guide",
       defaultGateBadge: "Default Gate",
-      editPal: "�ݒ�",
-      editSoul: "SOUL��ҏW",
-      editSecondary: "����t�@�C����ҏW",
-      deletePal: "�폜",
-      addHint: "Settings�œo�^�ς݂�LLM���f�� / CLI�c�[�� / Skills�̂ݗ��p�ł��܂�",
-      noModels: "���p�\��LLM���f��������܂���",
-      noTools: "���p�\��CLI�c�[��������܂���",
-      noProfiles: "Pal������܂���B�ǉ����Ă��������B",
-      noSkills: "���p�\��Skills������܂���",
-      noSkillsCompact: "�X�L���Ȃ�",
-      skillsModelOnly: "Skills�̓��f�����s���̂ݗL���ł�",
-      modalTitleDefault: "Pal�ݒ�",
+      editPal: "設定",
+      editSoul: "SOULを編集",
+      editSecondary: "補助ファイルを編集",
+      deletePal: "削除",
+      addHint: "Settingsで登録済みのLLMモデル / CLIツール / Skillsのみ利用できます",
+      noModels: "利用可能なLLMモデルがありません",
+      noTools: "利用可能なCLIツールがありません",
+      noProfiles: "Palがありません。追加してください。",
+      noSkills: "利用可能なSkillsがありません",
+      noSkillsCompact: "スキルなし",
+      skillsModelOnly: "Skillsはモデル実行時のみ有効です",
+      modalTitleDefault: "Pal設定",
     }
     : {
       role: "Type",
@@ -5852,70 +6155,70 @@ function renderSettingsTab() {
   const labels = isJa
     ? {
       language: "Language",
-      languageItem: "�\������",
+      languageItem: "表示言語",
       languageSection: "Language",
       handoffSection: "Execution Loop",
       handoffItem: "Context Handoff Policy",
-      handoffHint: "Guide ���� Worker/Gate �֓n�������ʂ𐧌䂵�܂�",
+      handoffHint: "Guide から Worker/Gate へ渡す文脈量を制御します",
       guideAssistItem: "Guide controller assist",
-      guideAssistHint: "�����OFF�BON�ɂ���� planning trigger / readiness �� controller ���⏕���܂�",
+      guideAssistHint: "既定は OFF。ON にすると planning trigger / readiness を controller が補助します",
       handoffMinimal: "Minimal",
       handoffBalanced: "Balanced",
       handoffVerbose: "Verbose",
-      modelSection: "���f�� / CLI",
+      modelSection: "モデル / CLI",
       skillCategorySection: "Skills",
       models: "LLM models",
       tools: "CLI tools",
       skillSection: "Model Runtime Skills",
-      skillSectionHint: "���f�����s���ɗ��p�\�BPal���ƂɗL�����ł��܂�",
-      installedSkillsPanel: "�C���X�g�[���ς݃X�L��",
-      skillMarketPanel: "ClawHub ���� / �C���X�g�[��",
-      skillCatalogHint: "ClawHub����X�L����������ăC���X�g�[��",
-      skillSearchPlaceholder: "�����L�[���[�h�i��: browser, file, test�j",
-      skillSearchEmpty: "�Y���Ȃ�",
-      skillSearchIdle: "�L�[���[�h����͂��Č������s���Ă�������",
-      skillSearchLoading: "ClawHub�������...",
-      skillFilterGroup: "�������",
-      skillFilterNonSuspicious: "�^�킵���X�L������O",
-      skillFilterHighlightedOnly: "Highlighted�̂�",
-      skillSortLabel: "���я�",
-      skillSortDownloads: "Downloads��",
-      skillSortStars: "Stars��",
-      skillSortInstalls: "�C���X�g�[������",
-      skillSortUpdated: "�ŐV�X�V��",
-      skillSortHighlighted: "Highlighted�D��",
-      skillRecommendTitle: "���C���X�g�[����������",
-      skillRecommendEmpty: "�������ߌ��͂���܂���",
-      skillMarketOpen: "ClawHub���猟���E�C���X�g�[��",
-      skillModalTitle: "ClawHub �X�L������",
-      skillModalKeyword: "�����L�[���[�h",
-      skillModalSearch: "�������s",
-      skillModalClose: "����",
-      skillSafety: "���S��",
-      skillRating: "�]��",
+      skillSectionHint: "モデル実行時に利用可能。Palごとに有効化できます",
+      installedSkillsPanel: "インストール済みスキル",
+      skillMarketPanel: "ClawHub 検索 / インストール",
+      skillCatalogHint: "ClawHub からスキルを検索してインストール",
+      skillSearchPlaceholder: "検索キーワード（例: browser, file, test）",
+      skillSearchEmpty: "該当なし",
+      skillSearchIdle: "キーワードを入力して検索を実行してください",
+      skillSearchLoading: "ClawHub を検索中...",
+      skillFilterGroup: "絞り込み",
+      skillFilterNonSuspicious: "怪しいスキルを除外",
+      skillFilterHighlightedOnly: "Highlighted のみ",
+      skillSortLabel: "並び順",
+      skillSortDownloads: "Downloads順",
+      skillSortStars: "Stars順",
+      skillSortInstalls: "インストール数順",
+      skillSortUpdated: "最新更新順",
+      skillSortHighlighted: "Highlighted 優先",
+      skillRecommendTitle: "未インストールのおすすめ",
+      skillRecommendEmpty: "おすすめ候補はありません",
+      skillMarketOpen: "ClawHub から検索・インストール",
+      skillModalTitle: "ClawHub スキル検索",
+      skillModalKeyword: "検索キーワード",
+      skillModalSearch: "検索実行",
+      skillModalClose: "閉じる",
+      skillSafety: "安全性",
+      skillRating: "評価",
       skillDownloads: "Downloads",
       skillStars: "Stars",
       skillInstalls: "Installs",
-      skillOpenLink: "�����N",
-      skillDownload: "�C���X�g�[��",
-      skillInstallUnsupported: "�W��Skill�̂ݑΉ�",
-      noModels: "���f���͂���܂���",
-      noTools: "CLI�c�[���͂���܂���",
-      noSkills: "Skill�͂���܂���",
-      addOpen: "���ڂ�ǉ�",
-      addClose: "�ǉ��t�H�[�������",
-      add: "�ǉ�",
-      cancel: "�L�����Z��",
-      save: "�ݒ��ۑ�",
-      saveAll: "�ݒ�S�̂�ۑ�",
-      saving: "�ۑ���",
+      skillOpenLink: "リンク",
+      skillDownload: "インストール",
+      skillInstallUnsupported: "標準 Skill のみ対応",
+      noModels: "モデルはありません",
+      noTools: "CLIツールはありません",
+      noSkills: "Skill はありません",
+      addOpen: "項目を追加",
+      addClose: "追加フォームを閉じる",
+      add: "追加",
+      cancel: "キャンセル",
+      save: "設定を保存",
+      saveAll: "設定全体を保存",
+      saving: "保存中",
       summary: "models",
       summaryTools: "tools",
       summarySkills: "skills",
       selectedModels: "selected_models",
-      modelPlaceholder: "���f���� (��: gpt-4.1)",
-      unsavedChanges: "���ۑ��̕ύX������܂�",
-      savedState: "�ۑ��ς�",
+      modelPlaceholder: "モデル名 (例: gpt-4.1)",
+      unsavedChanges: "未保存の変更があります",
+      savedState: "保存済み",
     }
     : {
       language: "Language",
@@ -6047,7 +6350,7 @@ function renderSettingsTab() {
           ${model.apiKeyConfigured ? `<span class="text-xs text-base-content/60">api_key: configured</span>` : ""}
           ${model.baseUrl ? `<span class="text-xs text-base-content/60">base_url: ${escapeHtml(model.baseUrl)}</span>` : ""}
         </div>
-        <button class="btn btn-ghost btn-xs" data-remove-model-index="${index}" type="button">${isJa ? "�폜" : "Remove"}</button>
+        <button class="btn btn-ghost btn-xs" data-remove-model-index="${index}" type="button">${isJa ? "削除" : "Remove"}</button>
       </li>`)
       .join("");
 
@@ -6059,7 +6362,7 @@ function renderSettingsTab() {
           <span class="badge badge-accent badge-sm">CLI</span>
           <span class="badge badge-ghost badge-sm">${escapeHtml(tool)}</span>
         </div>
-        <button class="btn btn-ghost btn-xs" data-remove-tool-index="${index}" type="button">${isJa ? "�폜" : "Remove"}</button>
+        <button class="btn btn-ghost btn-xs" data-remove-tool-index="${index}" type="button">${isJa ? "削除" : "Remove"}</button>
       </li>`)
       .join("");
 
@@ -6087,7 +6390,7 @@ function renderSettingsTab() {
               rel="noopener noreferrer"
               data-skill-link-id="${escapeHtml(normalizedSkillId)}"
             >${escapeHtml(skillOpenLinkLabel)}</a>` : ""}
-            <button class="btn btn-ghost btn-xs" data-remove-skill-id="${escapeHtml(normalizedSkillId)}" type="button">${isJa ? "�폜" : "Remove"}</button>
+            <button class="btn btn-ghost btn-xs" data-remove-skill-id="${escapeHtml(normalizedSkillId)}" type="button">${isJa ? "削除" : "Remove"}</button>
           </div>
         </li>`;
       })
@@ -6212,7 +6515,7 @@ function renderSettingsTab() {
 
   const modelNameOptions = selectableModelOptions(settingsState.itemDraft.provider);
   const noModelOptionsForProviderLabel = isJa
-    ? "�I�����provider�ɑΉ����郂�f��������܂���"
+    ? "選択した provider に対応するモデルがありません"
     : "No models available for selected provider";
   const modelOptions = modelNameOptions.length === 0
     ? `<option value="">-</option>`
@@ -6943,8 +7246,8 @@ function buildWorkerExpectedOutput(targetKind = "task") {
       : "Complete the task and provide evidence for gate review.";
   }
   return targetKind === "job"
-    ? "������s��������A���ʗv��� Gate ����p�� evidence ��Ԃ��B"
-    : "Task ��������AGate ����p�� evidence ��Ԃ��B";
+    ? "Cron を実行し、結果要約と Gate 審査用の evidence を返す。"
+    : "Task を完了し、Gate 審査用の evidence を返す。";
 }
 
 function buildWorkerProjectContext() {
@@ -6968,7 +7271,7 @@ function buildWorkerHandoffSummary(target, targetKind = "task", pal = null, gate
   const goal = description || title || normalizeText(target?.id);
   const decisionContext = locale === "en"
     ? `Assigned to ${palName || "worker"} and reviewed by ${gateName || "default gate"}.`
-    : `${palName || "�S��Pal"} �����s���A${gateName || "����Gate"} �����肷��B`;
+    : `${palName || "担当Pal"} が実行し、${gateName || "既定Gate"} が審査する。`;
   const risks = [];
   if (gateFixes.length > 0) {
     risks.push(...gateFixes);
@@ -6981,7 +7284,7 @@ function buildWorkerHandoffSummary(target, targetKind = "task", pal = null, gate
   }
   const openQuestions = [];
   if (!description) {
-    openQuestions.push(locale === "en" ? "Instruction detail is minimal." : "�w���ڍׂ����Ȃ��B");
+    openQuestions.push(locale === "en" ? "Instruction detail is minimal." : "指示詳細が少ない。");
   }
   return {
     goal,
@@ -7061,7 +7364,7 @@ function buildWorkerExecutionUserText(executionInput) {
       risks: "risks",
       openQuestions: "open_questions",
       sourceRefs: "source_refs",
-      none: "- �Ȃ�",
+      none: "- なし",
     };
   const lines = [
     labels.header,
@@ -7241,8 +7544,8 @@ function buildGateReviewUserText(reviewInput) {
       openQuestions: "open_questions",
       sourceRefs: "source_refs",
       outputFormat: "[OutputFormat]",
-      none: "- �Ȃ�",
-      outputRule: 'JSON�݂̂ŕԂ�: {"decision":"approved|rejected","reason":"...","fixes":["..."]}',
+      none: "- なし",
+      outputRule: 'JSONのみで返す: {"decision":"approved|rejected","reason":"...","fixes":["..."]}',
     };
   const lines = [
     labels.header,
@@ -7367,18 +7670,18 @@ function renderGateRuntimeSuggestion() {
   gatePanel.setAttribute("data-gate-suggested-decision", gateRuntimeState.suggestedDecision || "none");
   if (statusEl) {
     if (gateRuntimeState.loading) {
-      statusEl.textContent = locale === "en" ? "Gate model is reviewing..." : "Gate ���f�������蒆�ł�...";
+      statusEl.textContent = locale === "en" ? "Gate model is reviewing..." : "Gate モデルが審査中です...";
     } else if (gateRuntimeState.error) {
-      statusEl.textContent = locale === "en" ? "Gate model review is unavailable." : "Gate ���f������͗��p�ł��܂���B";
+      statusEl.textContent = locale === "en" ? "Gate model review is unavailable." : "Gate モデル審査は利用できません。";
     } else if (gateRuntimeState.suggestedDecision !== "none") {
       const label = gateRuntimeState.suggestedDecision === "approved"
         ? (locale === "en" ? "approve" : "approve")
         : (locale === "en" ? "reject" : "reject");
       statusEl.textContent = locale === "en"
         ? `Gate model suggested: ${label}`
-        : `Gate ���f�����: ${label}`;
+        : `Gate モデル審査: ${label}`;
     } else {
-      statusEl.textContent = locale === "en" ? "Manual review" : "�蓮���r���[";
+      statusEl.textContent = locale === "en" ? "Manual review" : "手動レビュー";
     }
   }
   if (!suggestionEl) return;
@@ -7389,10 +7692,10 @@ function renderGateRuntimeSuggestion() {
   }
   const fixes = gateRuntimeState.fixes.length > 0
     ? gateRuntimeState.fixes.map((item) => `<li>${escapeHtml(item)}</li>`).join("")
-    : `<li>${escapeHtml(locale === "en" ? "No fixes" : "�C������Ȃ�")}</li>`;
+    : `<li>${escapeHtml(locale === "en" ? "No fixes" : "修正項目なし")}</li>`;
   suggestionEl.classList.remove("hidden");
   suggestionEl.innerHTML = `
-    <div class="font-semibold">${escapeHtml(locale === "en" ? "Gate Suggestion" : "Gate ���")}</div>
+    <div class="font-semibold">${escapeHtml(locale === "en" ? "Gate Suggestion" : "Gate 提案")}</div>
     <div class="mt-1 text-xs text-base-content/70">${escapeHtml(locale === "en" ? "decision" : "decision")}: ${escapeHtml(gateRuntimeState.suggestedDecision)}</div>
     <div class="mt-2 text-sm">${escapeHtml(gateRuntimeState.reason || "-")}</div>
     <ul class="mt-2 list-disc pl-5 text-xs text-base-content/75">${fixes}</ul>
@@ -7615,18 +7918,40 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
       targetKind,
       latest.id,
       "runtime",
-      `${latest.id} �̎��s���ʂ�X�V���܂���`,
+      `${latest.id} の実行結果を更新しました`,
       `${latest.id} runtime result updated`
     );
+    void appendTaskProgressLogForTarget(targetKind, latest.id, "worker_runtime", {
+      actualActor: "worker",
+      displayActor: "Pal",
+      status: "ok",
+      messageJa: `${latest.id} の実行結果を更新しました`,
+      messageEn: `${latest.id} runtime result updated`,
+      payload: {
+        assigneePalId: normalizeText(latest.palId),
+        evidence: normalizeText(latest.evidence),
+        replay: normalizeText(latest.replay),
+      },
+    });
     rerenderAll();
   } catch (error) {
     appendEvent(
       targetKind,
       targetId,
       "runtime_error",
-      `${targetId} �̎��s�ŃG���[���������܂���`,
+      `${targetId} の実行でエラーが発生しました`,
       `${targetId} runtime execution failed`
     );
+    void appendTaskProgressLogForTarget(targetKind, targetId, "worker_runtime", {
+      actualActor: "worker",
+      displayActor: "Pal",
+      status: "error",
+      messageJa: `${targetId} の実行でエラーが発生しました`,
+      messageEn: `${targetId} runtime execution failed`,
+      payload: {
+        errorText: normalizeText(error?.message || error),
+      },
+    });
     rerenderAll();
   }
 }
@@ -7649,7 +7974,7 @@ async function runTaskAction(action, taskId) {
       return;
     }
     touchTask(task, "in_progress", "working");
-    appendEvent("task", task.id, "in_progress", `${task.id} ����s���֑J��`, `${task.id} moved to in_progress`);
+    appendEvent("task", task.id, "in_progress", `${task.id} を実行中へ更新`, `${task.id} moved to in_progress`);
     void executePalRuntimeForTarget(task.id, "task");
     setMessage("MSG-PPH-0007");
   } else if (action === "submit") {
@@ -7665,12 +7990,27 @@ async function runTaskAction(action, taskId) {
       task.id,
       "to_gate",
       gateExplanation.ja
-        ? `${task.id} ��Gate��o�҂��ɍX�V (${gateExplanation.ja})`
-        : `${task.id} ��Gate��o�҂��ɍX�V`,
+        ? `${task.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
+        : `${task.id} を Gate 提出待ちに更新`,
       gateExplanation.en
         ? `${task.id} moved to to_gate (${gateExplanation.en})`
         : `${task.id} moved to to_gate`
     );
+    void appendTaskProgressLogForTarget("task", task.id, "to_gate", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "pending",
+      messageJa: gateExplanation.ja
+        ? `${task.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
+        : `${task.id} を Gate 提出待ちに更新`,
+      messageEn: gateExplanation.en
+        ? `${task.id} moved to to_gate (${gateExplanation.en})`
+        : `${task.id} moved to to_gate`,
+      payload: {
+        gateProfileId: normalizeText(task.gateProfileId),
+        routingExplanation: gateExplanation,
+      },
+    });
     setMessage("MSG-PPH-0003");
   } else if (action === "gate") {
     await openGate(task.id, "task");
@@ -7686,7 +8026,17 @@ async function runTaskAction(action, taskId) {
       reason: "-",
       fixes: [],
     });
-    appendEvent("resubmit", task.id, "ok", `${task.id} ��Ē�o`, `${task.id} resubmitted`);
+    appendEvent("resubmit", task.id, "ok", `${task.id} を再提出`, `${task.id} resubmitted`);
+    void appendTaskProgressLogForTarget("task", task.id, "resubmit", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: `${task.id} を再提出`,
+      messageEn: `${task.id} resubmitted`,
+      payload: {
+        gateProfileId: normalizeText(task.gateProfileId),
+      },
+    });
     setMessage("MSG-PPH-0005");
   }
   rerenderAll();
@@ -7704,7 +8054,7 @@ async function runJobAction(action, jobId) {
       return;
     }
     touchJob(job, "in_progress", "working");
-    appendEvent("job", job.id, "in_progress", `${job.id} ����s���֑J��`, `${job.id} moved to in_progress`);
+    appendEvent("job", job.id, "in_progress", `${job.id} を実行中へ更新`, `${job.id} moved to in_progress`);
     void executePalRuntimeForTarget(job.id, "job");
     setMessage("MSG-PPH-0007");
   } else if (action === "submit") {
@@ -7720,12 +8070,27 @@ async function runJobAction(action, jobId) {
       job.id,
       "to_gate",
       gateExplanation.ja
-        ? `${job.id} ��Gate��o�҂��ɍX�V (${gateExplanation.ja})`
-        : `${job.id} ��Gate��o�҂��ɍX�V`,
+        ? `${job.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
+        : `${job.id} を Gate 提出待ちに更新`,
       gateExplanation.en
         ? `${job.id} moved to to_gate (${gateExplanation.en})`
         : `${job.id} moved to to_gate`
     );
+    void appendTaskProgressLogForTarget("job", job.id, "to_gate", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "pending",
+      messageJa: gateExplanation.ja
+        ? `${job.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
+        : `${job.id} を Gate 提出待ちに更新`,
+      messageEn: gateExplanation.en
+        ? `${job.id} moved to to_gate (${gateExplanation.en})`
+        : `${job.id} moved to to_gate`,
+      payload: {
+        gateProfileId: normalizeText(job.gateProfileId),
+        routingExplanation: gateExplanation,
+      },
+    });
     setMessage("MSG-PPH-0003");
   } else if (action === "gate") {
     await openGate(job.id, "job");
@@ -7741,7 +8106,17 @@ async function runJobAction(action, jobId) {
       reason: "-",
       fixes: [],
     });
-    appendEvent("resubmit", job.id, "ok", `${job.id} ��Ē�o`, `${job.id} resubmitted`);
+    appendEvent("resubmit", job.id, "ok", `${job.id} を再提出`, `${job.id} resubmitted`);
+    void appendTaskProgressLogForTarget("job", job.id, "resubmit", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: `${job.id} を再提出`,
+      messageEn: `${job.id} resubmitted`,
+      payload: {
+        gateProfileId: normalizeText(job.gateProfileId),
+      },
+    });
     setMessage("MSG-PPH-0005");
   }
   rerenderAll();
@@ -7850,23 +8225,65 @@ function runGate(decision) {
       return;
     }
     if (isJob) {
-      touchJob(target, "rejected", "rejected", gateResult.fixCondition || "�C�������ǉ�", gateResult);
+      touchJob(target, "rejected", "rejected", gateResult.fixCondition || "修正条件を追加", gateResult);
     } else {
-      touchTask(target, "rejected", "rejected", gateResult.fixCondition || "�C�������ǉ�", gateResult);
+      touchTask(target, "rejected", "rejected", gateResult.fixCondition || "修正条件を追加", gateResult);
     }
-    appendEvent("gate", target.id, "rejected", `${target.id} ������߂��܂���`, `${target.id} rejected`);
+    appendEvent("gate", target.id, "rejected", `${target.id} を差し戻しました`, `${target.id} rejected`);
+    void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
+      actualActor: "gate",
+      displayActor: "Gate",
+      status: "rejected",
+      messageJa: `${target.id} を差し戻しました`,
+      messageEn: `${target.id} rejected`,
+      payload: {
+        decision: "rejected",
+        gateResult,
+      },
+    });
+    if (shouldRequireReplanFromGateResult(gateResult)) {
+      void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "replan_required", {
+        actualActor: "orchestrator",
+        displayActor: "Guide",
+        status: "blocked",
+        messageJa: `${target.id} は再計画が必要です。Guide が進め方を見直します`,
+        messageEn: `${target.id} requires replanning. Guide will revisit the approach`,
+        payload: {
+          decision: "rejected",
+          gateResult,
+        },
+      });
+    }
   } else {
     if (isJob) {
       touchJob(target, "done", "approved", "-", gateResult);
     } else {
       touchTask(target, "done", "approved", "-", gateResult);
     }
-    appendEvent("gate", target.id, "approved", `${target.id} ����F���܂���`, `${target.id} approved`);
+    appendEvent("gate", target.id, "approved", `${target.id} を承認しました`, `${target.id} approved`);
+    void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
+      actualActor: "gate",
+      displayActor: "Gate",
+      status: "approved",
+      messageJa: `${target.id} を承認しました`,
+      messageEn: `${target.id} approved`,
+      payload: {
+        decision: "approved",
+        gateResult,
+      },
+    });
   }
   setMessage("MSG-PPH-0004");
   closeGate();
   if (!isRejectDecision && !isJob && tasks.every((t) => t.status === "done")) {
-    appendEvent("plan", "PLAN-001", "completed", "Plan������ʒm", "Plan completion announced");
+    appendEvent("plan", "PLAN-001", "completed", "Plan完了を通知", "Plan completion announced");
+    void appendTaskProgressLogForTarget("plan", "PLAN-001", "plan_completed", {
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "completed",
+      messageJa: "Plan完了を通知",
+      messageEn: "Plan completion announced",
+    });
     setMessage("MSG-PPH-0008");
   }
   if (isRejectDecision) {

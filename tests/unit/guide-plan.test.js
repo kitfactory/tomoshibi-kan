@@ -57,6 +57,30 @@ test("parseGuidePlanResponse normalizes valid plan_ready payload", () => {
   assert.deepEqual(parsed.plan.tasks[0].requiredSkills, ["browser-chrome", "codex-file-search"]);
 });
 
+test("parseGuidePlanResponse recovers empty reply for valid plan_ready payload", () => {
+  const parsed = parseGuidePlanResponse(JSON.stringify({
+    status: "plan_ready",
+    reply: "",
+    plan: {
+      goal: "設定画面の保存不具合を調査する",
+      completionDefinition: "原因と確認方法がそろう",
+      constraints: ["既存設定は壊さない"],
+      tasks: [
+        {
+          title: "Trace",
+          description: "保存処理の流れを追跡する",
+          expectedOutput: "trace result",
+          requiredSkills: ["browser-chrome", "codex-file-search"],
+          reviewFocus: ["repro", "traceability"],
+        },
+      ],
+    },
+  }));
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.status, "plan_ready");
+  assert.match(parsed.reply, /Trace|計画/);
+});
+
 test("parseGuidePlanResponse accepts wrapper-token plan_ready payload", () => {
   const parsed = parseGuidePlanResponse(`
 <|channel|>final

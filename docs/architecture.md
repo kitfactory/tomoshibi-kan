@@ -749,5 +749,73 @@ CREATE TABLE orchestration_debug_runs (
 - `debug smoke` は Playwright Electron launcher を使って app を起動し、isolated workspace に対して Settings -> Guide -> Job/Gate の最小経路を実行する。
 - 出力は plain text とし、一覧・詳細・smoke summary の 3 形態のみを初期対応とする。
 
+## 追加設計 (2026-03-07): Guide-driven Orchestrator と Task-centric Progress Log
+
+### Orchestrator core と Guide reasoning boundary
+- `PlanExecutionOrchestrator` は独立モジュールとして保持し、dispatch、retry、reroute、gate submit、status 遷移、完了判定などの deterministic 制御を担当する。
+- `PlanExecutionOrchestrator` は planning の主体ではない。新しい Plan が必要な場合は `replan_required` を起こし、Guide へ差し戻す。
+- `GuideConversationUseCase` は初回 plan だけでなく replan の生成主体でもある。
+- `PlanExecutionOrchestrator` が LLM に依存する意味判断を行う場合、`activeGuideProfileId` から解決した Guide の model / `SOUL.md` / `ROLE.md` を使う。これを `GuideReasoningContext` として扱う。
+- `GuideReasoningContext` を使う対象は、少なくとも `replan`, `outcome interpretation`, `user-facing progress summary` のような意味判断に限る。
+- `dispatch`, `retry count`, `timeout`, `gate submit`, `state machine` は `GuideReasoningContext` に依存せず、Orchestrator core の責務に留める。
+
+### Task-centric Progress Log
+- progress log は event log の一種だが、task/job を主キーに途中経過を追えることを最優先とする。
+- 1 レコードは内部監査向けの actor と、ユーザー表示向けの actor/message を同時に持つ。
+- 表示上は `Guide` を語り手として使ってよいが、内部では `actualActor=orchestrator` のような記録を必ず保持する。
+
+```ts
+type ProgressActualActor = "orchestrator" | "guide" | "worker" | "gate";
+type ProgressDisplayActor = "Guide" | "Pal" | "Gate";
+
+type TaskProgressLogEntry = {
+  id: string;
+  createdAt: string;
+  planId?: string;
+  targetType: "plan" | "task" | "job";
+  targetId: string;
+  actualActor: ProgressActualActor;
+  displayActor: ProgressDisplayActor;
+  actionType:
+    | "dispatch"
+    | "worker_runtime"
+    | "to_gate"
+    | "gate_review"
+    | "replan_required"
+    | "resubmit"
+    | "plan_completed";
+  status: "ok" | "pending" | "approved" | "rejected" | "blocked" | "completed" | "error";
+  messageForUser: string;
+  payloadJson: string;
+  sourceRunId?: string;
+};
+```
+
+### Repository / bridge
+- `SqliteSettingsStore` は `task_progress_logs` table を持ち、`appendTaskProgressLogEntry`, `listTaskProgressLogEntries`, `getLatestTaskProgressLogEntry` を提供する。
+- 保存先は既存 `settings.sqlite` とし、新しい DB ファイルは増やさない。
+- Electron main は `progress-log:append`, `progress-log:list`, `progress-log:latest` IPC handler を公開し、preload は `TomoshibikanProgressLog` bridge を expose する。
+- renderer は direct DB access を持たず、bridge が無い browser verify では in-memory fallback を使ってよい。
+
+### Append points
+- `Guide -> Plan -> Task materialize` の dispatch で `actualActor=orchestrator`, `displayActor=Guide`, `actionType=dispatch` を残す。
+- worker runtime 完了/失敗時に `actualActor=worker`, `displayActor=Pal`, `actionType=worker_runtime` を残す。
+- Gate 提出待ちへ移した時に `actualActor=orchestrator`, `displayActor=Guide`, `actionType=to_gate` を残す。
+- Gate approve/reject 時に `actualActor=gate`, `displayActor=Gate`, `actionType=gate_review` を残す。
+- Gate reject のうち進め方や前提の見直しが必要と判断した場合、続けて `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replan_required`, `status=blocked` を残してよい。
+- resubmit と plan completion も同じ table に append し、task/job 単位の直近イベント列で追えるようにする。
+
+### Progress query
+- `WorkspaceQueryUseCase` は task/job 単位の `latest progress summary` と `recent progress entries` を返せるようにする。
+- `GuideConversationUseCase` は、ユーザーが途中経過を尋ねた時に progress log を読んで自然文へ整形してよい。
+- progress query は `task_id/job_id` が明示される場合だけでなく、「さっきお願いした件」のような最新依頼照会にも対応できるよう、`plan_id -> latest task/job` の補助解決を持ってよい。
+- minimal 実装では renderer に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
+- progress query path は model 呼び出し前に処理し、追加の LLM 呼び出しなしで completion / pending / rejected / replan_required / in_progress / assigned を返す。
+
+### 表示責務
+- `WorkspacePresenter` は内部の `actualActor` をそのまま前面表示せず、`displayActor + messageForUser` を通常表示の主材料にする。
+- `Event Log` や将来の debug view では `actualActor` と `displayActor` の両方を出し分けられるようにする。
+- `PlanExecutionOrchestrator` が内部で付与した progress comment も、通常 UX では Guide の進行メモとして見せてよい。
+
 
 

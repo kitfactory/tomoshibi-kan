@@ -124,6 +124,12 @@ function createDebugRunId() {
   return `debug-${now}-${rand}`;
 }
 
+function createProgressLogId() {
+  const now = Date.now().toString(36);
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `progress-${now}-${rand}`;
+}
+
 function clampLimit(value, fallback = 50) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return fallback;
@@ -147,6 +153,29 @@ function normalizeDebugRunPayload(payload) {
     outputJson: safeJsonStringify(payload?.output ?? {}, "{}"),
     errorText: normalizeString(payload?.errorText),
     metaJson: safeJsonStringify(payload?.meta ?? {}, "{}"),
+  };
+}
+
+function normalizeProgressActor(value, fallback) {
+  const normalized = normalizeString(value);
+  return normalized || fallback;
+}
+
+function normalizeTaskProgressLogPayload(payload) {
+  const createdAt = normalizeString(payload?.createdAt) || new Date().toISOString();
+  return {
+    entryId: normalizeString(payload?.entryId) || createProgressLogId(),
+    createdAt,
+    planId: normalizeString(payload?.planId),
+    targetKind: normalizeString(payload?.targetKind),
+    targetId: normalizeString(payload?.targetId),
+    actionType: normalizeString(payload?.actionType),
+    status: normalizeString(payload?.status) || "ok",
+    actualActor: normalizeProgressActor(payload?.actualActor, "orchestrator"),
+    displayActor: normalizeProgressActor(payload?.displayActor, "Guide"),
+    messageForUser: normalizeString(payload?.messageForUser),
+    payloadJson: safeJsonStringify(payload?.payload ?? {}, "{}"),
+    sourceRunId: normalizeString(payload?.sourceRunId),
   };
 }
 
@@ -301,6 +330,26 @@ class SqliteSettingsStore {
     db.run(`
       CREATE INDEX IF NOT EXISTS idx_orchestration_debug_runs_created_at
       ON orchestration_debug_runs (created_at DESC);
+    `);
+    db.run(`
+      CREATE TABLE IF NOT EXISTS task_progress_logs (
+        entry_id TEXT PRIMARY KEY,
+        created_at TEXT NOT NULL,
+        plan_id TEXT NOT NULL DEFAULT '',
+        target_kind TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        actual_actor TEXT NOT NULL,
+        display_actor TEXT NOT NULL,
+        message_for_user TEXT NOT NULL DEFAULT '',
+        payload_json TEXT NOT NULL DEFAULT '{}',
+        source_run_id TEXT NOT NULL DEFAULT ''
+      );
+    `);
+    db.run(`
+      CREATE INDEX IF NOT EXISTS idx_task_progress_logs_target_created_at
+      ON task_progress_logs (target_kind, target_id, created_at DESC);
     `);
     this.db = db;
     this.persistDb();
@@ -536,6 +585,93 @@ class SqliteSettingsStore {
     });
   }
 
+  async appendTaskProgressLogEntry(payload) {
+    return this.withLock(async () => {
+      const normalized = normalizeTaskProgressLogPayload(payload);
+      this.db.run(
+        `INSERT INTO task_progress_logs (
+          entry_id, created_at, plan_id, target_kind, target_id, action_type, status,
+          actual_actor, display_actor, message_for_user, payload_json, source_run_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          normalized.entryId,
+          normalized.createdAt,
+          normalized.planId,
+          normalized.targetKind,
+          normalized.targetId,
+          normalized.actionType,
+          normalized.status,
+          normalized.actualActor,
+          normalized.displayActor,
+          normalized.messageForUser,
+          normalized.payloadJson,
+          normalized.sourceRunId,
+        ]
+      );
+      this.persistDb();
+      return {
+        entryId: normalized.entryId,
+        createdAt: normalized.createdAt,
+      };
+    });
+  }
+
+  async listTaskProgressLogEntries(options = {}) {
+    return this.withLock(async () => {
+      const limit = clampLimit(options.limit, 50);
+      const targetKind = normalizeString(options.targetKind);
+      const targetId = normalizeString(options.targetId);
+      const planId = normalizeString(options.planId);
+      const clauses = [];
+      const params = [];
+      if (targetKind) {
+        clauses.push("target_kind = ?");
+        params.push(targetKind);
+      }
+      if (targetId) {
+        clauses.push("target_id = ?");
+        params.push(targetId);
+      }
+      if (planId) {
+        clauses.push("plan_id = ?");
+        params.push(planId);
+      }
+      const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+      const rows = queryRows(
+        this.db,
+        `SELECT entry_id, created_at, plan_id, target_kind, target_id, action_type, status,
+                actual_actor, display_actor, message_for_user, payload_json, source_run_id
+           FROM task_progress_logs
+           ${whereClause}
+          ORDER BY created_at DESC
+          LIMIT ?`,
+        [...params, limit]
+      );
+      return rows.map((row) => ({
+        entryId: normalizeString(row.entry_id),
+        createdAt: normalizeString(row.created_at),
+        planId: normalizeString(row.plan_id),
+        targetKind: normalizeString(row.target_kind),
+        targetId: normalizeString(row.target_id),
+        actionType: normalizeString(row.action_type),
+        status: normalizeString(row.status),
+        actualActor: normalizeString(row.actual_actor),
+        displayActor: normalizeString(row.display_actor),
+        messageForUser: normalizeString(row.message_for_user),
+        payload: safeJsonParse(row.payload_json, {}),
+        sourceRunId: normalizeString(row.source_run_id),
+      }));
+    });
+  }
+
+  async getLatestTaskProgressLogEntry(options = {}) {
+    const rows = await this.listTaskProgressLogEntries({
+      ...options,
+      limit: 1,
+    });
+    return rows[0] || null;
+  }
+
   async close() {
     return this.withLock(async () => {
       if (!this.db) return;
@@ -550,4 +686,5 @@ module.exports = {
   SqliteSettingsStore,
   normalizeSettingsPayload,
   normalizeDebugRunPayload,
+  normalizeTaskProgressLogPayload,
 };

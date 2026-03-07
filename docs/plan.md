@@ -1,5 +1,17 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-guide-plan-ready-empty-reply-recovery] Guide が `status=plan_ready` を返しても `reply` が空の時に task materialization へ進める recovery を追加する
+- [x] [DR-20260307-guide-plan-ready-empty-reply-recovery] delta request/apply/verify/archive を実施し、empty `reply` の `plan_ready` を archive まで閉じる
+- [x] [SEED-20260307-orchestrator-cycle-recheck-after-progress-log] progress log / replan_required 追加後も `Trace / Fix / Verify` の 3 task cycle が worker/gate まで通ることを real runner で再確認する
+- [x] [DR-20260307-orchestrator-cycle-recheck-after-progress-log] delta request/apply/verify/archive を実施し、3 task cycle の再確認結果を archive まで閉じる
+- [x] [SEED-20260307-replan-required-progress-log] Gate reject のうち再計画が必要なケースを `replan_required` として progress log に残し、Guide progress query で説明できるようにする
+- [x] [DR-20260307-replan-required-progress-log] delta request/apply/verify/archive を実施し、minimal `replan_required` 分岐を archive まで閉じる
+- [x] [SEED-20260307-guide-progress-query-minimal] Guide が progress log を読み、task/job の途中経過と完了状態をローカルに答えられる最小 query/usecase を追加する
+- [x] [DR-20260307-guide-progress-query-minimal] delta request/apply/verify/archive を実施し、Guide progress query の minimal 実装を archive まで閉じる
+- [x] [SEED-20260307-task-progress-log-minimal] `task-centric progress log` の SQLite schema / repository / bridge を追加し、既存 dispatch/worker/gate フローから主要イベントを記録できるようにする
+- [x] [DR-20260307-task-progress-log-minimal] delta request/apply/verify/archive を実施し、minimal task progress log を archive まで閉じる
+- [x] [SEED-20260307-mojibake-baseline-repair] `wireframe/app.js` と `wireframe/debug-identity-seeds.js` の日本語文字化けを baseline repair し、次の Orchestrator / task log 実装へ進める前提を整える
+- [x] [DR-20260307-mojibake-baseline-repair] delta request/apply/verify/archive を実施し、UI 辞書と debug seed の文字化け修復を archive まで閉じる
 - [x] [SEED-20260307-opencode-capability-audit] `OpenCode` CLI に問い合わせ、command / skill 相当の能力・設定・補助機構を棚卸しする
 - [x] [DR-20260307-opencode-capability-audit] delta request/apply/verify/archive を実施し、OpenCode capability audit を archive まで閉じる
 - [x] [SEED-20260307-opencode-skill-install-reobserve] OpenCode skills の導入場所・frontmatter・発見条件を確認し、一時 skill を置いて `debug skill` の再観測を行う
@@ -8,6 +20,8 @@
 - [x] [DR-20260307-opencode-lmstudio-run-check] delta request/apply/verify/archive を実施し、OpenCode の LM Studio 実行可否と必要設定を archive まで閉じる
 - [x] [SEED-20260307-opencode-capability-probe-impl] `OpenCode` の command / agent / skill / MCP / built-in tool を capability snapshot として取得し、既存の CLI tool probe 枠へ追加する
 - [x] [DR-20260307-opencode-capability-probe-impl] delta request/apply/verify/archive を実施し、OpenCode capability probe 実装と unit/docs 同期を archive まで閉じる
+- [x] [SEED-20260307-guide-driven-orchestrator-log-doc] Orchestrator を Guide-driven な実行系として定義し、task-centric log の内部 actor / 表示 actor 二層構造を正本へ反映する
+- [x] [DR-20260307-guide-driven-orchestrator-log-doc] delta request/apply/verify/archive を実施し、Guide-driven Orchestrator と task log 契約を archive まで閉じる
 - [x] [SEED-20260307-cli-tool-capability-probe] CLIツール利用時に `Codex` へ問い合わせて capability snapshot を取得し、tool runtime の routing/context に反映する
 - [x] [DR-20260307-cli-tool-capability-probe] delta request/apply/verify/archive を実施し、CLI capability probe と tool runtime capability 反映を archive まで閉じる
 - [x] [SEED-20260307-mojibake-repair-and-encoding-guard] `app.js` と `debug-identity-seeds.js` の日本語文字化けを修復し、AGENTS に再発防止ルールを追加する
@@ -99,6 +113,10 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260307-guide-progress-query-minimal] Guide が progress log と board state を使って、task/job の進捗確認質問へローカルに答える minimal query を追加した
+- [x] [DR-20260307-task-progress-log-minimal] `task_progress_logs` の SQLite schema / Electron bridge / append/query を追加し、dispatch・to_gate・gate_review を query できる minimal progress log を実装した
+- [x] [DR-20260307-mojibake-baseline-repair] `wireframe/app.js` と `workspace-layout.spec.js` の主要日本語文言 baseline を UTF-8 で修復し、targeted Playwright と delta validator を PASS させた
+- [x] [DR-20260307-guide-driven-orchestrator-log-doc] `PlanExecutionOrchestrator` を Guide-driven な実行系として定義し、task-centric progress log の `actual_actor / display_actor` 二層構造と途中経過確認用途を concept/spec/architecture に同期した
 - [x] [DR-20260307-opencode-capability-probe-impl] `OpenCode` の command / agent / skill / MCP / built-in tool probe を実装し、既存 settings persistence / tool runtime routing/context で利用できるようにした
 - [x] [DR-20260307-opencode-lmstudio-run-check] temp workspace の custom provider で `OpenCode` を LM Studio (`192.168.11.16:1234/v1`) の `openai/gpt-oss-20b` に向け、`models` と `run` が通ることを確認した
 - [x] [DR-20260307-opencode-skill-install-reobserve] OpenCode skills の導入場所を docs と実観測で確認し、project-local と `OPENCODE_CONFIG_DIR` の両方で一時 skill を検出できることを確認した
@@ -165,6 +183,9 @@
 - [x] [SEED-20260301-context-builder-rollout] Gate/Worker へ Builder を展開し、Runtime=model 時のみ Skill を注入する方針を実装する
 
 # archive
+- [x] [DR-20260307-orchestrator-cycle-recheck-after-progress-log] progress log / `replan_required` 追加後も、Guide が生成した `Trace / Fix / Verify` 3 task が worker/gate まで一巡できることを real runner で再確認した
+- [x] [DR-20260307-guide-plan-ready-empty-reply-recovery] `plan_ready + valid plan + empty reply` の時だけ parser が minimal reply を補い、Guide task materialization を継続できるようにした
+- [x] [DR-20260307-replan-required-progress-log] Gate reject reason から `replan_required` を progress log へ追加し、Guide progress query が再計画待ちを自然文で説明できるようにした
 - [x] [DR-20260307-first-party-rename-commit] Tomoshibi-kan への first-party rename 差分を commit に確定した
 - [x] [DR-20260307-first-party-rename-tomoshibi-kan] first-party の CLI / env / workspace / localStorage / current docs を Tomoshibi-kan 基準へ揃え、旧 palpal 系は alias / fallback として残した
 - [x] [DR-20260301-context-builder-roadmap-order] これまでの議論を Context Builder 実装順序として plan に固定した

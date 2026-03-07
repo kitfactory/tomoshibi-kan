@@ -198,3 +198,58 @@ test("SqliteSettingsStore appends and lists orchestration debug runs", async () 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test("SqliteSettingsStore appends and queries task progress log entries", async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
+  const store = await createStore(tmpDir);
+  try {
+    await store.appendTaskProgressLogEntry({
+      planId: "PLAN-001",
+      targetKind: "task",
+      targetId: "TASK-001",
+      actionType: "dispatch",
+      status: "ok",
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      messageForUser: "TASK-001 を pal-alpha に割り当てました。",
+      payload: {
+        workerId: "pal-alpha",
+      },
+    });
+    await store.appendTaskProgressLogEntry({
+      planId: "PLAN-001",
+      targetKind: "task",
+      targetId: "TASK-001",
+      actionType: "gate_review",
+      status: "approved",
+      actualActor: "gate",
+      displayActor: "Gate",
+      messageForUser: "TASK-001 を承認しました。",
+      payload: {
+        decision: "approved",
+      },
+    });
+
+    const rows = await store.listTaskProgressLogEntries({
+      targetKind: "task",
+      targetId: "TASK-001",
+      limit: 10,
+    });
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].actionType, "gate_review");
+    assert.equal(rows[0].actualActor, "gate");
+    assert.equal(rows[1].actionType, "dispatch");
+    assert.equal(rows[1].payload.workerId, "pal-alpha");
+
+    const latest = await store.getLatestTaskProgressLogEntry({
+      targetKind: "task",
+      targetId: "TASK-001",
+    });
+    assert.ok(latest);
+    assert.equal(latest.actionType, "gate_review");
+    assert.equal(latest.status, "approved");
+  } finally {
+    await store.close();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

@@ -690,5 +690,27 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - `tomoshibikan debug smoke` は isolated workspace 上で Electron orchestration smoke を実行し、`guide_chat / worker_runtime / gate_review` の debug record が生成されることを確認できること。
 - 初期段階では `tail/export/UI` は持たず、まず `runs/show/smoke` に限定する。
 
+## 追加仕様 (2026-03-07): Guide-driven Orchestrator と Task-centric Log
+
+- `PlanExecutionOrchestrator` は `Execution Loop` の実行主体であり、dispatch、retry、reroute、status 遷移、完了判定を束ねる。
+- `Guide` は planning の主体であり続ける。`PlanExecutionOrchestrator` は自分で新しい Plan を発明せず、replan が必要だと判断した時だけ Guide へ戻す。
+- replan の要求を出す主体は `PlanExecutionOrchestrator` とし、再plan の生成主体は Guide とする。
+- `PlanExecutionOrchestrator` が LLM に依存する判断を行う場合、active Guide と同じ model と `SOUL.md` を使ってよい。ただし、state 遷移や dispatch のような deterministic な処理まで Guide へ委譲してはならない。
+- task/job の進行確認のため、`task-centric progress log` を持つ。目的は、ユーザーが途中で「依頼した task は今どうなっているか」を確認できるようにすることにある。
+- progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
+- `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
+- `display_actor` は少なくとも `Guide | Pal | Gate` を取れる。
+- `PlanExecutionOrchestrator` が内部で dispatch / retry / reroute / replan_required を起こした場合でも、表示上は Guide の進行コメントとして見せてよい。
+- progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。
+- progress log は task/job 単位で最新状態と直近イベント列を引けること。Guide はこのログを使って途中経過を自然文で説明してよい。
+- `message_for_user` は世界観に沿った自然文を許容するが、内部の `actual_actor` と `action_type` を欠落させてはならない。
+- minimal 実装では `task_progress_logs` を `settings.sqlite` に追加し、`append`, `list`, `latest` の query を提供する。
+- minimal 実装で progress log へ必ず記録する action は `dispatch`, `worker_runtime`, `to_gate`, `gate_review`, `replan_required`, `resubmit`, `plan_completed` とする。
+- Gate reject reason が進め方・前提・要件・スコープの見直しを示す場合、`PlanExecutionOrchestrator` は `replan_required` を progress log に追加してよい。
+- Guide は progress query で latest action が `replan_required` の target に対し、「再計画が必要で、進め方や前提を見直している」旨を自然文で説明してよい。
+- renderer は progress log を direct DB access せず、Electron bridge 経由で append/query する。
+- Guide はユーザーが task/job の進捗確認を求めた時、progress log と現行 board state だけを使ってローカル reply を返してよい。
+- minimal 実装では、明示 ID (`TASK-xxx`, `JOB-xxx`) がある時はその target を優先し、無ければ最新 progress entry を参照する。
+
 
 
