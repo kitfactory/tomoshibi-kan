@@ -1399,7 +1399,7 @@ for (const viewport of VIEWPORTS) {
       await page.click('[data-tab="pal"]');
       await expect(page.locator("#palList")).toContainText(/Guide役|Guide/);
       await expect(page.locator("#palList")).toContainText(/Gate役|Gate/);
-      await expect(page.locator("#palList")).toContainText(/通常Pal|Worker Pal/);
+      await expect(page.locator("#palList")).toContainText(/住人|Worker \/ 住人/);
 
       await page.click('[data-pal-open-id="guide-core"]');
       await expect(page.locator('[data-pal-runtime-select="guide-core"]')).toHaveValue("model");
@@ -1533,7 +1533,7 @@ for (const viewport of VIEWPORTS) {
       const newRow = rows.nth(before);
       const palId = await newRow.getAttribute("data-pal-row");
       expect(palId).toBeTruthy();
-      await expect(page.locator(`[data-pal-name-input="${palId}"]`)).toHaveValue("New Pal");
+      await expect(page.locator(`[data-pal-name-input="${palId}"]`)).toHaveValue("新しい住人");
       await expect(page.locator(`[data-pal-runtime-select="${palId}"]`)).toHaveValue("model");
       await expect(page.locator(`[data-pal-runtime-target-select="${palId}"]`)).toBeEnabled();
       await expect(

@@ -30,7 +30,7 @@
 - 主対象ユーザー: 単独または少人数でタスクを分担する開発者。
 - 利用環境: Windows/macOS の Electron デスクトップアプリ。
 - 運用前提: ローカルDBにカード・設定・イベントを保存する。
-- UI前提: WorkspaceはTab（Guide Chat / Pal List / Cron / Task Board / Event Log / Settings）で切り替える。
+- UI前提: WorkspaceはTab（Guide Chat / 住人一覧 / Cron / Task Board / Event Log / Settings）で切り替える。
 - 設定前提: Settingsでモデル、CLIツール、Skill、Pal割当を管理する。
 - Skill前提: `ClawHub` を検索し、Download操作でローカル登録する（現段階は擬似導線）。
 - セキュリティ前提: Palごとの制約（例: `no_network`、`allowed_paths`、`deny_commands`）を実行前に強制する。

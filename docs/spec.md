@@ -16,7 +16,7 @@
 | REQ-0003 | PalがTaskを完了したら、Completion Ritualを保存してGateへ提出する。 | UC-3 |
 | REQ-0004 | Gateが提出物を判定したら、ApproveまたはRejectを記録する。 | UC-4 |
 | REQ-0005 | RejectされたTaskを再作業したら、再提出できる。 | UC-5 |
-| REQ-0006 | Workspaceを開いたら、Guide Chat/Pal List/Cron/Task Board/Event Log/SettingsをTab切替表示できる。 | UC-6 |
+| REQ-0006 | Workspaceを開いたら、Guide Chat/住人一覧/Cron/Task Board/Event Log/SettingsをTab切替表示できる。 | UC-6 |
 | REQ-0007 | Palが実行操作を開始したら、制約違反操作を実行前にブロックする。 | UC-3 |
 | REQ-0008 | 最終TaskがApproveされたら、Guideが完了通知を投稿しPlanを完了状態へ更新する。 | UC-7 |
 | REQ-0009 | Jobを実行・提出したら、Task同様にGate判定と差し戻し再提出を運用できる。 | UC-8 |
@@ -80,7 +80,7 @@ Done: TaskCardが再び `to_gate` へ遷移し、Gate再判定待ちになる
 ### [PPH-0006] Workspaceを開いたら、Tab切替で各機能を表示する。
 Given: ユーザーがアプリにアクセスできる  
 When: Workspaceを表示しTabを選択する  
-Done: Guide Chat / Pal List / Cron / Task Board / Event Log / Settingsのうち、選択した1画面のみが表示される
+Done: Guide Chat / 住人一覧 / Cron / Task Board / Event Log / Settingsのうち、選択した1画面のみが表示される
 
 #### エラー分岐（REQ-0006の枝番）
 | ERR-ID | 発生条件 | ユーザーアクション | 関連MSG-ID |
@@ -140,7 +140,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 | MSG-PPH-0003 | Completion Ritualを保存してGateへ提出しました。 | Task/Cron Detail | Ritual提出成功時 | REQ-0003, REQ-0009 |
 | MSG-PPH-0004 | Gate判定を記録しました。 | Task Board / Cron Board | Gate判定成功時 | REQ-0004, REQ-0009 |
 | MSG-PPH-0005 | 差し戻しTaskを再提出しました。 | Task/Cron Detail | 再提出成功時 | REQ-0005, REQ-0009 |
-| MSG-PPH-0007 | Agent設定を適用しました。 | Pal List / Settings | 設定保存成功時 | REQ-0010 |
+| MSG-PPH-0007 | Agent設定を適用しました。 | 住人一覧 / Settings | 設定保存成功時 | REQ-0010 |
 | MSG-PPH-0008 | Plan完了を通知しました。 | Guide Chat | 完了通知成功時 | REQ-0008 |
 | MSG-PPH-0009 | Guideチャットを更新しました。 | Guide Chat | Guide会話更新時 | REQ-0001 |
 | MSG-PPH-1001 | 入力内容を確認してください。 | 対象画面 | 入力不正時 | ERR-PPH-0001, ERR-PPH-0005, ERR-PPH-0014, ERR-PPH-0019 |
@@ -182,7 +182,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 | 画面ID | 画面名 | 目的 | 関連REQ |
 |---|---|---|---|
 | SCR-WS-001 | Guide Chat Tab | 相談とGuide応答を扱う | REQ-0001, REQ-0008 |
-| SCR-WS-002 | Pal List Tab | Guide/Gate/Palプロフィールを管理する | REQ-0010 |
+| SCR-WS-002 | 住人一覧 Tab | Guide/Gate/住人プロフィールを管理する | REQ-0010 |
 | SCR-WS-003 | Cron Tab | 定期タスク（Job）を運用する | REQ-0009 |
 | SCR-WS-004 | Task Board Tab | Task進捗を運用する | REQ-0002, REQ-0003, REQ-0005 |
 | SCR-WS-005 | Event Log Tab | イベント履歴を確認する | REQ-0006 |
@@ -194,7 +194,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 | 画面/ブロック | 表示項目（最低限） |
 |---|---|
 | Guide Chat | timestamp, sender(user/guide/system), message, plan_status |
-| Pal List | pal_id, role, runtime_kind, runtime_ref, skills, status |
+| 住人一覧 | pal_id, role, runtime_kind, runtime_ref, skills, status |
 | Cron Tab | job_id, title, schedule, instruction, status, pal_id, last_run |
 | Task Board | task_id, title, status, pal_id, updated_at, gate_decision_summary |
 | Event Log | timestamp, event_type, target_id(task/job), result, summary |

@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260307-resident-facing-ui-labels] ユーザーに見える `Pal` 表記を `住人` 側へ寄せ、技術用語 `worker` は内部に残したまま UI ラベルを揃える
+- [x] [DR-20260307-resident-facing-ui-labels] delta request/apply/verify/archive を実施し、minimal user-facing naming を archive まで閉じる
 - [x] [SEED-20260307-resident-facing-default-seeds] built-in Guide/Gate/Worker の初期値を `管理人 / 住人 / 古参住人` に寄せ、技術用語 `worker` との境界を保ったまま世界観と揃える
 - [x] [DR-20260307-resident-facing-default-seeds] delta request/apply/verify/archive を実施し、初期 seed / template の user-facing naming を archive まで閉じる
 - [x] [SEED-20260307-guide-plan-ready-empty-reply-recovery] Guide が `status=plan_ready` を返しても `reply` が空の時に task materialization へ進める recovery を追加する
@@ -470,6 +472,7 @@
 - [x] [DR-20260306-guide-simple-role-worker-hint] Guide prompt / operating rules に simple-role worker (`trace / fix / verify`) 優先の planning hint を追加した
 - [x] [DR-20260306-simple-role-debug-pals] built-in debug worker の `ROLE/persona/skills` を simple-role 構成へ絞り、trace/fix/verify の 1責務を読み取りやすくした
 - [x] [DR-20260306-guide-autonomous-check] 実モデルで Guide 単体確認を行い、`guide_chat` debug record と task assignment の所見を CLI で観測した
+- [x] [DR-20260307-resident-facing-ui-labels] `Pal List` / `Pal Settings` / `Add Pal` などの visible label と fallback 名を `住人` 系へ寄せ、E2E と docs 最小同期を通した
 
 
 

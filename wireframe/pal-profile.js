@@ -31,7 +31,7 @@
   function defaultDisplayNameForRole(role) {
     if (role === "guide") return "New Guide";
     if (role === "gate") return "New Gate";
-    return "New Pal";
+    return "新しい住人";
   }
 
   function defaultPersonaForRole(role) {

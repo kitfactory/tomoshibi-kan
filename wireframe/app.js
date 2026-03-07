@@ -26,13 +26,13 @@ const UI_TEXT = {
     "UI-PPH-0204": "Task Detail",
     "UI-PPH-0205": "Gate Panel",
     "UI-PPH-0206": "Reject Reason",
-    "UI-PPH-0207": "Pal Preview Slot",
+    "UI-PPH-0207": "Resident Preview Slot",
     "UI-PPH-0208": "3D Coming Soon",
     "UI-PPH-0209": "Reject",
     "UI-PPH-0210": "Approve",
     "UI-PPH-0211": "Agent / Guide",
     "UI-PPH-0212": "Agent / Gate",
-    "UI-PPH-0213": "Agent / Pal",
+    "UI-PPH-0213": "Agent / Resident",
     "UI-PPH-0214": "Safety",
     "UI-PPH-0215": "Workspace",
   },
@@ -55,13 +55,13 @@ const UI_TEXT = {
     "UI-PPH-0204": "Task Detail",
     "UI-PPH-0205": "Gate Panel",
     "UI-PPH-0206": "Reject Reason",
-    "UI-PPH-0207": "Pal Preview Slot",
+    "UI-PPH-0207": "Resident Preview Slot",
     "UI-PPH-0208": "3D Coming Soon",
     "UI-PPH-0209": "Reject",
     "UI-PPH-0210": "Approve",
     "UI-PPH-0211": "Agent / Guide",
     "UI-PPH-0212": "Agent / Gate",
-    "UI-PPH-0213": "Agent / Pal",
+    "UI-PPH-0213": "Agent / Resident",
     "UI-PPH-0214": "Safety",
     "UI-PPH-0215": "Workspace",
   },
@@ -179,7 +179,7 @@ const MESSAGE_TEXT = {
   },
   "MSG-PPH-0002": {
     ja: "TaskをPalへ割り当てました。",
-    en: "Tasks dispatched to Pal.",
+    en: "Tasks dispatched to resident.",
   },
   "MSG-PPH-0003": {
     ja: "Completion Ritualを保存してGateへ提出しました。",
@@ -195,7 +195,7 @@ const MESSAGE_TEXT = {
   },
   "MSG-PPH-0007": {
     ja: "Pal設定を適用しました。",
-    en: "Pal constraints applied.",
+    en: "Resident constraints applied.",
   },
   "MSG-PPH-0008": {
     ja: "Plan完了を通知しました。",
@@ -1334,7 +1334,7 @@ function normalizePalProfileIdWithFallback(role, id) {
 function defaultPalDisplayNameForRole(role) {
   if (role === "guide") return "Guide Core";
   if (role === "gate") return "Gate Core";
-  return "Pal";
+  return "住人";
 }
 
 function defaultPalPersonaForRole(role) {
@@ -2863,7 +2863,7 @@ function createPalProfileWithFallback(input) {
     id: normalizePalProfileIdWithFallback(role, input.id),
     role,
     runtimeKind,
-    displayName: normalizeText(input.displayName) || (role === "guide" ? "New Guide" : (role === "gate" ? "New Gate" : "New Pal")),
+    displayName: normalizeText(input.displayName) || (role === "guide" ? "New Guide" : (role === "gate" ? "New Gate" : "新しい住人")),
     persona: role === "guide" ? "Guide" : (role === "gate" ? "Gate" : "Worker"),
     provider: runtimeKind === "model" ? input.defaultProvider : "",
     models: runtimeKind === "model" && defaultModel ? [defaultModel] : [],
@@ -3917,11 +3917,11 @@ function palRoleLabel(role) {
   if (locale === "ja") {
     if (normalized === "guide") return "Guide役";
     if (normalized === "gate") return "Gate役";
-    return "通常Pal";
+    return "住人";
   }
   if (normalized === "guide") return "Guide";
   if (normalized === "gate") return "Gate";
-  return "Worker Pal";
+  return "Worker / 住人";
 }
 
 function coreModelOptionsByProvider(providerId) {
@@ -5933,7 +5933,7 @@ function renderPalList() {
       save: "Save",
       addGuide: "Add Guide",
       addGate: "Add Gate",
-      addPal: "Add Pal",
+      addPal: "住人を追加",
       setActiveGuide: "Use as Guide",
       setDefaultGate: "Use as Gate",
       activeGuideBadge: "Active Guide",
@@ -5945,11 +5945,11 @@ function renderPalList() {
       addHint: "Only models / CLI tools / skills registered in Settings can be used",
       noModels: "No LLM models available",
       noTools: "No CLI tools available",
-      noProfiles: "No Pal profiles. Add one.",
+      noProfiles: "住人プロフィールがありません。追加してください。",
       noSkills: "No skills available",
       noSkillsCompact: "No skills",
       skillsModelOnly: "Skills are enabled only in model runtime",
-      modalTitleDefault: "Pal Settings",
+      modalTitleDefault: "住人設定",
     };
 
   const addDisabled = !hasModelOptions && !hasToolOptions;
@@ -5984,7 +5984,7 @@ function renderPalList() {
           roleAllowedSkills,
           availableSkills,
           defaultProvider,
-          displayName: role === "guide" ? "New Guide" : (role === "gate" ? "New Gate" : "New Pal"),
+          displayName: role === "guide" ? "New Guide" : (role === "gate" ? "New Gate" : "新しい住人"),
         });
         palProfiles.push(nextProfile);
         syncWorkspaceAgentSelection();
@@ -6237,7 +6237,7 @@ function renderSettingsTab() {
       models: "models",
       tools: "cli tools",
       skillSection: "Model Runtime Skills",
-      skillSectionHint: "Mounted on model runtime, selectable per Pal",
+      skillSectionHint: "Mounted on model runtime, selectable per resident",
       installedSkillsPanel: "Installed Skills",
       skillMarketPanel: "ClawHub Search / Install",
       skillCatalogHint: "Search and install skills from ClawHub",
@@ -6290,7 +6290,7 @@ function renderSettingsTab() {
   const noSkillsLabel = labels.noSkills || "No skills registered";
   const skillSectionLabel = labels.skillSection || "Model Runtime Skills";
   const skillSectionHintLabel =
-    labels.skillSectionHint || "Mounted on model runtime, selectable per Pal";
+    labels.skillSectionHint || "Mounted on model runtime, selectable per resident";
   const skillSearchPlaceholderLabel =
     labels.skillSearchPlaceholder || "Search on ClawHub";
   const skillSearchIdleLabel = labels.skillSearchIdle || "Enter keyword and press Search";
