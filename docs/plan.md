@@ -1,7 +1,7 @@
 # plan.md（最新版）
 
 # current
-- [ ] [SEED-20260308-assist-off-plan-ready-stability] assist OFF の Guide が resident trio 前提でも `plan_ready` へ安定到達し、task materialization まで進みやすいようにする
+- なし
 
 # future
 - Guide の assist OFF 条件で、短いターンから resident trio の `plan_ready` へ収束しやすくする
@@ -12,6 +12,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-assist-off-plan-ready-stability] assist OFF の Guide が explicit breakdown 要求と主要材料を受けた時、resident trio の `plan_ready` へ到達し task materialization まで進むことを real-model で確認した
 - [x] [DR-20260308-guide-finalization-proposal] 3案提示と推薦の後で、Guide が最終依頼案を短く提案して少ないターンで収束しやすくした
 - [x] [DR-20260308-reroute-replan-real-observation] `reroute` は自然発火せず、`replan_required` は観測できたが `replanned` には届かないことを real-model 条件で確認した
 - [x] [DR-20260308-progress-voice-log-rendering] `Progress Voice` を task detail 右列の会話ログ本文生成へ反映し、管理人 / 住人 / 古参住人らしい言い回しを強めた

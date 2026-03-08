@@ -135,8 +135,11 @@ test("buildGuideContext uses planning-oriented Guide operating rules in Japanese
   assert.match(result.messages[0].content, /なぜそれを先に見るのかを一言/);
   assert.match(result.messages[0].content, /最終依頼案を短く提示/);
   assert.match(result.messages[0].content, /誰に何を頼む形になるか/);
+  assert.match(result.messages[0].content, /`まとめてほしい` のように、ユーザーへ逆に依頼しない/);
   assert.match(result.messages[0].content, /この形で進めてよければ依頼にします/);
   assert.match(result.messages[0].content, /1でよいですか？/);
+  assert.match(result.messages[0].content, /追加の最終確認に戻らず status=plan_ready/);
+  assert.match(result.messages[0].content, /明示的な breakdown 要求と主要材料が揃っている時は plan 作成を優先/);
   assert.match(result.messages[0].content, /調べる人 \/ 作り手 \/ 書く人 の3段/);
   assert.match(result.messages[0].content, /担当 Pal をユーザーへ聞き返さず自分で選ぶ/);
 });
@@ -156,7 +159,10 @@ test("buildGuideContext uses planning-oriented Guide operating rules in English"
   assert.match(result.messages[0].content, /add one short reason/);
   assert.match(result.messages[0].content, /propose the final request shape yourself/);
   assert.match(result.messages[0].content, /what kind of request this will become/);
+  assert.match(result.messages[0].content, /Do not ask the user to summarize it for you/);
   assert.match(result.messages[0].content, /If that works, I will turn it into a request/);
+  assert.match(result.messages[0].content, /return status=plan_ready instead of asking for one more final confirmation/);
+  assert.match(result.messages[0].content, /When the breakdown request is explicit and the main inputs are present, prefer producing the plan/);
   assert.match(result.messages[0].content, /Shall we go with 1\?/);
   assert.match(result.messages[0].content, /one blocking fact prevents task creation/);
 });

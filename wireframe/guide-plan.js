@@ -375,7 +375,7 @@
     };
     const exampleTwoJa = {
       status: "plan_ready",
-      reply: "1 を前提に進めます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
+      reply: "この内容で依頼としてまとめます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
       plan: {
         goal: "Settings 保存後に reload しても model が残る状態に戻す",
         completionDefinition: "Save 後に reload しても登録した model が一覧に残り、利用者向け説明まで整っている",
@@ -415,7 +415,7 @@
     };
     const exampleTwoEn = {
       status: "plan_ready",
-      reply: "Proceeding with option 1. I split the work into Research Resident / Maker Resident / Writer Resident tasks.",
+      reply: "I will turn this into a request in that shape. I split the work into Research Resident / Maker Resident / Writer Resident tasks.",
       plan: {
         goal: "Keep the saved model visible after reload",
         completionDefinition: "After Save and reload, the registered model still appears and the final explanation is ready to return",
@@ -453,12 +453,14 @@
         "Few-shot examples for Guide behavior:",
         `Example 1 user: Settings save feels wrong. What should we check first?\nExample 1 assistant: ${JSON.stringify(exampleOneEn)}`,
         `Example 2 user: After Save and reload, the model disappears. Split it into Research Resident / Maker Resident / Writer Resident tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
+        `Example 3 user: The Save button in Settings can be pressed but the result is not reflected. Repro: open Settings, add a model, press Save, then reload. Expected outcome: the model remains after reload. Split it into trace / fix / verify tasks.\nExample 3 assistant: ${JSON.stringify(exampleTwoEn)}`,
       ].join("\n\n");
     }
     return [
       "Guide の振る舞い例:",
       `例1 ユーザー: Settings の保存が変です。まずどこから見ればいい？\n例1 Guide: ${JSON.stringify(exampleOneJa)}`,
       `例2 ユーザー: Save 後に reload すると model が消えます。調べる人 / 作り手 / 書く人 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
+      `例3 ユーザー: Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。\n例3 Guide: ${JSON.stringify(exampleTwoJa)}`,
     ].join("\n\n");
   }
 

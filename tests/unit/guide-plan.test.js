@@ -293,6 +293,8 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   assert.match(prompt, /保存処理と保存直後の状態反映を確認する依頼/);
   assert.match(prompt, /この形で進めてよければ依頼にします/);
   assert.match(prompt, /でよいですか/);
+  assert.match(prompt, /この内容で依頼としてまとめます/);
+  assert.match(prompt, /trace \/ fix \/ verify の Task に分けて進めたい/);
   assert.match(prompt, /調べる人/);
   assert.match(prompt, /作り手/);
   assert.match(prompt, /書く人/);
