@@ -43,4 +43,46 @@
 - `node scripts/validate_delta_links.js --dir .` PASS
 
 ## delta-archive
-- PASS。`replan_required -> replanned -> new task dispatch` の最小橋渡しを archive する。
+
+## Delta ID
+- DR-20260308-orchestrator-replan-bridge
+
+## クローズ判定
+- verify結果: PASS
+- review gate: NOT REQUIRED
+- archive可否: 可
+
+## 確定内容
+- 目的: `replan_required -> replanned -> new task dispatch` の最小橋渡しを追加した
+- 変更対象: `wireframe/app.js`、`tests/e2e/workspace-layout.spec.js`、`docs/concept.md`、`docs/spec.md`、`docs/architecture.md`、`docs/plan.md`、当該 delta 記録
+- 非対象: worker reroute、Gate routing 見直し、board layout redesign、resident identity 再編集、replan 精度最適化
+
+## 実装記録
+- 変更ファイル:
+  - `wireframe/app.js`
+  - `tests/e2e/workspace-layout.spec.js`
+  - `docs/concept.md`
+  - `docs/spec.md`
+  - `docs/architecture.md`
+  - `docs/plan.md`
+  - `docs/delta/DR-20260308-orchestrator-replan-bridge.md`
+- AC達成状況:
+  - AC-01 PASS
+  - AC-02 PASS
+  - AC-03 PASS
+  - AC-04 PASS
+  - AC-05 PASS
+
+## 検証記録
+- verify要約: `replan_required -> replanned -> new task materialization` の橋渡しが E2E と validator で確認された
+- 主要な根拠:
+  - `node --check wireframe/app.js` PASS
+  - `node --check tests/e2e/workspace-layout.spec.js` PASS
+  - Playwright targeted PASS
+  - `node scripts/validate_delta_links.js --dir .` PASS
+
+## 未解決事項
+- なし
+
+## 次のdeltaへの引き継ぎ（任意）
+- なし

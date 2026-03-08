@@ -46,4 +46,47 @@
 - `node scripts/validate_delta_links.js --dir .` PASS
 
 ## delta-archive
-- PASS。Guide-driven worker dispatch に `reroute` bridge を追加し、conversation log と progress log で resident の付け替えを追える状態にした。
+
+## Delta ID
+- DR-20260308-orchestrator-reroute-bridge
+
+## クローズ判定
+- verify結果: PASS
+- review gate: NOT REQUIRED
+- archive可否: 可
+
+## 確定内容
+- 目的: Guide-driven worker dispatch に `reroute` bridge を追加し、resident の付け替えを progress log と conversation log で追えるようにした
+- 変更対象: `wireframe/agent-routing.js`、`wireframe/plan-orchestrator.js`、`wireframe/app.js`、`tests/e2e/workspace-layout.spec.js`、`docs/spec.md`、`docs/architecture.md`、`docs/plan.md`、当該 delta 記録
+- 非対象: worker runtime 失敗後の reroute、Gate reroute、routing 精度最適化、board UI redesign、resident identity 編集
+
+## 実装記録
+- 変更ファイル:
+  - `wireframe/agent-routing.js`
+  - `wireframe/plan-orchestrator.js`
+  - `wireframe/app.js`
+  - `tests/e2e/workspace-layout.spec.js`
+  - `docs/spec.md`
+  - `docs/architecture.md`
+  - `docs/plan.md`
+  - `docs/delta/DR-20260308-orchestrator-reroute-bridge.md`
+- AC達成状況:
+  - AC-01 PASS
+  - AC-02 PASS
+  - AC-03 PASS
+  - AC-04 PASS
+  - AC-05 PASS
+
+## 検証記録
+- verify要約: `reroute -> dispatch` の resident 付け替えと progress log が unit / E2E / validator で確認された
+- 主要な根拠:
+  - `node --check` PASS
+  - unit PASS
+  - Playwright targeted PASS
+  - `node scripts/validate_delta_links.js --dir .` PASS
+
+## 未解決事項
+- なし
+
+## 次のdeltaへの引き継ぎ（任意）
+- なし

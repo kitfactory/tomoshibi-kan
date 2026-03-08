@@ -44,4 +44,45 @@
 - `node scripts/validate_delta_links.js --dir .` PASS
 
 ## delta-archive
-- PASS。resident の主担当 function と `taskKind` を routing 前処理と fallback scorer に反映し、role-first の精度改善を入れた。
+
+## Delta ID
+- DR-20260308-routing-precision-role-first
+
+## クローズ判定
+- verify結果: PASS
+- review gate: NOT REQUIRED
+- archive可否: 可
+
+## 確定内容
+- 目的: resident の主担当 function と `taskKind` を routing 前処理と fallback scorer に反映し、role-first の精度改善を入れた
+- 変更対象: `wireframe/agent-routing.js`、`tests/unit/agent-routing.test.js`、`tests/unit/plan-orchestrator.test.js`、`docs/spec.md`、`docs/architecture.md`、`docs/plan.md`、当該 delta 記録
+- 非対象: resident identity 編集、Gate routing 精度改善、reroute / replan bridge の追加変更、board UI redesign、real-model autonomous check 再設計
+
+## 実装記録
+- 変更ファイル:
+  - `wireframe/agent-routing.js`
+  - `tests/unit/agent-routing.test.js`
+  - `tests/unit/plan-orchestrator.test.js`
+  - `docs/spec.md`
+  - `docs/architecture.md`
+  - `docs/plan.md`
+  - `docs/delta/DR-20260308-routing-precision-role-first.md`
+- AC達成状況:
+  - AC-01 PASS
+  - AC-02 PASS
+  - AC-03 PASS
+  - AC-04 PASS
+  - AC-05 PASS
+
+## 検証記録
+- verify要約: resident function と `taskKind` の role-first bias が unit と validator で確認された
+- 主要な根拠:
+  - `node --check wireframe/agent-routing.js` PASS
+  - `node --test tests/unit/agent-routing.test.js tests/unit/plan-orchestrator.test.js` PASS
+  - `node scripts/validate_delta_links.js --dir .` PASS
+
+## 未解決事項
+- なし
+
+## 次のdeltaへの引き継ぎ（任意）
+- なし

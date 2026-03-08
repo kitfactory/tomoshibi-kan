@@ -9,7 +9,7 @@
 1. **ユーザー要件は必ず delta 4ステップで処理**：`delta request → delta apply → delta verify → delta archive`。
 2. **矛盾時は delta を優先**：AGENTS.md / OVERVIEW / 既存メモと矛盾したら、当該 Delta ID の定義（In Scope / Out of Scope / AC）を優先する。
 3. **入口は `docs/OVERVIEW.md`**（全体像・現在地・リンク集）。作業前後で必ず確認/更新する。
-4. **`docs/plan.md` は current / future / archive で管理**（current はチェックリスト、future は粗い計画、archive は完了）。
+4. **`docs/plan.md` は current / review timing / future / archive summary / archive index で管理**し、詳細 archive は monthly file へ分離する。
 5. **レビューゲートで必ず停止**：自己レビュー → 完成と判断できたらユーザー確認 → 合意で次へ。
 
 ## 要件対応プロトコル（Delta-First / 必須）
@@ -24,10 +24,12 @@
 ### Step 3: `delta verify`（検証）
 - 受入条件を満たすかを検証する。
 - Out of Scope への変更があれば FAIL とし、後工程へ流さない。
-- `node scripts/validate_delta_links.js --dir .` で plan↔delta↔archive の整合を確認する。
+- plan↔delta↔archive の整合確認と長大コードの確認は `project-validator` skill を使う。
 
 ### Step 4: `delta archive`（確定）
 - verify が PASS の差分だけを履歴化してクローズする。
+- 大機能完了時は `Delta Type: REVIEW` を先に通し、`docs/delta/REVIEW_CHECKLIST.md` で点検する。
+- ユーザーは `review deltaを回して` と手動発動してよい。
 - archive で新規要件を追加しない。
 
 ### 逸脱防止ルール
@@ -79,24 +81,18 @@
 - AGENTS.md が日本語の場合、`docs/**` は日本語で作成する
 - ソースコードのコメントは **日本語 + 英語を併記**
 
-## 文字化け防止
-- 日本語を含むファイルは UTF-8 を前提に扱う
-- PowerShell で日本語ファイルを書き換えるときは、エンコーディング未指定の `Set-Content` / `Out-File` を使わない
-- 日本語文言の変更は、可能な限り `apply_patch` を優先する
-- 日本語文言を変更した後は、対象ファイルを再読込して文字化けがないことを確認する
-- UI 文言変更を含む delta では、verify に文字化け確認を含める
-
 ## 言語別指針 (Python)
 - Python: `uv` + `.venv` 仮想環境、`pytest`、Lint/Format（`ruff`/`black` など）を推奨。
 - 環境変数/`.env` の必要キーと利用箇所を明示し、`.env.sample` は生成しないでください。
 
-## 対応エディタ
+## 対応エージェント
 - ターゲット: Codex
-- 他のエディタ指定時は CLI オプション `--editor` を使用
+- 他のエージェント指定時は CLI オプション `--agent` を使用
+- skills の配置先は `--skills none|workspace|user` で切り替える
 
 ## サンプル（最低限）
-- 成功例: `bon --dir ./project --lang ts --editor codex`
-- 失敗例: `bon --editor unknown` → `[bon][E_EDITOR_UNSUPPORTED] Unsupported editor: unknown`
+- 成功例: `bon --dir ./project --lang ts --agent codex --skills workspace`
+- 失敗例: `bon --agent unknown` → `[bon][E_AGENT_UNSUPPORTED] Unsupported agent: unknown`
 
 ## 詳細は OVERVIEW を正とする
 `docs/OVERVIEW.md` を参照する。

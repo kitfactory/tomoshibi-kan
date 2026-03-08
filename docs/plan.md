@@ -1,9 +1,6 @@
 # plan.md（最新版）
 
 # current
-- [ ] [DR-20260308-orchestrator-replan-bridge] Gate reject が `replan_required` を示した時、Orchestrator が active Guide の runtime / `SOUL.md` を使って新しい Plan を作り、old task を残したまま新 task へ橋渡しする
-- [ ] [DR-20260308-orchestrator-reroute-bridge] Guide-driven routing が `reroute` を返した時、Orchestrator が resident を付け替えて `reroute -> dispatch` を progress log に残す
-- [ ] [DR-20260308-routing-precision-role-first] resident の主担当 (`調べる人 / 作り手 / 書く人`) を routing 前処理へ明示し、fallback scorer を role-first に改善する
 - [ ] [SEED-20260308-assist-off-plan-ready-stability] assist OFF の Guide が resident trio 前提でも `plan_ready` へ安定到達し、task materialization まで進みやすいようにする
 - [ ] [SEED-20260308-progress-voice-log-rendering] `Progress Voice` を task detail 右列の会話ログ本文生成へ反映し、管理人 / 住人 / 古参住人らしい言い回しを強める
 - [ ] [SEED-20260308-reroute-replan-real-observation] `reroute / replan_required` を含む Orchestrator 分岐を real-model 条件で観測し、resident routing の実運用上の詰まり方を記録する
@@ -17,6 +14,12 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-open-delta-archive-normalization] 3件の open delta 記録を validator が読める archive 形式へ正規化した
+- [x] [DR-20260308-plan-current-open-delta-cleanup] current に残っていた archive 済み delta 3件を整理し、seed 中心の current に戻した
+- [x] [DR-20260308-orchestrator-replan-bridge] `replan_required -> replanned -> new task dispatch` の最小橋渡しを追加した
+- [x] [DR-20260308-orchestrator-reroute-bridge] Guide-driven worker dispatch に `reroute` bridge を追加し、conversation log と progress log で resident の付け替えを追えるようにした
+- [x] [DR-20260308-routing-precision-role-first] resident の主担当 function と `taskKind` を routing 前処理と fallback scorer に反映し、role-first の精度改善を入れた
+- [x] [DR-20260308-plan-editor-section-sync] local `plan-editor` を `current / review timing / future / archive summary / archive index` 運用へ同期した
 - [x] [DR-20260308-plan-md-shrink] `docs/plan.md` を `current / future / archive summary` の薄い入口へ再構成し、既存内容を `docs/plan_archive_2026_03.md` へ退避した
 - [x] 詳細 archive: [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
 - [x] 20260301: [DR-20260301-api-key-rotation-policy] [DR-20260301-context-builder-guide] [DR-20260301-context-builder-roadmap-order] [DR-20260301-context-builder-rollout] [DR-20260301-context-builder-spec] [DR-20260301-core-adapter-swap-tests] [DR-20260301-core-catalog-direct] [DR-20260301-core-catalog-no-default-models] [DR-20260301-doc-sync] [DR-20260301-env-vars-provider-minimal] [DR-20260301-event-log-query-controls] [DR-20260301-gate-reason-template-nav] [DR-20260301-guide-chat-dialogue] [DR-20260301-guide-chat-mojibake-fix] [DR-20260301-guide-lmstudio-dev] [DR-20260301-guide-model-guard] [DR-20260301-i18n-dictionary-verify] [DR-20260301-job-scheduler-spec] [DR-20260301-optional-api-key-local] [DR-20260301-pal-markdown-contract] [DR-20260301-pal-profile] [DR-20260301-plan-clarify] [DR-20260301-plan-current-order-guide] [DR-20260301-runtime-validation] [DR-20260301-settings-lmstudio-provider] [DR-20260301-settings-model-catalog-env] [DR-20260301-settings-model-registration] [DR-20260301-settings-pal-model-immediate] [DR-20260301-settings-persistence-impl] [DR-20260301-settings-persistence-policy] [DR-20260301-settings-provider-model-link] [DR-20260301-settings-provider-selection-sticky] [DR-20260301-settings-skill-section-split] [DR-20260301-settings-structure-refine] [DR-20260301-skill-catalog] [DR-20260301-workspace-access-fallback] [DR-20260301-ws-root-env-appdata] [DR-20260301-ws-root-layout]
