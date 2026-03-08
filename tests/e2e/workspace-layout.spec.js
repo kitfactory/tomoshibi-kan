@@ -1921,6 +1921,14 @@ for (const viewport of VIEWPORTS) {
       expect(saves).toHaveLength(5);
       expect(saves.some((item) => item.agentId === "pal-delta")).toBeTruthy();
       expect(saves.some((item) => item.agentId === "pal-gamma")).toBeFalsy();
+      const guideSave = saves.find((item) => item.agentId === "guide-core");
+      const gateSave = saves.find((item) => item.agentId === "gate-core");
+      const researcherSave = saves.find((item) => item.agentId === "pal-alpha");
+      expect(guideSave.role).toContain("Progress Voice");
+      expect(guideSave.role).toContain("Progress Note Triggers");
+      expect(gateSave.rubric).toContain("Progress Voice");
+      expect(gateSave.rubric).toContain("Progress Note Triggers");
+      expect(researcherSave.role).toContain("Hand-off Rules");
 
       await page.click('[data-tab="pal"]');
       await expect(page.locator("#palList")).toContainText("書く人");
@@ -1928,6 +1936,12 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#palList")).toContainText("作り手");
       await expect(page.locator("#palList")).toContainText("古参");
       await expect(page.locator("#palList")).toContainText("管理人");
+
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.click('[data-pal-edit-identity="guide-core:role"]');
+      await expect(page.locator("#identityEditorTextarea")).toHaveValue(/Progress Voice/);
+      await expect(page.locator("#identityEditorTextarea")).toHaveValue(/Progress Note Triggers/);
+      await page.click("#identityEditorCancel");
     });
 
     test("language switch exists in settings tab", async ({ page }) => {
