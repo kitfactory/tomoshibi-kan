@@ -119,6 +119,7 @@
 #11.用語集（Glossary）
 - Guide: ユーザー相談を受け、Planを作成・配布する窓口エージェント。家庭用/仕事用/研究用など複数 profile を切り替えて使える。
 - Worker: Task/Jobを実行し、Completion Ritualを添えてGateへ提出する実行エージェント。ユーザーに見える文脈では「住人」と表現してよい。
+- Resident Role Clarity: built-in resident の表示は固有名 `冬坂 / 久瀬 / 白峰` を基本とする。`ROLE.md` では、それぞれを `リサーチャー / プログラマ / ライター` として定義し、何を引き受ける住人かを明確にする。
 - Gate: palpal-core判定根拠でTask/JobをApprove/Rejectする承認エージェント。業務ごとに複数 profile を持ち、既定 gate または対象別 gate を使い分ける。
 - Plan Card: 目的・完了条件・制約を持つ実行計画カード。
 - Task Card: Palに配布される通常作業カード。
@@ -148,5 +149,6 @@
 
 - Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / 住人 / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
 - Task Detail Conversation Log: task 一覧から詳細を開いた時、右列には `Guide / 住人 / 古参住人` のやり取りとして progress log が時系列表示される。管理人が住人へ託し、住人が途中経過をつぶやき、古参住人が助言や判定を返す流れが読めることを重視する。
+- Plan Preview Before Dispatch: Guide は依頼確定前に、少なくとも `何をする task か / 誰に頼むか / 何を返してもらうか` を短く提示し、ユーザーが「この内容で依頼する」判断をできるようにする。
 - Guide-driven Replan Bridge: Gate が「進め方そのものを見直すべき」と判断した時、Orchestrator は active Guide の頭脳を借りて新しい Plan を作り、old task を履歴として残したまま新しい task へ橋渡しする。
 

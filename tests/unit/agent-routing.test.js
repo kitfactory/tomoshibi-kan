@@ -130,7 +130,7 @@ test("buildWorkerRoutingInput produces resident summaries for llm-assisted routi
     workers: [
       {
         id: "pal-alpha",
-        displayName: "調べる人",
+        displayName: "冬坂",
         roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n- 原因候補と証拠を集めたい依頼\n\n## 得意な作成物\n- 再現手順メモ\n- 証拠 summary",
         enabledSkillIds: ["codex-file-search"],
         skillSummaries: ["file search and repro evidence"],
@@ -160,7 +160,7 @@ test("buildWorkerRoutingLlmInput keeps full ROLE and capability summary while dr
     workers: [
       {
         id: "pal-alpha",
-        displayName: "調べる人",
+        displayName: "冬坂",
         roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n\n## 得意な作成物\n- 再現手順メモ",
         enabledSkillIds: ["codex-file-search"],
         skillSummaries: ["file search and repro evidence"],
@@ -192,21 +192,21 @@ test("selectWorkerForTask prefers resident role focus before generic lexical mat
   const workers = [
     {
       id: "pal-alpha",
-      displayName: "調べる人",
+      displayName: "冬坂",
       roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n- 原因候補と証拠を集めたい依頼\n\n## 得意な作成物\n- 再現手順メモ\n- 証拠 summary",
       enabledSkillIds: ["codex-file-search"],
       skillSummaries: ["trace files and gather evidence"],
     },
     {
       id: "pal-beta",
-      displayName: "作り手",
+      displayName: "久瀬",
       roleText: "# ROLE\n\n## 得意な依頼\n- 最小修正で前へ進めたい依頼\n- patch や試作で形を作りたい依頼\n\n## 得意な作成物\n- 最小 patch\n- 変更ファイル一覧",
       enabledSkillIds: ["codex-file-edit"],
       skillSummaries: ["apply patches and implement changes"],
     },
     {
       id: "pal-delta",
-      displayName: "書く人",
+      displayName: "白峰",
       roleText: "# ROLE\n\n## 得意な依頼\n- 話が混線していて整理したい依頼\n- 返却文や説明文を整えたい依頼\n\n## 得意な作成物\n- 要約\n- 返却文",
       enabledSkillIds: ["codex-file-read"],
       skillSummaries: ["write summaries and shape explanations"],

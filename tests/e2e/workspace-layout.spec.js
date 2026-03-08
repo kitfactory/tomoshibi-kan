@@ -760,7 +760,7 @@ for (const viewport of VIEWPORTS) {
           status: "ok",
           actualActor: "orchestrator",
           displayActor: "Guide",
-          messageForUser: "作り手ではなく書く人にお願いし直しました。",
+          messageForUser: "久瀬ではなく白峰にお願いし直しました。",
           payload: { fromWorkerId: "pal-beta", workerId: "pal-delta" },
         });
         await window.appendTaskProgressLogEntryWithFallback({
@@ -970,7 +970,7 @@ for (const viewport of VIEWPORTS) {
               modelName: "gpt-4.1",
               text: JSON.stringify({
                 selectedResidentId: "pal-delta",
-                reason: "このtaskは結果の整理と返却文の形づくりが主なので、書く人へ振り直す。",
+                reason: "この task は結果の整理と返却文の形づくりが主なので、白峰へ振り直す。",
                 confidence: "high",
                 fallbackAction: "reroute",
               }),
@@ -2046,9 +2046,9 @@ for (const viewport of VIEWPORTS) {
 
       expect(guide.role).toMatch(/trace \/ fix \/ verify/);
       expect(gate.rubric).toMatch(/Decision Shape/);
-      expect(researchResident.role).toMatch(/調べる人|researcher resident/);
-      expect(makerResident.role).toMatch(/作り手|maker resident/);
-      expect(writerResident.role).toMatch(/書く人|writer resident/);
+      expect(researchResident.role).toMatch(/リサーチャー|researcher resident/);
+      expect(makerResident.role).toMatch(/プログラマ|maker resident/);
+      expect(writerResident.role).toMatch(/ライター|writer resident/);
       expect(researchResident.enabledSkillIds).toContain("codex-file-search");
       expect(writerResident.enabledSkillIds).toContain("codex-test-runner");
     });
@@ -2144,10 +2144,10 @@ for (const viewport of VIEWPORTS) {
       await page.addInitScript(() => {
         const oldSnapshot = {
           profiles: [
-            { id: "guide-core", role: "guide", runtimeKind: "model", displayName: "管理人 Guide", persona: "old guide", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-search"], status: "active" },
-            { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "古参住人 Gate", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
-            { id: "pal-alpha", role: "worker", runtimeKind: "tool", displayName: "Trace担当の住人", persona: "old trace", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-search"], status: "active" },
-            { id: "pal-beta", role: "worker", runtimeKind: "tool", displayName: "Fix担当の住人", persona: "old fix", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-edit"], status: "active" },
+            { id: "guide-core", role: "guide", runtimeKind: "model", displayName: "燈子さん", persona: "old guide", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-search"], status: "active" },
+            { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "槙原", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
+            { id: "pal-alpha", role: "worker", runtimeKind: "tool", displayName: "冬坂", persona: "old trace", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-search"], status: "active" },
+            { id: "pal-beta", role: "worker", runtimeKind: "tool", displayName: "久瀬", persona: "old fix", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-edit"], status: "active" },
             { id: "pal-gamma", role: "worker", runtimeKind: "tool", displayName: "整える人", persona: "old arranger", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-test-runner"], status: "active" },
           ],
           activeGuideId: "guide-core",
@@ -2211,11 +2211,11 @@ for (const viewport of VIEWPORTS) {
       expect(researcherSave.role).toContain("Hand-off Rules");
 
       await page.click('[data-tab="pal"]');
-      await expect(page.locator("#palList")).toContainText("書く人");
-      await expect(page.locator("#palList")).toContainText("調べる人");
-      await expect(page.locator("#palList")).toContainText("作り手");
-      await expect(page.locator("#palList")).toContainText("古参");
-      await expect(page.locator("#palList")).toContainText("管理人");
+      await expect(page.locator("#palList")).toContainText("白峰");
+      await expect(page.locator("#palList")).toContainText("冬坂");
+      await expect(page.locator("#palList")).toContainText("久瀬");
+      await expect(page.locator("#palList")).toContainText("槙原");
+      await expect(page.locator("#palList")).toContainText("燈子さん");
 
       await page.click('[data-pal-open-id="guide-core"]');
       await page.click('[data-pal-edit-identity="guide-core:role"]');

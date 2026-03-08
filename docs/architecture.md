@@ -573,11 +573,11 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` の `OPERATING_RULES` は、短い `scope_unclear` turn では generic follow-up だけで止まらず、会話履歴からあり得そうな案件を具体化した 3 つの option を可能性順に提示し、1 つを recommendation として返し、短い choice で答えられる closing を付けられる。
 - `GuideConversationUseCase` の 3 option は、各案の観点（例: 永続化、再読込、UI state 反映）を短く明示し、recommendation には「なぜ今その観点を見るか」の一言理由を付ける。
 - `GuideConversationUseCase` の system prompt は、上記の `3 option + recommendation + short-answer closing` を few-shot example でも示し、model が rules を自然な返答へ写像しやすいよう補助してよい。
-- debug-purpose workspace では、`GuideConversationUseCase` は resident set built-in (`調べる人 / 作り手 / 書く人`) を優先候補として扱い、trace / fix / verify に分けやすい plan を出す。
-- debug-purpose workspace で明示的な breakdown 要求がある場合、`GuideConversationUseCase` の `OPERATING_RULES` は `調べる人 / 作り手 / 書く人` の resident trio plan を優先する。
+- debug-purpose workspace では、`GuideConversationUseCase` は resident set built-in (`冬坂 / 久瀬 / 白峰`) を優先候補として扱い、trace / fix / verify に分けやすい plan を出す。
+- debug-purpose workspace で明示的な breakdown 要求がある場合、`GuideConversationUseCase` の `OPERATING_RULES` は `冬坂 / 久瀬 / 白峰` の resident trio plan を優先する。
 - `GuideConversationUseCase` の controller は latest user text を planning trigger として再評価できる。trigger が立つ場合は runtime adapter に assist prompt を追加し、`conversation` に留まらず `needs_clarification` か `plan_ready` へ進める。
 - `GuideConversationUseCase` の controller は planning trigger に加えて planning readiness も判定できる。`explicit_breakdown` かつ再現手順・期待結果が揃う時は readiness assist を追加し、軽微な不足を assumption に寄せて `plan_ready` を優先させる。
-- `GuidePlan` parser は debug-purpose の explicit breakdown (`調べる人 / 作り手 / 書く人`) を含む `plan_ready` で task 配列が壊れている場合、reply と controller cue (`planningIntent` / `planningReadiness`) を参照して resident trio 3 task に recovery する。
+- `GuidePlan` parser は debug-purpose の explicit breakdown (`冬坂 / 久瀬 / 白峰`) を含む `plan_ready` で task 配列が壊れている場合、reply と controller cue (`planningIntent` / `planningReadiness`) を参照して resident trio 3 task に recovery する。
 - `tool` runtime の Guide には外部 skill/tool を動的注入しない。CLI tool へ渡すのは `systemPrompt`, history, userText, response schema hint までとし、routing 用の capability snapshot は Guide/Orchestrator 側の判断材料としてだけ使う。
 - CLI tool の structured output は弱いものとして扱う。`output-schema` や response format を渡しても、accept 条件は parser / repair / validate を通過した valid object で固定する。
 - controller assist は `guideControllerAssistEnabled=true` の時だけ有効にする。既定では Guide 自身の判断に任せ、controller は planning cue を注入しない。
@@ -910,9 +910,12 @@ type TaskProgressLogEntry = {
 - `Event Log` や将来の debug view では `actualActor` と `displayActor` の両方を出し分けられるようにする。
 - `PlanExecutionOrchestrator` が内部で付与した progress comment も、通常 UX では Guide の進行メモとして見せてよい。
 - `TaskDetailPresenter` は task detail 右列に `Guide / 住人 / 古参住人` の conversation-like timeline を描画してよい。内部的には progress log entry の列だが、通常 UX では住人同士のやり取りとして読めることを優先する。
+- resident trio の表示は `冬坂 / 久瀬 / 白峰` に固定する。役割の意味は表示レイヤーで増やさず、`ROLE.md` に `リサーチャー / プログラマ / ライター` として明記して判断材料に使う。
 
 ### ROLE contract guidance
 - built-in resident rollout では、`ROLE.md` を personality file として使わず、作業契約として扱う。
+- `GuideConversationUseCase` は `plan_ready` 直前または `needs_clarification` の最終段階で `PlanPreview` を生成してよい。`PlanPreview` は `taskTitle`, `residentLabel`, `oneLineIntent`, `expectedOutput` を持ち、dispatch 前にユーザーが承認しやすい短文へ整形する。`residentLabel` は固有名を使う。
+- `PlanExecutionOrchestrator` は dispatch 時に resident id と worker runtime を確定するが、ユーザー向けの説明は `PlanPreview` と progress voice を一次ソースとして扱う。
 - `ROLE.md` の最小契約は次の 8 節とする。
   - `Mission`
   - `Primary Responsibilities`

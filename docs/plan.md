@@ -13,13 +13,15 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-resident-proper-name-rollout] built-in 住人の表示名を `燈子さん / 槙原 / 冬坂 / 久瀬 / 白峰` に統一し、Guide prompt / few-shot / parser recovery / task wording を proper-name 前提へ更新し、Guide 5 turn 収束と 3 task cycle の dispatch 維持を確認した
+- [x] [DR-20260308-resident-role-alignment-and-plan-preview-design] built-in 住人の職業設定を `管理人 / 世話人 / リサーチャー / プログラマ / ライター` とし、Guide が依頼前に `誰に何を頼むか` を見せる `PlanPreview` 設計を定義した
 - [x] [DR-20260308-guide-five-turn-convergence] Guide の収束基準を `3ターン固定` から `5ターン以内で自然に依頼化` へ切り替え、runner と観測基準を更新した
 - [x] [DR-20260308-llm-routing-precision-improvement] resident routing の LLM 入力を `ROLE全文 + capability + fitHints` 中心に整理し、通常経路を LLM 側へ寄せた
 - [x] [DR-20260308-fallback-scorer-necessity-evaluation] fallback scorer は削除せず、`invalid / low-confidence / no-fit / runtime unavailable` 時だけ使う safety net として残すと判断した
 - [x] [DR-20260308-full-role-routing-real-observation] `ROLE全文 + summary` で real-model resident routing を観測し、resident trio の割当維持と explicit assignee 優先を確認した
 - [x] [DR-20260308-full-role-routing-context] resident routing の LLM 入力へ `ROLE.md` 全文を追加し、summary と併用して判断できるようにした
 - [x] [DR-20260308-role-first-routing-without-taskkind] `taskKind` を廃止し、ROLE の得意な依頼 / 得意な作成物を軸に resident routing を行うように切り替えた
-- [x] [DR-20260308-resident-variation-real-observation] resident 主体の依頼を real-model で観測し、`調べる人` / `作り手` は `plan_ready` 手前で止まり、`書く人` は progress query 誤判定に衝突することを確認した
+- [x] [DR-20260308-resident-variation-real-observation] resident 主体の依頼を real-model で観測し、`冬坂` / `久瀬` は `plan_ready` 手前で止まり、`白峰` は progress query 誤判定に衝突することを確認した
 - [x] [DR-20260308-assist-off-plan-ready-stability] assist OFF の Guide が explicit breakdown 要求と主要材料を受けた時、resident trio の `plan_ready` へ到達し task materialization まで進むことを real-model で確認した
 - [x] [DR-20260308-guide-finalization-proposal] 3案提示と推薦の後で、Guide が最終依頼案を短く提案して少ないターンで収束しやすくした
 - [x] [DR-20260308-reroute-replan-real-observation] `reroute` は自然発火せず、`replan_required` は観測できたが `replanned` には届かないことを real-model 条件で確認した

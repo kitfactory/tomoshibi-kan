@@ -556,11 +556,11 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide の `OPERATING_RULES` は、短い `scope_unclear` ターンでは generic な聞き返しだけで止まらず、会話履歴からあり得そうな案件を具体化した 3 択を可能性順に提案し、1 つを推薦し、番号や短い yes/no で返答できる締めを付けてよい。
 - Guide の 3 択提案は、各案が何に着目しているかを短く明示し、推薦した案には「なぜ今その観点を見るか」の一言を添えること。
 - Guide の system prompt には、`3 択 + recommendation + short-answer closing` を再現しやすくする few-shot example を含めてよい。
-- debug-purpose workspace では、Guide は resident set の built-in 住人 (`調べる人 / 作り手 / 書く人`) を優先し、trace / fix / verify の順に素直に task を割り当てられる plan を好む。
-- debug-purpose workspace で明示的な breakdown 要求がある場合、Guide の `OPERATING_RULES` は `調べる人 / 作り手 / 書く人` の resident trio plan を優先してよい。
+- debug-purpose workspace では、Guide は resident set の built-in 住人 (`冬坂 / 久瀬 / 白峰`) を優先し、trace / fix / verify の順に素直に task を割り当てられる plan を好む。
+- debug-purpose workspace で明示的な breakdown 要求がある場合、Guide の `OPERATING_RULES` は `冬坂 / 久瀬 / 白峰` の resident trio plan を優先してよい。
 - controller は user text から planning trigger を検知できるようにし、明示的な plan / task breakdown 要求時は Guide runtime へ `conversation` に留まらず `needs_clarification` か `plan_ready` を返す補助指示を追加してよい。
 - controller は `planningIntent=explicit_breakdown` かつ対象画面・再現手順・期待結果が user text に揃っている場合、readiness assist を追加し、ファイルパスやログ未提示だけでは `needs_clarification` に留まらないよう Guide を補助してよい。
-- debug-purpose の resident breakdown (`調べる人 / 作り手 / 書く人`) を含む `plan_ready` で task 配列が壊れている場合、parser は reply 内の breakdown だけでなく controller が付与した `planningIntent` / `planningReadiness` cue も使って resident trio 3 task (`調べる人 / 作り手 / 書く人`) へ recovery してよい。
+- debug-purpose の resident breakdown (`冬坂 / 久瀬 / 白峰`) を含む `plan_ready` で task 配列が壊れている場合、parser は reply 内の breakdown だけでなく controller が付与した `planningIntent` / `planningReadiness` cue も使って resident trio 3 task へ recovery してよい。
 - controller assist は暫定安定化策として保持してよいが、workspace 設定で明示的に有効化した時だけ使う。既定値は OFF とする。
 - `conversation` は雑談、壁打ち、通常相談など、ユーザーが task 化や実行計画化を明示していない状態を表す。この状態では Plan を生成せず、task/job materialize も開始しない。
 - Guide の最新出力が valid な `Plan` オブジェクトとして parse / validate できない場合、システムは `GuideConversationUseCase` に留まり、Guide との対話を継続する。
@@ -721,13 +721,23 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
 - `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
-- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-delta` の 5 件とし、resident-facing の表示は `管理人 / 古参 / 調べる人 / 作り手 / 書く人` を正とする。
+- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-delta` の 5 件とし、resident-facing の表示は `燈子さん / 槙原 / 冬坂 / 久瀬 / 白峰` を正とする。
+- resident trio の user-facing 名称は固有名 `冬坂 / 久瀬 / 白峰` を基本とする。`ROLE.md` では次の職業設定を明示する:
+  - `冬坂` -> `リサーチャー`
+  - `久瀬` -> `プログラマ`
+  - `白峰` -> `ライター`
 - Settings には built-in 住人定義を current workspace に同期する導線を持ち、built-in identity (`SOUL.md / ROLE.md / RUBRIC.md`) と resident-facing metadata を current seed/template 内容で上書きできるようにする。
 - `PlanExecutionOrchestrator` が内部で dispatch / retry / reroute / replan_required を起こした場合でも、表示上は Guide の進行コメントとして見せてよい。
 - progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。
 - progress log は task/job 単位で最新状態と直近イベント列を引けること。Guide はこのログを使って途中経過を自然文で説明してよい。
 - `message_for_user` は世界観に沿った自然文を許容するが、内部の `actual_actor` と `action_type` を欠落させてはならない。
 - task 一覧から task detail を開いた時、右列は `Guide / 住人 / 古参住人` の会話として progress log を時系列表示できること。内部 actor は保持したまま、通常表示では conversation-like timeline を優先する。
+- Guide は dispatch 前に `plan preview` を出せること。preview は少なくとも次を含む:
+  - task title: 何をするか
+  - assignee label: 誰に頼むか（resident 名）
+  - one-line intent: その resident に何を期待するか
+  - expected output: 何が返ると次へ進めるか
+- preview は resident 名だけを並べて終わらず、`誰に何を頼むか` が読める短い日本語であること。
 - minimal 実装では `task_progress_logs` を `settings.sqlite` に追加し、`append`, `list`, `latest` の query を提供する。
 - minimal 実装で progress log へ必ず記録する action は `dispatch`, `reroute`, `worker_runtime`, `to_gate`, `gate_review`, `replan_required`, `replanned`, `resubmit`, `plan_completed` とする。
 - Gate reject reason が進め方・前提・要件・スコープの見直しを示す場合、`PlanExecutionOrchestrator` は `replan_required` を progress log に追加してよい。

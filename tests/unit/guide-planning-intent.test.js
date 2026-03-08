@@ -15,7 +15,7 @@ test("detectPlanningIntent returns explicit breakdown for trace fix verify reque
 });
 
 test("detectPlanningIntent returns explicit breakdown for resident breakdown request", () => {
-  const intent = detectPlanningIntent("調べる人 / 作り手 / 書く人 に分けて進めたい");
+  const intent = detectPlanningIntent("冬坂 / 久瀬 / 白峰 に分けて進めたい");
   assert.equal(intent.requested, true);
   assert.equal(intent.cue, "explicit_breakdown");
 });
@@ -52,5 +52,5 @@ test("buildPlanningReadinessAssistPrompt pushes plan_ready for ready repro input
   });
   assert.match(prompt, /target area, reproducible steps, and an expected result/);
   assert.match(prompt, /Do not stay in status=needs_clarification/);
-  assert.match(prompt, /produce exactly three tasks for the Research Resident, Maker Resident, and Writer Resident/);
+  assert.match(prompt, /produce exactly three tasks for Fuyusaka, Kuze, and Shiramine/);
 });

@@ -140,7 +140,7 @@ test("buildGuideContext uses planning-oriented Guide operating rules in Japanese
   assert.match(result.messages[0].content, /1でよいですか？/);
   assert.match(result.messages[0].content, /追加の最終確認に戻らず status=plan_ready/);
   assert.match(result.messages[0].content, /明示的な breakdown 要求と主要材料が揃っている時は plan 作成を優先/);
-  assert.match(result.messages[0].content, /調べる人 \/ 作り手 \/ 書く人 の3段/);
+  assert.match(result.messages[0].content, /冬坂 \/ 久瀬 \/ 白峰 の3段/);
   assert.match(result.messages[0].content, /担当 Pal をユーザーへ聞き返さず自分で選ぶ/);
 });
 
@@ -152,7 +152,7 @@ test("buildGuideContext uses planning-oriented Guide operating rules in English"
   });
   assert.equal(result.ok, true);
   assert.match(result.messages[0].content, /moving toward a work request/);
-  assert.match(result.messages[0].content, /Research Resident \/ Maker Resident \/ Writer Resident split/);
+  assert.match(result.messages[0].content, /Fuyusaka \/ Kuze \/ Shiramine split/);
   assert.match(result.messages[0].content, /propose three concrete likely work options grounded in the conversation so far, ordered by likelihood/);
   assert.match(result.messages[0].content, /Make each option explicit about its angle/);
   assert.match(result.messages[0].content, /recommend the most plausible one/);

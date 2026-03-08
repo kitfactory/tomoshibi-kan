@@ -78,7 +78,7 @@ test("parseGuidePlanResponse recovers empty reply for valid plan_ready payload",
   }));
   assert.equal(parsed.ok, true);
   assert.equal(parsed.status, "plan_ready");
-  assert.match(parsed.reply, /Trace|計画/);
+  assert.match(parsed.reply, /依頼としてまとめます|原因調査/);
 });
 
 test("parseGuidePlanResponse accepts wrapper-token plan_ready payload", () => {
@@ -155,7 +155,11 @@ test("parseGuidePlanResponse recovers trace fix verify tasks from malformed debu
   assert.equal(parsed.plan.tasks.length, 3);
   assert.deepEqual(
     parsed.plan.tasks.map((task) => task.title),
-    ["調べる人", "作り手", "書く人"]
+    [
+      "保存結果が reload 後に消える原因と再現条件を調査する",
+      "保存後も設定が残るように必要な修正を加える",
+      "修正結果と返却文を整理して利用者向けにまとめる",
+    ]
   );
   assert.deepEqual(parsed.plan.tasks[0].requiredSkills, ["browser-chrome", "codex-file-search", "codex-file-read"]);
   assert.equal(parsed.plan.tasks[0].assigneePalId, "pal-alpha");
@@ -190,21 +194,25 @@ test("parseGuidePlanResponse recovers debug tasks from controller intent context
   assert.equal(parsed.status, "plan_ready");
   assert.deepEqual(
     parsed.plan.tasks.map((task) => task.title),
-    ["調べる人", "作り手", "書く人"]
+    [
+      "保存結果が reload 後に消える原因と再現条件を調査する",
+      "保存後も設定が残るように必要な修正を加える",
+      "修正結果と返却文を整理して利用者向けにまとめる",
+    ]
   );
 });
 
 test("parseGuidePlanResponse recovers resident trio when plan_ready returns partial malformed resident tasks", () => {
   const parsed = parseGuidePlanResponse(`{
     "status":"plan_ready",
-    "reply":"1 を前提に進めます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
+    "reply":"1 を前提に進めます。冬坂に原因調査、久瀬に修正、白峰に返却文の整理をお願いします。",
     "plan":{
       "goal":"Settings save を直す",
       "completionDefinition":"reload 後も model が残る",
       "constraints":["既存設定画面を壊さない"],
       "tasks":[
         {
-          "title":"調べる人",
+          "title":"保存結果が reload 後に消える原因と再現条件を調査する",
           "description":"保存処理の再現手順とログを追う",
           "expectedOutput":"trace summary",
           "requiredSkills":["browser-chrome","codex-file-search"],
@@ -212,7 +220,7 @@ test("parseGuidePlanResponse recovers resident trio when plan_ready returns part
           "assigneePalId":"pal-alpha"
         },
         {
-          "title":"作り手",
+          "title":"保存後も設定が残るように必要な修正を加える",
           "description":"調べる",
           "expectedOutput":"fix summary",
           "requiredSkills":["codex-file-edit"],
@@ -229,7 +237,11 @@ test("parseGuidePlanResponse recovers resident trio when plan_ready returns part
   assert.equal(parsed.status, "plan_ready");
   assert.deepEqual(
     parsed.plan.tasks.map((task) => task.title),
-    ["調べる人", "作り手", "書く人"]
+    [
+      "保存結果が reload 後に消える原因と再現条件を調査する",
+      "保存後も設定が残るように必要な修正を加える",
+      "修正結果と返却文を整理して利用者向けにまとめる",
+    ]
   );
   assert.equal(parsed.plan.tasks[0].assigneePalId, "pal-alpha");
   assert.equal(parsed.plan.tasks[1].assigneePalId, "pal-beta");
@@ -295,7 +307,9 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   assert.match(prompt, /でよいですか/);
   assert.match(prompt, /この内容で依頼としてまとめます/);
   assert.match(prompt, /trace \/ fix \/ verify の Task に分けて進めたい/);
-  assert.match(prompt, /調べる人/);
-  assert.match(prompt, /作り手/);
-  assert.match(prompt, /書く人/);
+  assert.match(prompt, /冬坂/);
+  assert.match(prompt, /久瀬/);
+  assert.match(prompt, /白峰/);
+  assert.match(prompt, /原因調査/);
+  assert.match(prompt, /返却文/);
 });

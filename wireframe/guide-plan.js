@@ -117,7 +117,10 @@
   function hasExplicitResidentBreakdown(reply) {
     const text = normalizeString(reply);
     if (!text) return false;
-    return /調べる人/.test(text) && /作り手/.test(text) && /書く人/.test(text);
+    const properNames = /冬坂/.test(text) && /久瀬/.test(text) && /白峰/.test(text);
+    const professions = /リサーチャー/.test(text) && /プログラマ/.test(text) && /ライター/.test(text);
+    const legacyLabels = /調べる人/.test(text) && /作り手/.test(text) && /書く人/.test(text);
+    return properNames || professions || legacyLabels;
   }
 
   function isExplicitResidentBreakdownContext(options) {
@@ -143,45 +146,40 @@
   }
 
   function isExpectedResidentAssignee(task) {
-    const title = normalizeString(task?.title);
     const assignee = normalizeString(task?.assigneePalId).replace(/[^a-z0-9-]/gi, "");
-    if (!title) return false;
-    if (title === "調べる人") return assignee === "pal-alpha";
-    if (title === "作り手") return assignee === "pal-beta";
-    if (title === "書く人") return assignee === "pal-delta";
-    return false;
+    return assignee === "pal-alpha" || assignee === "pal-beta" || assignee === "pal-delta";
   }
 
   function isResidentTaskSetValid(tasks) {
-    const titles = tasks.map((task) => normalizeString(task?.title));
-    const expectedTitles = ["調べる人", "作り手", "書く人"];
-    if (titles.length !== expectedTitles.length) return false;
-    if (titles.some((title, index) => title !== expectedTitles[index])) return false;
+    if (!Array.isArray(tasks) || tasks.length !== 3) return false;
+    const assignees = tasks.map((task) => normalizeString(task?.assigneePalId));
+    const expectedAssignees = ["pal-alpha", "pal-beta", "pal-delta"];
+    if (assignees.some((assignee, index) => assignee !== expectedAssignees[index])) return false;
     return tasks.every((task) => !isSuspiciousTask(task) && isExpectedResidentAssignee(task));
   }
 
   function buildRecoveredResidentTasks() {
     return [
       {
-        title: "調べる人",
-        description: "保存処理の再現手順、SQLite への書き込み、reload 時の読み込み箇所を追い、証拠と原因候補を集める。",
-        expectedOutput: "再現結果、関連ファイル、原因候補の trace summary",
+        title: "保存結果が reload 後に消える原因と再現条件を調査する",
+        description: "冬坂が保存処理の再現手順、SQLite への書き込み、reload 時の読み込み箇所を追い、証拠と原因候補を集める。",
+        expectedOutput: "再現結果、関連ファイル、原因候補をまとめた調査レポート",
         requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
         reviewFocus: ["repro", "traceability"],
         assigneePalId: "pal-alpha",
       },
       {
-        title: "作り手",
-        description: "調べる人 の結果に基づいて、保存処理または読み込み処理の不整合を最小変更で修正する。",
-        expectedOutput: "修正内容、影響ファイル、残リスクの summary",
+        title: "保存後も設定が残るように必要な修正を加える",
+        description: "久瀬が冬坂の調査結果に基づいて、保存処理または読み込み処理の不整合を最小変更で修正する。",
+        expectedOutput: "修正内容、影響ファイル、残リスクをまとめた実装メモ",
         requiredSkills: ["codex-file-read", "codex-file-edit"],
         reviewFocus: ["scope", "minimal_fix"],
         assigneePalId: "pal-beta",
       },
       {
-        title: "書く人",
-        description: "修正後の挙動と残る注意点を整理し、reload 後も model が残ることと利用者向けの説明をまとめる。",
-        expectedOutput: "検証要約、利用者向け説明、残る不確実性",
+        title: "修正結果と返却文を整理して利用者向けにまとめる",
+        description: "白峰が修正後の挙動と残る注意点を整理し、reload 後も model が残ることを利用者向けの説明としてまとめる。",
+        expectedOutput: "検証要約、返却文、残る不確実性の整理",
         requiredSkills: ["codex-file-read"],
         reviewFocus: ["expected_outcome", "user_clarity"],
         assigneePalId: "pal-delta",
@@ -222,18 +220,10 @@
   }
 
   function buildRecoveredPlanReadyReply(plan, localeValue = "ja") {
-    const taskTitles = Array.isArray(plan?.tasks)
-      ? plan.tasks.map((task) => normalizeString(task?.title)).filter(Boolean)
-      : [];
-    const joined = taskTitles.join(" / ");
     if (normalizeString(localeValue).toLowerCase() === "en") {
-      return joined
-        ? `I prepared a plan with ${joined}.`
-        : "I prepared a plan.";
+      return "I prepared the request. Fuyusaka will investigate the cause, Kuze will make the fix, and Shiramine will prepare the final explanation.";
     }
-    return joined
-      ? `${joined} の計画を用意しました。`
-      : "計画を用意しました。";
+    return "この内容で依頼としてまとめます。冬坂に原因調査、久瀬に修正、白峰に返却文の整理をお願いします。";
   }
 
   function parseGuidePlanResponse(text, options = {}) {
@@ -375,32 +365,32 @@
     };
     const exampleTwoJa = {
       status: "plan_ready",
-      reply: "この内容で依頼としてまとめます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
+      reply: "この内容で依頼としてまとめます。冬坂に原因調査、久瀬に修正、白峰に返却文の整理をお願いします。",
       plan: {
         goal: "Settings 保存後に reload しても model が残る状態に戻す",
         completionDefinition: "Save 後に reload しても登録した model が一覧に残り、利用者向け説明まで整っている",
         constraints: ["既存設定フローは壊さない", "最小修正で進める"],
         tasks: [
           {
-            title: "調べる人",
-            description: "Save と reload 周辺の状態遷移と永続化ポイントを追跡し、消失箇所を特定する",
-            expectedOutput: "trace summary と再現手順",
+            title: "保存結果が reload 後に消える原因と再現条件を調査する",
+            description: "冬坂が Save と reload 周辺の状態遷移と永続化ポイントを追跡し、消失箇所を特定する",
+            expectedOutput: "調査レポートと再現手順",
             requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
             reviewFocus: ["repro", "traceability"],
             assigneePalId: "pal-alpha",
           },
           {
-            title: "作り手",
-            description: "調べる人 の結果に基づいて最小修正を入れ、model 一覧が再読込後も残るようにする",
-            expectedOutput: "修正 diff と変更要約",
+            title: "保存後も設定が残るように必要な修正を加える",
+            description: "久瀬が冬坂の結果に基づいて最小修正を入れ、model 一覧が再読込後も残るようにする",
+            expectedOutput: "実装メモと変更要約",
             requiredSkills: ["codex-file-read", "codex-file-edit"],
             reviewFocus: ["scope", "minimal_fix"],
             assigneePalId: "pal-beta",
           },
           {
-            title: "書く人",
-            description: "修正後の挙動と残る注意点を整理し、利用者向けにどう説明するかをまとめる",
-            expectedOutput: "検証要約と利用者向け説明",
+            title: "修正結果と返却文を整理して利用者向けにまとめる",
+            description: "白峰が修正後の挙動と残る注意点を整理し、利用者向けにどう説明するかをまとめる",
+            expectedOutput: "検証要約と返却文",
             requiredSkills: ["codex-file-read"],
             reviewFocus: ["expected_outcome", "user_clarity"],
             assigneePalId: "pal-delta",
@@ -415,32 +405,32 @@
     };
     const exampleTwoEn = {
       status: "plan_ready",
-      reply: "I will turn this into a request in that shape. I split the work into Research Resident / Maker Resident / Writer Resident tasks.",
+      reply: "I will turn this into a request in that shape. Fuyusaka will investigate the cause, Kuze will make the fix, and Shiramine will prepare the return explanation.",
       plan: {
         goal: "Keep the saved model visible after reload",
         completionDefinition: "After Save and reload, the registered model still appears and the final explanation is ready to return",
         constraints: ["Do not break the existing settings flow", "Prefer the smallest viable fix"],
         tasks: [
           {
-            title: "Research Resident",
+            title: "Investigate why the saved setting disappears after reload",
             description: "Trace the save and reload path to find where the model entry disappears",
-            expectedOutput: "trace summary and reproduction notes",
+            expectedOutput: "research report and reproduction notes",
             requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
             reviewFocus: ["repro", "traceability"],
             assigneePalId: "pal-alpha",
           },
           {
-            title: "Maker Resident",
+            title: "Apply the changes needed to keep the setting after reload",
             description: "Apply the smallest fix that keeps the model list after reload",
-            expectedOutput: "diff summary",
+            expectedOutput: "implementation note and diff summary",
             requiredSkills: ["codex-file-read", "codex-file-edit"],
             reviewFocus: ["scope", "minimal_fix"],
             assigneePalId: "pal-beta",
           },
           {
-            title: "Writer Resident",
+            title: "Summarize the result and prepare the return note",
             description: "Summarize the result and prepare a clear user-facing explanation with remaining caveats",
-            expectedOutput: "verification summary and user-facing explanation",
+            expectedOutput: "verification summary and return note",
             requiredSkills: ["codex-file-read"],
             reviewFocus: ["expected_outcome", "user_clarity"],
             assigneePalId: "pal-delta",
@@ -452,14 +442,14 @@
       return [
         "Few-shot examples for Guide behavior:",
         `Example 1 user: Settings save feels wrong. What should we check first?\nExample 1 assistant: ${JSON.stringify(exampleOneEn)}`,
-        `Example 2 user: After Save and reload, the model disappears. Split it into Research Resident / Maker Resident / Writer Resident tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
+        `Example 2 user: After Save and reload, the model disappears. Split it into Fuyusaka / Kuze / Shiramine tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
         `Example 3 user: The Save button in Settings can be pressed but the result is not reflected. Repro: open Settings, add a model, press Save, then reload. Expected outcome: the model remains after reload. Split it into trace / fix / verify tasks.\nExample 3 assistant: ${JSON.stringify(exampleTwoEn)}`,
       ].join("\n\n");
     }
     return [
       "Guide の振る舞い例:",
       `例1 ユーザー: Settings の保存が変です。まずどこから見ればいい？\n例1 Guide: ${JSON.stringify(exampleOneJa)}`,
-      `例2 ユーザー: Save 後に reload すると model が消えます。調べる人 / 作り手 / 書く人 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
+      `例2 ユーザー: Save 後に reload すると model が消えます。冬坂 / 久瀬 / 白峰 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
       `例3 ユーザー: Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。\n例3 Guide: ${JSON.stringify(exampleTwoJa)}`,
     ].join("\n\n");
   }
