@@ -116,7 +116,7 @@ async function configureProfileModel(page, profileId) {
 }
 
 async function configureGuideWorkerAndGate(page) {
-  for (const profileId of ["guide-core", "gate-core", "pal-alpha", "pal-beta", "pal-gamma"]) {
+  for (const profileId of ["guide-core", "gate-core", "pal-alpha", "pal-beta", "pal-delta"]) {
     await configureProfileModel(page, profileId);
   }
 }
@@ -187,7 +187,7 @@ function resolvePrompts(args) {
   return [
     "最近このアプリの使い心地どう思う？",
     "設定画面の保存まわりで違和感がある。まず何を確認すべき？",
-    "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。",
+    "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。調べる人 / 作り手 / 書く人 に分けて進めたい。",
   ];
 }
 
