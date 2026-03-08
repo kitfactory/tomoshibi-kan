@@ -7,10 +7,12 @@
 - resident ごとの `Progress Voice` と `Progress Note Triggers` を、progress log message 生成と task detail UI に反映する
 - `reroute / replan_required / replanned` の real-model 観測を増やし、Orchestrator の fallback 境界を詰める
 - resident routing の前処理と candidate summary を改善し、role-first / evidence-first の割当精度を上げる
+- resident routing の LLM 精度を上げ、fallback 発火頻度をさらに下げる
 - OpenCode / Codex を含む tool runtime の capability snapshot を resident routing と handoff にさらに活かす
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-fallback-scorer-necessity-evaluation] fallback scorer は削除せず、`invalid / low-confidence / no-fit / runtime unavailable` 時だけ使う safety net として残すと判断した
 - [x] [DR-20260308-full-role-routing-real-observation] `ROLE全文 + summary` で real-model resident routing を観測し、resident trio の割当維持と explicit assignee 優先を確認した
 - [x] [DR-20260308-full-role-routing-context] resident routing の LLM 入力へ `ROLE.md` 全文を追加し、summary と併用して判断できるようにした
 - [x] [DR-20260308-role-first-routing-without-taskkind] `taskKind` を廃止し、ROLE の得意な依頼 / 得意な作成物を軸に resident routing を行うように切り替えた

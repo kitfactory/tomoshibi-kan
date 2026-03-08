@@ -668,6 +668,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - LLM へ渡す resident 候補は、display name ではなく `roleContractText`, `roleSummary`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
 - LLM routing の返答は `RoutingDecision` として parse / validate し、invalid decision は dispatch に使わない。
 - `RoutingDecision` が invalid、low-confidence、または no-fit の場合、Orchestrator は deterministic fallback へ落とすか、`reroute` または `replan_required` を起こす。
+- deterministic fallback scorer は resident routing の主役ではなく safety net として扱い、`invalid / low-confidence / no-fit / runtime unavailable` の時だけ resident 選定に使う。
 - `RoutingInput` は少なくとも `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
 - `candidateResidents[]` は resident ごとに `residentId`, `role`, `status`, `currentLoad`, `roleContractText`, `roleSummary[]`, `residentFocus[]`, `preferredOutputs[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
 - `RoutingDecision` は少なくとも `selectedResidentId`, `reason`, `confidence`, `fallbackAction` を持つ。

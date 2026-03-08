@@ -706,6 +706,7 @@ type GateRoutingInput = {
 - `CandidateResidentSummary` は resident の display name を説明用に含んでよいが、判断の一次ソースは `roleContractText / roleSummary / capabilitySummary / fitHints` とする。
 - LLM 返答は `RoutingDecision` として parse / validate し、`selectedResidentId` が候補外、`reason` が空、`fallbackAction` が不正な場合は invalid とする。
 - invalid / low-confidence / no-fit の `RoutingDecision` では dispatch せず、core は rule-based fallback または `reroute / replan_required` を起こす。
+- rule-based fallback scorer は resident routing の主役ではなく safety net であり、`invalid / low-confidence / no-fit / runtime unavailable` の時だけ resident 選定に使う。
 - `reroute` は同じ task を別 resident 候補へ回す決定、`replan_required` は Guide へ戻して Plan 自体の見直しを要求する決定として扱う。
 - routing の audit には、前処理 summary、LLM decision、採用した fallback を残せること。
 
