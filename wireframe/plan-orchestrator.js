@@ -2,7 +2,7 @@ function normalizePlanOrchestratorText(value) {
   return String(value || "").trim();
 }
 
-function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, routingApi) {
+async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, routingApi, artifact) {
   const explicitWorker = workers.find((worker) => worker.id === normalizePlanOrchestratorText(taskPlan?.assigneePalId)) || null;
   const taskDraft = {
     title: normalizePlanOrchestratorText(taskPlan?.title) || `Task ${index + 1}`,
@@ -16,7 +16,28 @@ function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, rou
     explanation = {
       matchedRoleTerms: ["explicit_assignee"],
       matchedSkills: [],
+      decisionSource: "explicit_assignee",
     };
+  } else if (routingApi && typeof routingApi.selectWorkerForTaskWithGuideDecision === "function") {
+    const selected = await routingApi.selectWorkerForTaskWithGuideDecision({
+      artifact,
+      taskDraft,
+      taskPlan,
+      index,
+      workers,
+      assignmentCounts,
+    });
+    workerId = normalizePlanOrchestratorText(selected?.workerId);
+    if (workerId) {
+      explanation = {
+        matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+        matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
+        decisionSource: normalizePlanOrchestratorText(selected?.decisionSource) || "guide_routing",
+        decisionReason: normalizePlanOrchestratorText(selected?.decisionReason),
+        decisionConfidence: normalizePlanOrchestratorText(selected?.decisionConfidence),
+        fallbackAction: normalizePlanOrchestratorText(selected?.fallbackAction),
+      };
+    }
   } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
     const selected = routingApi.selectWorkerForTask({
       taskDraft,
@@ -28,6 +49,7 @@ function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, rou
     explanation = {
       matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
       matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
+      decisionSource: "rule_based",
     };
   }
   if (!workerId) {
@@ -35,6 +57,7 @@ function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, rou
     explanation = {
       matchedSkills: [],
       matchedRoleTerms: [],
+      decisionSource: "round_robin_fallback",
     };
   }
   if (!workerId) return null;
@@ -45,7 +68,7 @@ function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, rou
   };
 }
 
-function materializePlanArtifact(input) {
+async function materializePlanArtifact(input) {
   const artifact = input && typeof input === "object" ? input.artifact : null;
   const plan = artifact && artifact.plan && typeof artifact.plan === "object" ? artifact.plan : null;
   const taskList = Array.isArray(plan?.tasks) ? plan.tasks : [];
@@ -65,9 +88,9 @@ function materializePlanArtifact(input) {
   let sequence = nextSequence;
   const createdTasks = [];
 
-  taskList.forEach((taskPlan, index) => {
-    const resolved = selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, routingApi);
-    if (!resolved) return;
+  for (const [index, taskPlan] of taskList.entries()) {
+    const resolved = await selectWorkerForPlanTask(taskPlan, index, workers, assignmentCounts, routingApi, artifact);
+    if (!resolved) continue;
     const { taskDraft, workerId, explanation } = resolved;
     assignmentCounts.set(workerId, (assignmentCounts.get(workerId) || 0) + 1);
     const task = buildTaskRecord({
@@ -83,7 +106,7 @@ function materializePlanArtifact(input) {
       workerId,
       explanation,
     });
-  });
+  }
 
   return {
     createdTasks,

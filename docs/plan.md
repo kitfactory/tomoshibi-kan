@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-orchestrator-routing-llm-impl] Plan artifact からの worker dispatch で、Orchestrator が active Guide の model / SOUL を借りて resident-aware な routing decision を返せる最小実装を入れる
+- [x] [DR-20260308-orchestrator-routing-llm-impl] delta request/apply/verify/archive を実施し、worker dispatch の LLM-assisted routing と fallback を最小実装する
+- [x] [SEED-20260308-orchestrator-routing-llm-design] Orchestrator が管理人と同じ model / SOUL を使って routing 判断できるよう、前処理・structured decision・fallback 境界を設計する
+- [x] [DR-20260308-orchestrator-routing-llm-design] delta request/apply/verify/archive を実施し、routing 用 `RoutingInput / RoutingDecision` と前処理方針を concept/spec/architecture に同期する
 - [x] [SEED-20260308-task-detail-conversation-ui] タスク一覧から開く右列を、`Guide / 住人 / 古参住人` の会話として読める task detail conversation log UI に改修する
 - [x] [DR-20260308-task-detail-conversation-ui] delta request/apply/verify/archive を実施し、task detail 右列の会話ログ UI を最小実装する
 - [x] [SEED-20260308-resident-microtests] 各住人が `SOUL/ROLE` に沿った想定動作をするかを、小さな resident microtests で確認する
@@ -147,6 +151,8 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260308-orchestrator-routing-llm-design] Orchestrator core が resident 候補を前処理し、必要時だけ active Guide の model / `SOUL.md` を借りて routing 判断する境界と、`RoutingInput / RoutingDecision` / fallback 契約を concept/spec/architecture に同期した
+- [x] [DR-20260308-orchestrator-routing-llm-impl] Orchestrator が resident-aware な `RoutingInput` を前処理し、必要時だけ active Guide の runtime / `SOUL.md` を借りて worker routing を判断し、invalid/no-fit/low-confidence は rule-based selector へ fallback する最小実装を追加した
 - [x] [DR-20260308-resident-set-remove-arranger] `整える人` を resident set と built-in 初期住人セットから外し、legacy built-in `pal-gamma` も Settings 同期時に profile list から落とすようにした
 - [x] [DR-20260308-built-in-soul-deepen] built-in 6人の `SOUL.md` を resident set / worldbuilding に沿って深掘りし、`ROLE.md` を変えずにキャラクター性だけを強めた
 - [x] [DR-20260308-built-in-resident-set-sync] `docs/tomoshibikan_resident_set_v0_1.md` を built-in 初期住人セットへ反映し、Settings から current workspace の built-in identity を同期できるようにした
@@ -484,6 +490,8 @@
 - [x] [DR-20260306-guide-autonomous-check] Guide 単体の自律確認 delta request を起点に、観測 runner と verify 記録を適用した
 
 # future
+- `RoutingInput / RoutingDecision` 実装後に、worker routing を lexical match から resident-aware / role-first の LLM-assisted selection へ切り替える
+- `reroute / replan_required` を structured decision で返し、Orchestrator が Guide-driven replan bridge へ接続する
 - [ ] [SEED-20260308-orchestrator-dispatch-extraction] dispatch / worker selection / gate submit 起動を Guide 送信フローから `PlanExecutionOrchestrator` へ抽出する
 - [ ] [SEED-20260308-orchestrator-replan-bridge] `replan_required` 発生時に Orchestrator が Guide の model / SOUL を使って再計画要求を返せる境界を実装する
 - [ ] [SEED-20260308-routing-precision-after-boundary] Plan artifact / Orchestrator 境界の固定後に、worker routing 精度を role-first に改善する

@@ -3480,6 +3480,128 @@ async function resolveWorkerAssignmentProfiles() {
   return profiles;
 }
 
+function buildGuideRoutingOperatingRulesPrompt(localeValue) {
+  const isJa = localeValue !== "en";
+  return isJa
+    ? [
+      "あなたは灯火館の管理人として、住人への割り当て判断だけを行います。",
+      "- 入力の task と候補住人一覧だけを見て、最も適した住人を 1 人選ぶ。",
+      "- 候補外の住人は選ばない。",
+      "- 住人の Mission, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, capability summary を優先して判断する。",
+      "- `currentLoad` は補助材料として使うが、適性より優先しない。",
+      "- 適任が見当たらない時だけ `replan_required` を返す。",
+      "- 返答は JSON schema に厳密に従い、余計な説明文を付けない。",
+    ].join("\n")
+    : [
+      "As the Tomoshibi-kan manager, make only the resident assignment decision.",
+      "- Choose exactly one resident from the provided candidates for the task.",
+      "- Never choose a resident outside the provided candidates.",
+      "- Prioritize Mission, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, and capability summary.",
+      "- Treat currentLoad as a secondary signal, not stronger than fitness.",
+      "- Return `replan_required` only when none of the candidates is a reasonable fit.",
+      "- Follow the JSON schema strictly and do not add extra prose.",
+    ].join("\n");
+}
+
+function buildGuideRoutingUserText(routingInput) {
+  const payload = routingInput && typeof routingInput === "object" ? routingInput : {};
+  return [
+    "Select the best resident for this task from the provided candidates.",
+    "Return only the structured routing decision.",
+    safeStringify(payload, "{}"),
+  ].join("\n\n");
+}
+
+async function requestGuideDrivenWorkerRoutingDecision(params = {}) {
+  const baseRoutingApi = resolveAgentRoutingApi();
+  if (!baseRoutingApi || typeof baseRoutingApi.buildWorkerRoutingInput !== "function" || typeof baseRoutingApi.parseRoutingDecisionResponse !== "function" || typeof baseRoutingApi.buildRoutingDecisionResponseFormat !== "function") {
+    return null;
+  }
+  const runtimeApi = resolveTomoshibikanCoreRuntimeApi();
+  if (!runtimeApi || typeof runtimeApi.guideChat !== "function") return null;
+  const guideState = resolveGuideModelStateWithFallback();
+  if (!guideState?.ready) return null;
+  const guideProfile = getActiveGuideProfile();
+  if (!guideProfile) return null;
+  const guideIdentity = await loadAgentIdentityForPal(guideProfile);
+  const runtimeKind = normalizeText(guideState.runtimeKind) === "tool" ? "tool" : "model";
+  const runtimeConfig = runtimeKind === "model" ? resolveGuideApiRuntimeConfig(guideState) : null;
+  if (runtimeKind === "model" && (!runtimeConfig || !runtimeConfig.modelName)) return null;
+  const routingInput = baseRoutingApi.buildWorkerRoutingInput({
+    targetType: "task",
+    targetId: `plan:${normalizeText(params?.artifact?.planId) || "PLAN-001"}:task:${Number(params?.index) + 1}`,
+    planId: normalizeText(params?.artifact?.planId),
+    goal: normalizeText(params?.artifact?.plan?.goal),
+    expectedOutput: normalizeText(params?.taskPlan?.expectedOutput || params?.artifact?.plan?.completionDefinition),
+    constraints: Array.isArray(params?.artifact?.plan?.constraints) ? params.artifact.plan.constraints : [],
+    requiredSkills: Array.isArray(params?.taskPlan?.requiredSkills) ? params.taskPlan.requiredSkills : [],
+    needsEvidence: /research|review/.test(String(params?.taskPlan?.title || "").toLowerCase()),
+    scopeRisk: "medium",
+    taskDraft: params?.taskDraft,
+    workers: params?.workers,
+    assignmentCounts: params?.assignmentCounts,
+    historySummary: [],
+  });
+  if (!Array.isArray(routingInput.candidateResidents) || routingInput.candidateResidents.length === 0) {
+    return null;
+  }
+  const responseFormat = baseRoutingApi.buildRoutingDecisionResponseFormat(locale);
+  const systemPrompt = buildFallbackIdentitySystemPrompt(buildGuideRoutingOperatingRulesPrompt(locale), guideIdentity);
+  const resolvedApiKey = runtimeKind === "model"
+    ? await resolveStoredModelApiKeyWithFallback(runtimeConfig.modelName, runtimeConfig.apiKey)
+    : "";
+  try {
+    const payload = await runtimeApi.guideChat({
+      runtimeKind,
+      toolName: runtimeKind === "tool" ? normalizeText(guideState.toolName) : "",
+      provider: runtimeConfig?.provider || "",
+      modelName: runtimeConfig?.modelName || "",
+      baseUrl: runtimeConfig?.baseUrl || "",
+      apiKey: resolvedApiKey,
+      userText: buildGuideRoutingUserText(routingInput),
+      systemPrompt,
+      messages: [],
+      responseFormat,
+      enabledSkillIds: await resolveGuideConfiguredSkillIds(),
+      workspaceRoot: resolveRuntimeWorkspaceRootForChat(),
+      debugMeta: {
+        stage: "orchestrator_routing",
+        agentRole: "guide",
+        agentId: normalizeText(guideProfile.id),
+        targetKind: "task",
+        targetId: routingInput.targetId,
+        identityVersions: buildDebugIdentityVersions(guideIdentity),
+      },
+    });
+    const parsed = baseRoutingApi.parseRoutingDecisionResponse(payload?.text || "", {
+      allowedResidentIds: routingInput.candidateResidents.map((entry) => entry.residentId),
+    });
+    if (!parsed?.ok || !parsed.decision) return null;
+    if (parsed.decision.fallbackAction !== "dispatch" || parsed.decision.confidence === "low") {
+      return null;
+    }
+    return {
+      workerId: parsed.decision.selectedResidentId,
+      matchedSkills: [],
+      matchedRoleTerms: ["guide_routing"],
+      decisionSource: "guide_routing",
+      decisionReason: parsed.decision.reason,
+      decisionConfidence: parsed.decision.confidence,
+      fallbackAction: parsed.decision.fallbackAction,
+    };
+  } catch (_error) {
+    return null;
+  }
+}
+
+function buildPlanOrchestratorRoutingApi(baseRoutingApi) {
+  if (!baseRoutingApi) return null;
+  return {
+    ...baseRoutingApi,
+    selectWorkerForTaskWithGuideDecision: async (input) => requestGuideDrivenWorkerRoutingDecision(input),
+  };
+}
+
 function createTaskRecord(input) {
   return {
     id: input.id,
@@ -3669,8 +3791,8 @@ async function materializeApprovedPlanArtifact(artifact) {
   }
   const workers = await resolveWorkerAssignmentProfiles();
   if (workers.length === 0) return { created: 0 };
-  const routingApi = resolveAgentRoutingApi();
-  const result = orchestratorApi.materializePlanArtifact({
+  const routingApi = buildPlanOrchestratorRoutingApi(resolveAgentRoutingApi());
+  const result = await orchestratorApi.materializePlanArtifact({
     artifact,
     workers,
     nextSequence: nextTaskSequenceNumber(),

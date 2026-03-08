@@ -698,6 +698,54 @@ type GateRoutingInput = {
 - Worker/Gate ともに、選定理由は audit/event に残せる短い explanation DTO として返す。
 - Renderer は selector explanation DTO を `dispatch` / `to_gate` event summary へ短く埋め込み、Event Log から routing 根拠を追えるようにする。
 
+### Guide-driven routing boundary
+- `PlanExecutionOrchestrator` は routing の deterministic core を保持する。resident 候補抽出、status filter、load 計算、capability probe 反映、invalid decision fallback は Orchestrator 側で行う。
+- resident 候補の意味判断が必要な時だけ、Orchestrator は active Guide の model / `SOUL.md` / `ROLE.md` を `GuideReasoningContext` として借りる。
+- Guide-driven routing で LLM に渡すのは raw transcript 全文ではなく、`RoutingInput` に正規化した task 情報と `CandidateResidentSummary[]` のみとする。
+- `CandidateResidentSummary` は resident の display name を説明用に含んでよいが、判断の一次ソースは `roleSummary / capabilitySummary / fitHints` とする。
+- LLM 返答は `RoutingDecision` として parse / validate し、`selectedResidentId` が候補外、`reason` が空、`fallbackAction` が不正な場合は invalid とする。
+- invalid / low-confidence / no-fit の `RoutingDecision` では dispatch せず、core は rule-based fallback または `reroute / replan_required` を起こす。
+- `reroute` は同じ task を別 resident 候補へ回す決定、`replan_required` は Guide へ戻して Plan 自体の見直しを要求する決定として扱う。
+- routing の audit には、前処理 summary、LLM decision、採用した fallback を残せること。
+
+### Guide-driven routing DTO
+```ts
+type RoutingInput = {
+  targetType: "task" | "job";
+  targetId: string;
+  planId: string;
+  taskKind: "research" | "make" | "write" | "review" | "general";
+  goal: string;
+  title: string;
+  instruction: string;
+  constraints: string[];
+  expectedOutput: string;
+  requiredSkills: string[];
+  needsEvidence: boolean;
+  scopeRisk: "low" | "medium" | "high";
+  candidateResidents: CandidateResidentSummary[];
+  historySummary?: string[];
+};
+
+type CandidateResidentSummary = {
+  residentId: string;
+  role: "guide" | "worker" | "gate";
+  displayName: string;
+  status: string;
+  currentLoad: number;
+  roleSummary: string[];
+  capabilitySummary: string[];
+  fitHints: string[];
+};
+
+type RoutingDecision = {
+  selectedResidentId: string;
+  reason: string;
+  confidence: "low" | "medium" | "high";
+  fallbackAction: "dispatch" | "reroute" | "replan_required";
+};
+```
+
 ### CLI Capability Probe
 - Electron main は Settings load/save 時に登録済み CLI ツールへ問い合わせ、`registeredToolCapabilities[]` を補完する。
 - first step では `Codex` と `OpenCode` を first-class 対象とする。

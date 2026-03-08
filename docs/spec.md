@@ -661,6 +661,17 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - routing 説明は audit/event へ残せる短い文でよく、raw file 全文の転記は不要とする。
 - `dispatch` Event と `to_gate` Event は explanation が得られた場合、summary に短い routing 説明 (`skills=...`, `ROLE=...`, `RUBRIC=...`) を含めてよい。
 
+### LLM-assisted routing
+- resident routing で LLM を使う場合でも、dispatch 実行・state 遷移・retry count・persistence は `PlanExecutionOrchestrator` core の責務とする。
+- resident routing の前に、Orchestrator は task を `RoutingInput` へ正規化し、resident 候補を role/status/capability で前処理して絞り込む。
+- LLM へ渡す resident 候補は、display name ではなく `roleSummary`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
+- LLM routing の返答は `RoutingDecision` として parse / validate し、invalid decision は dispatch に使わない。
+- `RoutingDecision` が invalid、low-confidence、または no-fit の場合、Orchestrator は deterministic fallback へ落とすか、`reroute` または `replan_required` を起こす。
+- `RoutingInput` は少なくとも `taskKind`, `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
+- `candidateResidents[]` は resident ごとに `residentId`, `role`, `status`, `currentLoad`, `roleSummary[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
+- `RoutingDecision` は少なくとも `selectedResidentId`, `reason`, `confidence`, `fallbackAction` を持つ。
+- `fallbackAction` は `dispatch | reroute | replan_required` のみを取り、Orchestrator core が最終実行を担う。
+
 ## 追加仕様 (2026-03-06): Orchestration Debug DB
 
 - orchestration の成功/失敗を改善前に追跡できるよう、最小 debug record を `settings.sqlite` に保存する。

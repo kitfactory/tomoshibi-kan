@@ -42,6 +42,191 @@
     ].join("\n").toLowerCase();
   }
 
+  function splitSummaryLines(value) {
+    return uniqueList(
+      normalizeString(value)
+        .split(/\r?\n+/)
+        .map((line) => line.replace(/^[-*]\s*/, "").trim())
+        .filter(Boolean)
+    );
+  }
+
+  function inferTaskKind(taskDraft, requiredSkills = []) {
+    const combined = `${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}\n${uniqueList(requiredSkills).join("\n")}`.toLowerCase();
+    if (!combined) return "general";
+    if (/(trace|research|investig|repro|evidence|調べ|再現|証拠|原因)/.test(combined)) return "research";
+    if (/(fix|patch|implement|build|make|修正|実装|変更)/.test(combined)) return "make";
+    if (/(write|summary|document|doc|explain|書く|説明|要約|文書)/.test(combined)) return "write";
+    if (/(review|verify|check|gate|検証|確認|判定)/.test(combined)) return "review";
+    return "general";
+  }
+
+  function buildCandidateResidentSummaries(workers = [], assignmentCounts = new Map(), requiredSkills = [], taskDraft = null) {
+    return (Array.isArray(workers) ? workers : []).map((worker) => {
+      const score = scoreWorkerCandidate(taskDraft || {}, worker, requiredSkills);
+      return {
+        residentId: normalizeString(worker?.id),
+        role: "worker",
+        displayName: normalizeString(worker?.displayName || worker?.id),
+        status: normalizeString(worker?.status) || "available",
+        currentLoad: Number(assignmentCounts.get(worker?.id) || 0),
+        roleSummary: splitSummaryLines(worker?.roleText),
+        capabilitySummary: uniqueList(worker?.skillSummaries),
+        fitHints: uniqueList([
+          ...score.matchedSkills.map((item) => `skill:${item}`),
+          ...score.matchedRoleTerms.map((item) => `role:${item}`),
+        ]),
+      };
+    }).filter((entry) => entry.residentId);
+  }
+
+  function buildWorkerRoutingInput(input = {}) {
+    const taskDraft = input?.taskDraft || {};
+    const requiredSkills = uniqueList(
+      Array.isArray(input?.requiredSkills) && input.requiredSkills.length > 0
+        ? input.requiredSkills.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
+        : inferRequiredSkills(taskDraft, input?.workers)
+    );
+    return {
+      targetType: normalizeString(input?.targetType || "task") || "task",
+      targetId: normalizeString(input?.targetId),
+      planId: normalizeString(input?.planId),
+      taskKind: inferTaskKind(taskDraft, requiredSkills),
+      goal: normalizeString(input?.goal || taskDraft?.title || taskDraft?.description),
+      title: normalizeString(taskDraft?.title),
+      instruction: normalizeString(taskDraft?.description),
+      constraints: uniqueList(input?.constraints),
+      expectedOutput: normalizeString(input?.expectedOutput || taskDraft?.expectedOutput),
+      requiredSkills,
+      needsEvidence: Boolean(input?.needsEvidence),
+      scopeRisk: ["low", "medium", "high"].includes(normalizeString(input?.scopeRisk)) ? normalizeString(input.scopeRisk) : "medium",
+      candidateResidents: buildCandidateResidentSummaries(
+        input?.workers,
+        input?.assignmentCounts instanceof Map ? input.assignmentCounts : new Map(),
+        requiredSkills,
+        taskDraft
+      ),
+      historySummary: uniqueList(input?.historySummary),
+    };
+  }
+
+  function stripCodeFence(text) {
+    const source = normalizeString(text);
+    if (!source) return "";
+    return source.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
+  }
+
+  function stripWrapperTokens(text) {
+    const source = normalizeString(text);
+    if (!source) return "";
+    return source.replace(/<\|[^>]+?\|>/g, "").trim();
+  }
+
+  function buildJsonCandidates(text) {
+    const stripped = stripWrapperTokens(stripCodeFence(text));
+    if (!stripped) return [];
+    const candidates = [stripped];
+    const firstBrace = stripped.indexOf("{");
+    const lastBrace = stripped.lastIndexOf("}");
+    if (firstBrace >= 0 && lastBrace > firstBrace) {
+      candidates.push(stripped.slice(firstBrace, lastBrace + 1));
+    }
+    return uniqueList(candidates);
+  }
+
+  function repairJsonText(text) {
+    const source = normalizeString(text);
+    if (!source) return [];
+    return uniqueList([
+      source.replace(/,\s*([}\]])/g, "$1"),
+    ]);
+  }
+
+  function parseJsonWithRepairs(text) {
+    const baseCandidates = buildJsonCandidates(text);
+    const allCandidates = [];
+    baseCandidates.forEach((candidate) => {
+      allCandidates.push(candidate);
+      repairJsonText(candidate).forEach((item) => allCandidates.push(item));
+    });
+    for (const candidate of uniqueList(allCandidates)) {
+      try {
+        return {
+          ok: true,
+          parsed: JSON.parse(candidate),
+        };
+      } catch (_error) {
+        // continue
+      }
+    }
+    return {
+      ok: false,
+      error: baseCandidates.length > 0 ? "json_parse_failed" : "json_not_found",
+    };
+  }
+
+  function normalizeRoutingDecision(parsed, options = {}) {
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ok: false, error: "routing_decision_invalid" };
+    }
+    const selectedResidentId = normalizeString(parsed.selectedResidentId);
+    const reason = normalizeString(parsed.reason);
+    const confidence = normalizeString(parsed.confidence).toLowerCase();
+    const fallbackAction = normalizeString(parsed.fallbackAction).toLowerCase();
+    const allowedIds = new Set((Array.isArray(options?.allowedResidentIds) ? options.allowedResidentIds : []).map((item) => normalizeString(item)).filter(Boolean));
+    if (!selectedResidentId) {
+      return { ok: false, error: "selected_resident_required" };
+    }
+    if (allowedIds.size > 0 && !allowedIds.has(selectedResidentId)) {
+      return { ok: false, error: "selected_resident_out_of_candidates" };
+    }
+    if (!reason) {
+      return { ok: false, error: "reason_required" };
+    }
+    if (!["low", "medium", "high"].includes(confidence)) {
+      return { ok: false, error: "confidence_invalid" };
+    }
+    if (!["dispatch", "reroute", "replan_required"].includes(fallbackAction)) {
+      return { ok: false, error: "fallback_action_invalid" };
+    }
+    return {
+      ok: true,
+      decision: {
+        selectedResidentId,
+        reason,
+        confidence,
+        fallbackAction,
+      },
+    };
+  }
+
+  function parseRoutingDecisionResponse(text, options = {}) {
+    const jsonResult = parseJsonWithRepairs(text);
+    if (!jsonResult.ok) return jsonResult;
+    return normalizeRoutingDecision(jsonResult.parsed, options);
+  }
+
+  function buildRoutingDecisionResponseFormat() {
+    return {
+      type: "json_schema",
+      json_schema: {
+        name: "routing_decision",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["selectedResidentId", "reason", "confidence", "fallbackAction"],
+          properties: {
+            selectedResidentId: { type: "string" },
+            reason: { type: "string" },
+            confidence: { type: "string", enum: ["low", "medium", "high"] },
+            fallbackAction: { type: "string", enum: ["dispatch", "reroute", "replan_required"] },
+          },
+        },
+      },
+    };
+  }
+
   function inferRequiredSkills(taskDraft, workers) {
     const taskText = `${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}`.toLowerCase();
     if (!taskText) return [];
@@ -228,7 +413,12 @@
   }
 
   const api = {
+    inferTaskKind,
     inferRequiredSkills,
+    buildCandidateResidentSummaries,
+    buildWorkerRoutingInput,
+    parseRoutingDecisionResponse,
+    buildRoutingDecisionResponseFormat,
     scoreWorkerCandidate,
     selectWorkerForTask,
     assignTasksToWorkers,

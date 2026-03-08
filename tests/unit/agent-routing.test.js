@@ -3,6 +3,8 @@ const assert = require("node:assert/strict");
 
 const {
   inferRequiredSkills,
+  buildWorkerRoutingInput,
+  parseRoutingDecisionResponse,
   selectWorkerForTask,
   selectGateForTarget,
 } = require("../../wireframe/agent-routing.js");
@@ -112,4 +114,44 @@ test("selectGateForTarget prioritizes rubric match and falls back to default gat
   assert.equal(selected.gateId, "gate-test");
   assert.ok(selected.matchedRubricTerms.includes("evidence"));
   assert.ok(selected.matchedReviewFocusTerms.includes("evidence"));
+});
+
+test("buildWorkerRoutingInput produces resident summaries for llm-assisted routing", () => {
+  const routingInput = buildWorkerRoutingInput({
+    targetType: "task",
+    targetId: "plan:PLAN-001:task:1",
+    planId: "PLAN-001",
+    taskDraft: {
+      title: "Trace save failure",
+      description: "設定保存後に再読込で値が消える原因を調べる",
+    },
+    workers: [
+      {
+        id: "pal-alpha",
+        displayName: "調べる人",
+        roleText: "証拠と再現条件を集める",
+        enabledSkillIds: ["codex-file-search"],
+        skillSummaries: ["file search and repro evidence"],
+      },
+    ],
+    assignmentCounts: new Map([["pal-alpha", 1]]),
+  });
+
+  assert.equal(routingInput.taskKind, "research");
+  assert.equal(routingInput.planId, "PLAN-001");
+  assert.equal(routingInput.candidateResidents.length, 1);
+  assert.equal(routingInput.candidateResidents[0].residentId, "pal-alpha");
+  assert.equal(routingInput.candidateResidents[0].currentLoad, 1);
+});
+
+test("parseRoutingDecisionResponse repairs wrapper text and validates candidate ids", () => {
+  const parsed = parseRoutingDecisionResponse(
+    '<|channel|>final\n```json\n{"selectedResidentId":"pal-alpha","reason":"best fit","confidence":"high","fallbackAction":"dispatch"}\n```',
+    { allowedResidentIds: ["pal-alpha", "pal-beta"] }
+  );
+
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.decision.selectedResidentId, "pal-alpha");
+  assert.equal(parsed.decision.confidence, "high");
+  assert.equal(parsed.decision.fallbackAction, "dispatch");
 });

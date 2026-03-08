@@ -14,9 +14,9 @@ function loadPlanOrchestrator() {
   return sandbox.window.PlanOrchestrator;
 }
 
-test("PlanOrchestrator materializes approved plan artifact into routed tasks", () => {
+test("PlanOrchestrator materializes approved plan artifact into routed tasks", async () => {
   const api = loadPlanOrchestrator();
-  const result = api.materializePlanArtifact({
+  const result = await api.materializePlanArtifact({
     artifact: {
       planId: "PLAN-ART-001",
       status: "approved",
@@ -65,4 +65,59 @@ test("PlanOrchestrator materializes approved plan artifact into routed tasks", (
   assert.equal(result.createdTasks[1].task.id, "TASK-005");
   assert.equal(result.createdTasks[1].workerId, "pal-beta");
   assert.equal(result.nextSequence, 6);
+});
+
+test("PlanOrchestrator prefers guide-driven routing when available and falls back otherwise", async () => {
+  const api = loadPlanOrchestrator();
+  const result = await api.materializePlanArtifact({
+    artifact: {
+      planId: "PLAN-ART-002",
+      status: "approved",
+      plan: {
+        tasks: [
+          {
+            title: "Trace",
+            description: "保存失敗の再現条件を調べる",
+          },
+        ],
+      },
+    },
+    workers: [
+      { id: "pal-alpha" },
+      { id: "pal-beta" },
+    ],
+    nextSequence: 1,
+    routingApi: {
+      async selectWorkerForTaskWithGuideDecision() {
+        return {
+          workerId: "pal-beta",
+          decisionSource: "guide_routing",
+          decisionReason: "Role and capability fit",
+          decisionConfidence: "high",
+          fallbackAction: "dispatch",
+        };
+      },
+      selectWorkerForTask() {
+        return {
+          workerId: "pal-alpha",
+          matchedSkills: [],
+          matchedRoleTerms: ["trace"],
+        };
+      },
+    },
+    buildTaskRecord(input) {
+      return {
+        id: input.id,
+        planId: input.planId,
+        title: input.title,
+        description: input.description,
+        palId: input.palId,
+      };
+    },
+  });
+
+  assert.equal(result.createdTasks.length, 1);
+  assert.equal(result.createdTasks[0].workerId, "pal-beta");
+  assert.equal(result.createdTasks[0].explanation.decisionSource, "guide_routing");
+  assert.equal(result.createdTasks[0].explanation.decisionConfidence, "high");
 });

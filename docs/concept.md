@@ -143,6 +143,8 @@
 - Gate Routing: 提出物をどの Gate profile へ回すかを決める判断。主に `RUBRIC.md` を見て、その業務・完了条件・評価観点に最も合う Gate を選ぶ。
 
 - Guide-driven Orchestrator: `PlanExecutionOrchestrator` は独立モジュールとして動くが、replan や結果解釈のような LLM が必要な判断では active Guide と同じ model / `SOUL.md` を使う。実行制御は Orchestrator、意味判断は Guide の頭脳で支える。
+- Orchestrator Routing: resident への dispatch 判断は、まず Orchestrator core が task と resident 候補を前処理して絞り込み、そのうえで必要時のみ active Guide と同じ model / `SOUL.md` を使って routing judgment を行う。生の会話全文をそのまま routing に渡さず、`RoutingInput` に正規化した情報だけを使う。
+- Routing Fallback: routing judgment が invalid / low-confidence / no-fit の場合、Orchestrator は deterministic fallback, reroute, replan_required のいずれかで止める。曖昧な dispatch はしない。
 
 - Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / 住人 / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
 - Task Detail Conversation Log: task 一覧から詳細を開いた時、右列には `Guide / 住人 / 古参住人` のやり取りとして progress log が時系列表示される。管理人が住人へ託し、住人が途中経過をつぶやき、古参住人が助言や判定を返す流れが読めることを重視する。
