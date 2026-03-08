@@ -242,7 +242,9 @@ function resolvePrompts(args) {
   return [
     "最近このアプリの使い心地どう思う？",
     "設定画面の保存まわりで違和感がある。まず何を確認すべき？",
-    "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。",
+    "今の3案なら 2 の Reload 後の復元に着目する案で進めたいです。",
+    "Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ることです。",
+    "ではその内容で依頼にして、調べる人 / 作り手 / 書く人 の3つに分けて進めてください。",
   ];
 }
 
@@ -286,6 +288,9 @@ async function runCheck(args) {
         prompt,
         ...turn,
       });
+      if (turn.afterTaskCount > turn.beforeTaskCount) {
+        break;
+      }
     }
     diagnostics = await page.evaluate(({ timeoutMs }) => ({
       guideChatText: document.getElementById("guideChat")?.textContent || "",
