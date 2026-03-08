@@ -32,6 +32,20 @@
     ]);
   }
 
+  function extractLexicalHints(text) {
+    const source = normalizeString(text);
+    if (!source) return [];
+    const japaneseTerms = source
+      .split(/[、。・/\s()（）「」『』,:：]+/u)
+      .flatMap((chunk) => chunk.split(/(?:を|に|で|と|や|へ|から|まで|より|したい|して|する|なる|した|です|ます|たい|よう|こと|もの|ため|及び|やすい|づらい)/u))
+      .map((chunk) => normalizeString(chunk))
+      .filter((chunk) => chunk.length >= 2);
+    return uniqueList([
+      ...tokenizeForMatching(source),
+      ...japaneseTerms,
+    ]);
+  }
+
   function buildWorkerSearchText(worker) {
     return [
       normalizeString(worker?.displayName),
@@ -51,46 +65,66 @@
     );
   }
 
-  function inferResidentFunction(worker) {
-    const text = [
-      normalizeString(worker?.displayName),
-      normalizeString(worker?.persona),
-      normalizeString(worker?.roleText),
-    ].join("\n").toLowerCase();
-    if (!text) return "general";
-    if (/(調べる人|research|trace|investig|repro|evidence|調べ|再現|証拠|原因)/.test(text)) return "research";
-    if (/(作り手|maker|make|build|fix|patch|implement|修正|実装|変更)/.test(text)) return "make";
-    if (/(書く人|writer|write|summary|document|explain|書く|説明|要約|文書)/.test(text)) return "write";
-    return "general";
+  function extractMarkdownSectionLines(markdown, headings = []) {
+    const source = normalizeString(markdown);
+    if (!source) return [];
+    const lines = source.split(/\r?\n/);
+    const normalizedHeadings = uniqueList(headings).map((item) => normalizeString(item).toLowerCase()).filter(Boolean);
+    if (normalizedHeadings.length === 0) return [];
+    const collected = [];
+    let inSection = false;
+    lines.forEach((line) => {
+      const trimmed = normalizeString(line);
+      const lower = trimmed.toLowerCase();
+      if (/^##\s+/.test(trimmed)) {
+        const heading = trimmed.replace(/^##\s+/, "").trim().toLowerCase();
+        inSection = normalizedHeadings.includes(heading);
+        return;
+      }
+      if (!inSection) return;
+      if (/^#/.test(trimmed)) {
+        inSection = false;
+        return;
+      }
+      const bullet = trimmed.replace(/^[-*]\s*/, "").trim();
+      if (bullet) collected.push(bullet);
+    });
+    return uniqueList(collected);
   }
 
-  function inferTaskKind(taskDraft, requiredSkills = []) {
-    const combined = `${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}\n${uniqueList(requiredSkills).join("\n")}`.toLowerCase();
-    if (!combined) return "general";
-    if (/(trace|research|investig|repro|evidence|調べ|再現|証拠|原因)/.test(combined)) return "research";
-    if (/(fix|patch|implement|build|make|修正|実装|変更)/.test(combined)) return "make";
-    if (/(write|summary|document|doc|explain|書く|説明|要約|文書)/.test(combined)) return "write";
-    if (/(review|verify|check|gate|検証|確認|判定)/.test(combined)) return "review";
-    return "general";
+  function buildResidentRoleSignals(worker) {
+    const roleText = normalizeString(worker?.roleText);
+    const residentFocus = uniqueList([
+      ...extractMarkdownSectionLines(roleText, ["得意な依頼", "Preferred Requests", "Primary Responsibilities"]),
+    ]);
+    const preferredOutputs = uniqueList([
+      ...extractMarkdownSectionLines(roleText, ["得意な作成物", "Preferred Outputs", "Outputs"]),
+    ]);
+    return {
+      residentFocus,
+      preferredOutputs,
+    };
   }
 
   function buildCandidateResidentSummaries(workers = [], assignmentCounts = new Map(), requiredSkills = [], taskDraft = null) {
     return (Array.isArray(workers) ? workers : []).map((worker) => {
       const score = scoreWorkerCandidate(taskDraft || {}, worker, requiredSkills);
-      const residentFunction = inferResidentFunction(worker);
+      const roleSignals = buildResidentRoleSignals(worker);
       return {
         residentId: normalizeString(worker?.id),
         role: "worker",
-        residentFunction,
         displayName: normalizeString(worker?.displayName || worker?.id),
         status: normalizeString(worker?.status) || "available",
         currentLoad: Number(assignmentCounts.get(worker?.id) || 0),
+        roleContractText: normalizeString(worker?.roleText),
         roleSummary: splitSummaryLines(worker?.roleText),
+        residentFocus: roleSignals.residentFocus,
+        preferredOutputs: roleSignals.preferredOutputs,
         capabilitySummary: uniqueList(worker?.skillSummaries),
         fitHints: uniqueList([
-          `function:${residentFunction}`,
           ...score.matchedSkills.map((item) => `skill:${item}`),
-          ...score.matchedResidentFunctions.map((item) => `function:${item}`),
+          ...score.matchedResidentFocus.map((item) => `focus:${item}`),
+          ...score.matchedPreferredOutputs.map((item) => `output:${item}`),
           ...score.matchedRoleTerms.map((item) => `role:${item}`),
         ]),
       };
@@ -108,7 +142,6 @@
       targetType: normalizeString(input?.targetType || "task") || "task",
       targetId: normalizeString(input?.targetId),
       planId: normalizeString(input?.planId),
-      taskKind: inferTaskKind(taskDraft, requiredSkills),
       goal: normalizeString(input?.goal || taskDraft?.title || taskDraft?.description),
       title: normalizeString(taskDraft?.title),
       instruction: normalizeString(taskDraft?.description),
@@ -268,24 +301,26 @@
 
   function scoreWorkerCandidate(taskDraft, worker, requiredSkills = []) {
     const haystack = buildWorkerSearchText(worker);
-    const taskTokens = tokenizeForMatching(`${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}`);
+    const taskTokens = extractLexicalHints(`${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}`);
     const roleText = normalizeString(worker?.roleText).toLowerCase();
-    const taskKind = inferTaskKind(taskDraft, requiredSkills);
-    const residentFunction = inferResidentFunction(worker);
+    const roleSignals = buildResidentRoleSignals(worker);
+    const residentFocusTokens = extractLexicalHints(roleSignals.residentFocus.join("\n"));
+    const preferredOutputsTokens = extractLexicalHints(roleSignals.preferredOutputs.join("\n"));
+    const roleTokens = extractLexicalHints(roleText);
     const enabledSkillIds = Array.isArray(worker?.enabledSkillIds)
       ? worker.enabledSkillIds.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
       : [];
     const matchedSkills = requiredSkills.filter((skillId) => enabledSkillIds.includes(normalizeSkillId(skillId)));
-    const matchedResidentFunctions = taskKind !== "general" && taskKind !== "review" && residentFunction === taskKind
-      ? [residentFunction]
-      : [];
-    const matchedRoleTerms = taskTokens.filter((token) => roleText.includes(token.toLowerCase()));
+    const matchedResidentFocus = taskTokens.filter((token) => residentFocusTokens.includes(token));
+    const matchedPreferredOutputs = taskTokens.filter((token) => preferredOutputsTokens.includes(token));
+    const matchedRoleTerms = taskTokens.filter((token) => roleTokens.includes(token));
     const matchedSkillTerms = taskTokens.filter((token) => haystack.includes(token.toLowerCase()));
-    const score = (matchedSkills.length * 100) + (matchedResidentFunctions.length * 80) + (matchedRoleTerms.length * 10) + matchedSkillTerms.length;
+    const score = (matchedSkills.length * 100) + (matchedResidentFocus.length * 25) + (matchedPreferredOutputs.length * 20) + (matchedRoleTerms.length * 10) + matchedSkillTerms.length;
     return {
       score,
       matchedSkills: uniqueList(matchedSkills),
-      matchedResidentFunctions: uniqueList(matchedResidentFunctions),
+      matchedResidentFocus: uniqueList(matchedResidentFocus),
+      matchedPreferredOutputs: uniqueList(matchedPreferredOutputs),
       matchedRoleTerms: uniqueList(matchedRoleTerms),
     };
   }
@@ -329,7 +364,8 @@
       workerId: normalizeString(bestWorker?.id),
       score: bestScore.score,
       matchedSkills: bestScore.matchedSkills,
-      matchedResidentFunctions: bestScore.matchedResidentFunctions,
+      matchedResidentFocus: bestScore.matchedResidentFocus,
+      matchedPreferredOutputs: bestScore.matchedPreferredOutputs,
       matchedRoleTerms: bestScore.matchedRoleTerms,
       requiredSkills,
     };
@@ -348,17 +384,18 @@
       });
       const workerId = normalizeString(selected.workerId) || normalizeString(workers[0]?.id);
       assignmentCounts.set(workerId, (assignmentCounts.get(workerId) || 0) + 1);
-      return {
-        taskDraft,
-        workerId,
-        score: selected.score,
-        requiredSkills: selected.requiredSkills,
-        explanation: {
-          matchedSkills: selected.matchedSkills,
-          matchedResidentFunctions: selected.matchedResidentFunctions,
-          matchedRoleTerms: selected.matchedRoleTerms,
-        },
-      };
+        return {
+          taskDraft,
+          workerId,
+          score: selected.score,
+          requiredSkills: selected.requiredSkills,
+          explanation: {
+            matchedSkills: selected.matchedSkills,
+            matchedResidentFocus: selected.matchedResidentFocus,
+            matchedPreferredOutputs: selected.matchedPreferredOutputs,
+            matchedRoleTerms: selected.matchedRoleTerms,
+          },
+        };
     });
   }
 
@@ -438,8 +475,8 @@
   }
 
   const api = {
-    inferTaskKind,
     inferRequiredSkills,
+    buildResidentRoleSignals,
     buildCandidateResidentSummaries,
     buildWorkerRoutingInput,
     parseRoutingDecisionResponse,

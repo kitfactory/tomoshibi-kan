@@ -703,7 +703,7 @@ type GateRoutingInput = {
 - `PlanExecutionOrchestrator` は routing の deterministic core を保持する。resident 候補抽出、status filter、load 計算、capability probe 反映、invalid decision fallback は Orchestrator 側で行う。
 - resident 候補の意味判断が必要な時だけ、Orchestrator は active Guide の model / `SOUL.md` / `ROLE.md` を `GuideReasoningContext` として借りる。
 - Guide-driven routing で LLM に渡すのは raw transcript 全文ではなく、`RoutingInput` に正規化した task 情報と `CandidateResidentSummary[]` のみとする。
-- `CandidateResidentSummary` は resident の display name を説明用に含んでよいが、判断の一次ソースは `roleSummary / capabilitySummary / fitHints` とする。
+- `CandidateResidentSummary` は resident の display name を説明用に含んでよいが、判断の一次ソースは `roleContractText / roleSummary / capabilitySummary / fitHints` とする。
 - LLM 返答は `RoutingDecision` として parse / validate し、`selectedResidentId` が候補外、`reason` が空、`fallbackAction` が不正な場合は invalid とする。
 - invalid / low-confidence / no-fit の `RoutingDecision` では dispatch せず、core は rule-based fallback または `reroute / replan_required` を起こす。
 - `reroute` は同じ task を別 resident 候補へ回す決定、`replan_required` は Guide へ戻して Plan 自体の見直しを要求する決定として扱う。
@@ -715,7 +715,6 @@ type RoutingInput = {
   targetType: "task" | "job";
   targetId: string;
   planId: string;
-  taskKind: "research" | "make" | "write" | "review" | "general";
   goal: string;
   title: string;
   instruction: string;
@@ -731,11 +730,13 @@ type RoutingInput = {
 type CandidateResidentSummary = {
   residentId: string;
   role: "guide" | "worker" | "gate";
-  residentFunction: "research" | "make" | "write" | "general";
   displayName: string;
   status: string;
   currentLoad: number;
+  roleContractText: string;
   roleSummary: string[];
+  residentFocus: string[];
+  preferredOutputs: string[];
   capabilitySummary: string[];
   fitHints: string[];
 };
@@ -748,8 +749,8 @@ type RoutingDecision = {
 };
 ```
 
-- `AgentRouting.buildWorkerRoutingInput()` は resident summary へ `residentFunction` を付与する。
-- `AgentRouting.selectWorkerForTask()` は lexical match に加え、`taskKind` と `residentFunction` の一致へ強い重みを与える role-first scorer とする。
+- `AgentRouting.buildWorkerRoutingInput()` は resident summary へ `roleContractText`, `residentFocus`, `preferredOutputs` を付与する。
+- `AgentRouting.selectWorkerForTask()` は lexical match に加え、`ROLE.md` の `得意な依頼` と `得意な作成物` の一致へ強い重みを与える role-first scorer とする。
 
 ### CLI Capability Probe
 - Electron main は Settings load/save 時に登録済み CLI ツールへ問い合わせ、`registeredToolCapabilities[]` を補完する。

@@ -1,7 +1,6 @@
 # plan.md（最新版）
 
 # current
-- なし
 
 # future
 - Guide の assist OFF 条件で、短いターンから resident trio の `plan_ready` へ収束しやすくする
@@ -12,6 +11,9 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-full-role-routing-context] resident routing の LLM 入力へ `ROLE.md` 全文を追加し、summary と併用して判断できるようにした
+- [x] [DR-20260308-role-first-routing-without-taskkind] `taskKind` を廃止し、ROLE の得意な依頼 / 得意な作成物を軸に resident routing を行うように切り替えた
+- [x] [DR-20260308-resident-variation-real-observation] resident 主体の依頼を real-model で観測し、`調べる人` / `作り手` は `plan_ready` 手前で止まり、`書く人` は progress query 誤判定に衝突することを確認した
 - [x] [DR-20260308-assist-off-plan-ready-stability] assist OFF の Guide が explicit breakdown 要求と主要材料を受けた時、resident trio の `plan_ready` へ到達し task materialization まで進むことを real-model で確認した
 - [x] [DR-20260308-guide-finalization-proposal] 3案提示と推薦の後で、Guide が最終依頼案を短く提案して少ないターンで収束しやすくした
 - [x] [DR-20260308-reroute-replan-real-observation] `reroute` は自然発火せず、`replan_required` は観測できたが `replanned` には届かないことを real-model 条件で確認した

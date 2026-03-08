@@ -16,7 +16,8 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
   if (workerId) {
     explanation = {
       matchedRoleTerms: ["explicit_assignee"],
-      matchedResidentFunctions: [],
+      matchedResidentFocus: [],
+      matchedPreferredOutputs: [],
       matchedSkills: [],
       decisionSource: "explicit_assignee",
     };
@@ -42,7 +43,8 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     if (workerId) {
       explanation = {
         matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
-        matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
+        matchedResidentFocus: Array.isArray(selected?.matchedResidentFocus) ? selected.matchedResidentFocus : [],
+        matchedPreferredOutputs: Array.isArray(selected?.matchedPreferredOutputs) ? selected.matchedPreferredOutputs : [],
         matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
         decisionSource: normalizePlanOrchestratorText(selected?.decisionSource) || "guide_routing",
         decisionReason: normalizePlanOrchestratorText(selected?.decisionReason),
@@ -61,7 +63,8 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     workerId = normalizePlanOrchestratorText(selected?.workerId);
     explanation = {
       matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
-      matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
+      matchedResidentFocus: Array.isArray(selected?.matchedResidentFocus) ? selected.matchedResidentFocus : [],
+      matchedPreferredOutputs: Array.isArray(selected?.matchedPreferredOutputs) ? selected.matchedPreferredOutputs : [],
       matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
       decisionSource: "rule_based",
     };
@@ -70,7 +73,8 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     workerId = normalizePlanOrchestratorText(workers[index % workers.length]?.id);
     explanation = {
       matchedSkills: [],
-      matchedResidentFunctions: [],
+      matchedResidentFocus: [],
+      matchedPreferredOutputs: [],
       matchedRoleTerms: [],
       decisionSource: "round_robin_fallback",
     };

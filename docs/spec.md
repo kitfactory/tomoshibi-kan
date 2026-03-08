@@ -665,14 +665,14 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 ### LLM-assisted routing
 - resident routing で LLM を使う場合でも、dispatch 実行・state 遷移・retry count・persistence は `PlanExecutionOrchestrator` core の責務とする。
 - resident routing の前に、Orchestrator は task を `RoutingInput` へ正規化し、resident 候補を role/status/capability で前処理して絞り込む。
-- LLM へ渡す resident 候補は、display name ではなく `roleSummary`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
+- LLM へ渡す resident 候補は、display name ではなく `roleContractText`, `roleSummary`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
 - LLM routing の返答は `RoutingDecision` として parse / validate し、invalid decision は dispatch に使わない。
 - `RoutingDecision` が invalid、low-confidence、または no-fit の場合、Orchestrator は deterministic fallback へ落とすか、`reroute` または `replan_required` を起こす。
-- `RoutingInput` は少なくとも `taskKind`, `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
-- `candidateResidents[]` は resident ごとに `residentId`, `role`, `residentFunction`, `status`, `currentLoad`, `roleSummary[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
+- `RoutingInput` は少なくとも `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
+- `candidateResidents[]` は resident ごとに `residentId`, `role`, `status`, `currentLoad`, `roleContractText`, `roleSummary[]`, `residentFocus[]`, `preferredOutputs[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
 - `RoutingDecision` は少なくとも `selectedResidentId`, `reason`, `confidence`, `fallbackAction` を持つ。
 - `fallbackAction` は `dispatch | reroute | replan_required` のみを取り、Orchestrator core が最終実行を担う。
-- deterministic fallback scorer は lexical match だけでなく、`taskKind` と resident function (`research | make | write`) の一致を主要判断材料として使う。
+- deterministic fallback scorer は lexical match だけでなく、`ROLE.md` の `得意な依頼` と `得意な作成物` の一致を主要判断材料として使う。
 
 ## 追加仕様 (2026-03-06): Orchestration Debug DB
 

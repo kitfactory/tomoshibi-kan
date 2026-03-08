@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   inferRequiredSkills,
+  buildResidentRoleSignals,
   buildWorkerRoutingInput,
   parseRoutingDecisionResponse,
   selectWorkerForTask,
@@ -129,7 +130,7 @@ test("buildWorkerRoutingInput produces resident summaries for llm-assisted routi
       {
         id: "pal-alpha",
         displayName: "調べる人",
-        roleText: "証拠と再現条件を集める",
+        roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n- 原因候補と証拠を集めたい依頼\n\n## 得意な作成物\n- 再現手順メモ\n- 証拠 summary",
         enabledSkillIds: ["codex-file-search"],
         skillSummaries: ["file search and repro evidence"],
       },
@@ -137,34 +138,44 @@ test("buildWorkerRoutingInput produces resident summaries for llm-assisted routi
     assignmentCounts: new Map([["pal-alpha", 1]]),
   });
 
-  assert.equal(routingInput.taskKind, "research");
   assert.equal(routingInput.planId, "PLAN-001");
   assert.equal(routingInput.candidateResidents.length, 1);
   assert.equal(routingInput.candidateResidents[0].residentId, "pal-alpha");
-  assert.equal(routingInput.candidateResidents[0].residentFunction, "research");
+  assert.match(routingInput.candidateResidents[0].roleContractText, /得意な依頼/);
+  assert.deepEqual(routingInput.candidateResidents[0].residentFocus, ["再現手順を固めたい依頼", "原因候補と証拠を集めたい依頼"]);
+  assert.deepEqual(routingInput.candidateResidents[0].preferredOutputs, ["再現手順メモ", "証拠 summary"]);
   assert.equal(routingInput.candidateResidents[0].currentLoad, 1);
 });
 
-test("selectWorkerForTask prefers resident function for research, make, and write tasks", () => {
+test("buildResidentRoleSignals extracts resident focus and preferred outputs from ROLE", () => {
+  const signals = buildResidentRoleSignals({
+    roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n- 原因候補と証拠を集めたい依頼\n\n## 得意な作成物\n- 再現手順メモ\n- 証拠 summary",
+  });
+
+  assert.deepEqual(signals.residentFocus, ["再現手順を固めたい依頼", "原因候補と証拠を集めたい依頼"]);
+  assert.deepEqual(signals.preferredOutputs, ["再現手順メモ", "証拠 summary"]);
+});
+
+test("selectWorkerForTask prefers resident role focus before generic lexical match", () => {
   const workers = [
     {
       id: "pal-alpha",
       displayName: "調べる人",
-      roleText: "証拠と再現条件を集める",
+      roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n- 原因候補と証拠を集めたい依頼\n\n## 得意な作成物\n- 再現手順メモ\n- 証拠 summary",
       enabledSkillIds: ["codex-file-search"],
       skillSummaries: ["trace files and gather evidence"],
     },
     {
       id: "pal-beta",
       displayName: "作り手",
-      roleText: "実装と修正を進める",
+      roleText: "# ROLE\n\n## 得意な依頼\n- 最小修正で前へ進めたい依頼\n- patch や試作で形を作りたい依頼\n\n## 得意な作成物\n- 最小 patch\n- 変更ファイル一覧",
       enabledSkillIds: ["codex-file-edit"],
       skillSummaries: ["apply patches and implement changes"],
     },
     {
       id: "pal-delta",
       displayName: "書く人",
-      roleText: "説明と返却文を整える",
+      roleText: "# ROLE\n\n## 得意な依頼\n- 話が混線していて整理したい依頼\n- 返却文や説明文を整えたい依頼\n\n## 得意な作成物\n- 要約\n- 返却文",
       enabledSkillIds: ["codex-file-read"],
       skillSummaries: ["write summaries and shape explanations"],
     },
@@ -173,32 +184,35 @@ test("selectWorkerForTask prefers resident function for research, make, and writ
   const research = selectWorkerForTask({
     taskDraft: {
       title: "再現確認",
-      description: "保存不具合の原因と証拠を調べる",
+      description: "保存不具合の原因候補と証拠を集めて、再現手順メモを残したい",
     },
     workers,
   });
   assert.equal(research.workerId, "pal-alpha");
-  assert.deepEqual(research.matchedResidentFunctions, ["research"]);
+  assert.ok(research.matchedResidentFocus.includes("証拠"));
+  assert.ok(research.matchedPreferredOutputs.includes("再現手順メモ"));
 
   const make = selectWorkerForTask({
     taskDraft: {
       title: "修正実装",
-      description: "保存処理のパッチを実装する",
+      description: "保存処理を最小修正で前へ進めたい。変更ファイル一覧も残す",
     },
     workers,
   });
   assert.equal(make.workerId, "pal-beta");
-  assert.deepEqual(make.matchedResidentFunctions, ["make"]);
+  assert.ok(make.matchedResidentFocus.includes("最小修正"));
+  assert.ok(make.matchedRoleTerms.includes("進め"));
 
   const write = selectWorkerForTask({
     taskDraft: {
       title: "返却文整理",
-      description: "読み手向けの説明と要約を書く",
+      description: "返却文と要約を整えて、話の混線をほどきたい",
     },
     workers,
   });
   assert.equal(write.workerId, "pal-delta");
-  assert.deepEqual(write.matchedResidentFunctions, ["write"]);
+  assert.ok(write.matchedResidentFocus.includes("返却文"));
+  assert.ok(write.matchedPreferredOutputs.includes("返却文"));
 });
 
 test("parseRoutingDecisionResponse repairs wrapper text and validates candidate ids", () => {

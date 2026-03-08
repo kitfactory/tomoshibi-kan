@@ -3495,23 +3495,27 @@ async function resolveWorkerAssignmentProfiles() {
 function buildGuideRoutingOperatingRulesPrompt(localeValue) {
   const isJa = localeValue !== "en";
   return isJa
-    ? [
-      "あなたは灯火館の管理人として、住人への割り当て判断だけを行います。",
-      "- 入力の task と候補住人一覧だけを見て、最も適した住人を 1 人選ぶ。",
-      "- 候補外の住人は選ばない。",
-      "- 住人の Mission, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, capability summary を優先して判断する。",
-      "- `currentLoad` は補助材料として使うが、適性より優先しない。",
-      "- 適任が見当たらない時だけ `replan_required` を返す。",
-      "- 返答は JSON schema に厳密に従い、余計な説明文を付けない。",
-    ].join("\n")
+      ? [
+        "あなたは灯火館の管理人として、住人への割り当て判断だけを行います。",
+        "- 入力の task と候補住人一覧だけを見て、最も適した住人を 1 人選ぶ。",
+        "- 候補外の住人は選ばない。",
+        "- 住人の Mission, 得意な依頼, 得意な作成物, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, capability summary を優先して判断する。",
+        "- 必要に応じて resident の ROLE.md 全文も参照してよいが、まずは得意な依頼 / 得意な作成物を軸に比較する。",
+        "- displayName の印象ではなく、ROLE に書かれた得意領域と作成物を一次ソースにする。",
+        "- `currentLoad` は補助材料として使うが、適性より優先しない。",
+        "- 適任が見当たらない時だけ `replan_required` を返す。",
+        "- 返答は JSON schema に厳密に従い、余計な説明文を付けない。",
+      ].join("\n")
     : [
-      "As the Tomoshibi-kan manager, make only the resident assignment decision.",
-      "- Choose exactly one resident from the provided candidates for the task.",
-      "- Never choose a resident outside the provided candidates.",
-      "- Prioritize Mission, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, and capability summary.",
-      "- Treat currentLoad as a secondary signal, not stronger than fitness.",
-      "- Return `replan_required` only when none of the candidates is a reasonable fit.",
-      "- Follow the JSON schema strictly and do not add extra prose.",
+        "As the Tomoshibi-kan manager, make only the resident assignment decision.",
+        "- Choose exactly one resident from the provided candidates for the task.",
+        "- Never choose a resident outside the provided candidates.",
+        "- Prioritize Mission, preferred requests, preferred outputs, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, and capability summary.",
+        "- You may read the full ROLE.md contract when needed, but compare candidates primarily through preferred requests and preferred outputs.",
+        "- Use the ROLE contract as the primary source of fitness, not the display name.",
+        "- Treat currentLoad as a secondary signal, not stronger than fitness.",
+        "- Return `replan_required` only when none of the candidates is a reasonable fit.",
+        "- Follow the JSON schema strictly and do not add extra prose.",
     ].join("\n");
 }
 
@@ -3717,34 +3721,37 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
 
     let workerId = normalizeText(explicitWorker?.id);
     let explanation = null;
-    if (workerId) {
-      explanation = {
-        matchedRoleTerms: ["explicit_assignee"],
-        matchedResidentFunctions: [],
-        matchedSkills: [],
-      };
-    } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
+      if (workerId) {
+        explanation = {
+          matchedRoleTerms: ["explicit_assignee"],
+          matchedResidentFocus: [],
+          matchedPreferredOutputs: [],
+          matchedSkills: [],
+        };
+      } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
       const selected = routingApi.selectWorkerForTask({
         taskDraft,
         workers,
         assignmentCounts,
         requiredSkills: Array.isArray(taskPlan?.requiredSkills) ? taskPlan.requiredSkills : [],
       });
-      workerId = normalizeText(selected?.workerId);
-      explanation = {
-        matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
-        matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
-        matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
-      };
-    }
-    if (!workerId) {
-      workerId = normalizeText(workers[index % workers.length]?.id);
-      explanation = {
-        matchedSkills: [],
-        matchedResidentFunctions: [],
-        matchedRoleTerms: [],
-      };
-    }
+        workerId = normalizeText(selected?.workerId);
+        explanation = {
+          matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+          matchedResidentFocus: Array.isArray(selected?.matchedResidentFocus) ? selected.matchedResidentFocus : [],
+          matchedPreferredOutputs: Array.isArray(selected?.matchedPreferredOutputs) ? selected.matchedPreferredOutputs : [],
+          matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
+        };
+      }
+      if (!workerId) {
+        workerId = normalizeText(workers[index % workers.length]?.id);
+        explanation = {
+          matchedSkills: [],
+          matchedResidentFocus: [],
+          matchedPreferredOutputs: [],
+          matchedRoleTerms: [],
+        };
+      }
     if (!workerId) return;
 
     assignmentCounts.set(workerId, (assignmentCounts.get(workerId) || 0) + 1);
@@ -4835,8 +4842,11 @@ function formatWorkerRoutingExplanation(explanation) {
   const matchedSkills = Array.isArray(explanation?.matchedSkills)
     ? explanation.matchedSkills.map((item) => normalizeText(item)).filter(Boolean)
     : [];
-  const matchedResidentFunctions = Array.isArray(explanation?.matchedResidentFunctions)
-    ? explanation.matchedResidentFunctions.map((item) => normalizeText(item)).filter(Boolean)
+  const matchedResidentFocus = Array.isArray(explanation?.matchedResidentFocus)
+    ? explanation.matchedResidentFocus.map((item) => normalizeText(item)).filter(Boolean)
+    : [];
+  const matchedPreferredOutputs = Array.isArray(explanation?.matchedPreferredOutputs)
+    ? explanation.matchedPreferredOutputs.map((item) => normalizeText(item)).filter(Boolean)
     : [];
   const matchedRoleTerms = Array.isArray(explanation?.matchedRoleTerms)
     ? explanation.matchedRoleTerms.map((item) => normalizeText(item)).filter(Boolean)
@@ -4845,8 +4855,11 @@ function formatWorkerRoutingExplanation(explanation) {
   if (matchedSkills.length > 0) {
     parts.push(`skills=${matchedSkills.join(",")}`);
   }
-  if (matchedResidentFunctions.length > 0) {
-    parts.push(`function=${matchedResidentFunctions.join(",")}`);
+  if (matchedResidentFocus.length > 0) {
+    parts.push(`focus=${matchedResidentFocus.join(",")}`);
+  }
+  if (matchedPreferredOutputs.length > 0) {
+    parts.push(`outputs=${matchedPreferredOutputs.join(",")}`);
   }
   if (matchedRoleTerms.length > 0) {
     parts.push(`ROLE=${matchedRoleTerms.join(",")}`);

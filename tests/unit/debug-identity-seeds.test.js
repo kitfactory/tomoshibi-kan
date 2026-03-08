@@ -44,15 +44,21 @@ test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
   assert.match(researcher.soul, /そこは違うと思います|かなり引っかかります/);
   assert.match(researcher.role, /「調べる人」/);
   assert.match(researcher.role, /file を編集しない/);
+  assert.match(researcher.role, /得意な依頼/);
+  assert.match(researcher.role, /得意な作成物/);
   assert.match(researcher.role, /Progress Voice/);
   assert.match(researcher.role, /Progress Note Triggers/);
   assert.match(maker.soul, /たぶん、いけます|ちょっと触ってみます/);
   assert.match(maker.role, /「作り手」/);
   assert.match(maker.role, /simple fix/);
+  assert.match(maker.role, /得意な依頼/);
+  assert.match(maker.role, /得意な作成物/);
   assert.match(maker.role, /Hand-off Rules/);
   assert.match(writer.soul, /いったん、こう整理できます|言い換えると/);
   assert.match(writer.role, /「書く人」/);
   assert.match(writer.role, /Gate judgment/);
+  assert.match(writer.role, /得意な依頼/);
+  assert.match(writer.role, /得意な作成物/);
   assert.match(writer.role, /Progress Voice/);
 });
 
