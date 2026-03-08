@@ -3585,14 +3585,12 @@ async function requestGuideDrivenWorkerRoutingDecision(params = {}) {
       allowedResidentIds: routingInput.candidateResidents.map((entry) => entry.residentId),
     });
     if (!parsed?.ok || !parsed.decision) return null;
-    if (parsed.decision.fallbackAction !== "dispatch" || parsed.decision.confidence === "low") {
-      return null;
-    }
+    if (parsed.decision.confidence === "low") return null;
     return {
       workerId: parsed.decision.selectedResidentId,
       matchedSkills: [],
-      matchedRoleTerms: ["guide_routing"],
-      decisionSource: "guide_routing",
+      matchedRoleTerms: [parsed.decision.fallbackAction === "reroute" ? "guide_reroute" : "guide_routing"],
+      decisionSource: parsed.decision.fallbackAction === "reroute" ? "guide_reroute" : "guide_routing",
       decisionReason: parsed.decision.reason,
       decisionConfidence: parsed.decision.confidence,
       fallbackAction: parsed.decision.fallbackAction,
@@ -3718,6 +3716,7 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     if (workerId) {
       explanation = {
         matchedRoleTerms: ["explicit_assignee"],
+        matchedResidentFunctions: [],
         matchedSkills: [],
       };
     } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
@@ -3730,6 +3729,7 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
       workerId = normalizeText(selected?.workerId);
       explanation = {
         matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+        matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
         matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
       };
     }
@@ -3737,6 +3737,7 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
       workerId = normalizeText(workers[index % workers.length]?.id);
       explanation = {
         matchedSkills: [],
+        matchedResidentFunctions: [],
         matchedRoleTerms: [],
       };
     }
@@ -3816,6 +3817,26 @@ async function materializeApprovedPlanArtifact(artifact) {
     created.push(task);
     const workerId = normalizeText(entry?.workerId || task.palId);
     const routingExplanation = formatWorkerRoutingExplanation(entry?.explanation);
+    const rerouteFromWorkerId = normalizeText(entry?.explanation?.rerouteFromWorkerId);
+    const shouldLogReroute = normalizeText(entry?.explanation?.fallbackAction) === "reroute" && rerouteFromWorkerId && rerouteFromWorkerId !== workerId;
+    if (shouldLogReroute) {
+      const rerouteMessageJa = `${task.id} は ${rerouteFromWorkerId} ではなく ${workerId} に振り直しました。`;
+      const rerouteMessageEn = `${task.id} was rerouted from ${rerouteFromWorkerId} to ${workerId}.`;
+      appendEvent("dispatch", task.id, "reroute", rerouteMessageJa, rerouteMessageEn);
+      void appendTaskProgressLogForTarget("task", task.id, "reroute", {
+        planId: normalizedPlanId,
+        actualActor: "orchestrator",
+        displayActor: "Guide",
+        status: "ok",
+        messageJa: rerouteMessageJa,
+        messageEn: rerouteMessageEn,
+        payload: {
+          fromWorkerId: rerouteFromWorkerId,
+          workerId,
+          routingExplanation,
+        },
+      });
+    }
     const summaryJa = routingExplanation.ja
       ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
       : `${task.id} を ${workerId} に割り当てました。`;
@@ -4810,12 +4831,18 @@ function formatWorkerRoutingExplanation(explanation) {
   const matchedSkills = Array.isArray(explanation?.matchedSkills)
     ? explanation.matchedSkills.map((item) => normalizeText(item)).filter(Boolean)
     : [];
+  const matchedResidentFunctions = Array.isArray(explanation?.matchedResidentFunctions)
+    ? explanation.matchedResidentFunctions.map((item) => normalizeText(item)).filter(Boolean)
+    : [];
   const matchedRoleTerms = Array.isArray(explanation?.matchedRoleTerms)
     ? explanation.matchedRoleTerms.map((item) => normalizeText(item)).filter(Boolean)
     : [];
   const parts = [];
   if (matchedSkills.length > 0) {
     parts.push(`skills=${matchedSkills.join(",")}`);
+  }
+  if (matchedResidentFunctions.length > 0) {
+    parts.push(`function=${matchedResidentFunctions.join(",")}`);
   }
   if (matchedRoleTerms.length > 0) {
     parts.push(`ROLE=${matchedRoleTerms.join(",")}`);
@@ -7626,6 +7653,7 @@ function detailActionLabel(actionType) {
   const labels = locale === "ja"
     ? {
       dispatch: "依頼",
+      reroute: "振り直し",
       worker_runtime: "作業",
       to_gate: "見てもらう",
       gate_review: "見立て",
@@ -7636,6 +7664,7 @@ function detailActionLabel(actionType) {
     }
     : {
       dispatch: "Dispatch",
+      reroute: "Reroute",
       worker_runtime: "Work",
       to_gate: "To Gate",
       gate_review: "Review",

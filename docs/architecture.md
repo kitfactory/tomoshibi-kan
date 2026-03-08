@@ -730,6 +730,7 @@ type RoutingInput = {
 type CandidateResidentSummary = {
   residentId: string;
   role: "guide" | "worker" | "gate";
+  residentFunction: "research" | "make" | "write" | "general";
   displayName: string;
   status: string;
   currentLoad: number;
@@ -745,6 +746,9 @@ type RoutingDecision = {
   fallbackAction: "dispatch" | "reroute" | "replan_required";
 };
 ```
+
+- `AgentRouting.buildWorkerRoutingInput()` は resident summary へ `residentFunction` を付与する。
+- `AgentRouting.selectWorkerForTask()` は lexical match に加え、`taskKind` と `residentFunction` の一致へ強い重みを与える role-first scorer とする。
 
 ### CLI Capability Probe
 - Electron main は Settings load/save 時に登録済み CLI ツールへ問い合わせ、`registeredToolCapabilities[]` を補完する。
@@ -876,6 +880,7 @@ type TaskProgressLogEntry = {
 - Gate approve/reject 時に `actualActor=gate`, `displayActor=Gate`, `actionType=gate_review` を残す。
 - Gate reject のうち進め方や前提の見直しが必要と判断した場合、続けて `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replan_required`, `status=blocked` を残してよい。
 - `replan_required` の後に Guide-driven replan が成功した場合、old target へ `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replanned`, `status=ok` を残し、`previousPlanId`, `nextPlanId`, `createdCount` を payload に保持する。
+- Guide-driven routing が `fallbackAction=reroute` を返した場合、dispatch 前に `actualActor=orchestrator`, `displayActor=Guide`, `actionType=reroute`, `status=ok` を残し、`fromWorkerId`, `workerId` を payload に保持する。
 - resubmit と plan completion も同じ table に append し、task/job 単位の直近イベント列で追えるようにする。
 
 ### Progress query
@@ -885,6 +890,7 @@ type TaskProgressLogEntry = {
 - minimal 実装では renderer に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
 - progress query path は model 呼び出し前に処理し、追加の LLM 呼び出しなしで completion / pending / rejected / replan_required / in_progress / assigned を返す。
 - `PlanExecutionOrchestrator` は Gate reject が `replan_required` を示す時、active Guide の runtime / `SOUL.md` を使って replan request を生成してよい。replan 成功時は new Plan artifact 保存 -> materialize -> old target に `replanned` append の順で橋渡しする。
+- `PlanExecutionOrchestrator` は Guide-driven routing が `reroute` を返した時、baseline resident との差分を `reroute` として記録してから selected resident へ dispatch してよい。
 
 ### 表示責務
 - `WorkspacePresenter` は内部の `actualActor` をそのまま前面表示せず、`displayActor + messageForUser` を通常表示の主材料にする。

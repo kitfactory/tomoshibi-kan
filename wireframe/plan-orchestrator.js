@@ -12,13 +12,24 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
 
   let workerId = normalizePlanOrchestratorText(explicitWorker?.id);
   let explanation = null;
+  let baselineWorkerId = "";
   if (workerId) {
     explanation = {
       matchedRoleTerms: ["explicit_assignee"],
+      matchedResidentFunctions: [],
       matchedSkills: [],
       decisionSource: "explicit_assignee",
     };
   } else if (routingApi && typeof routingApi.selectWorkerForTaskWithGuideDecision === "function") {
+    if (typeof routingApi.selectWorkerForTask === "function") {
+      const baselineSelected = routingApi.selectWorkerForTask({
+        taskDraft,
+        workers,
+        assignmentCounts,
+        requiredSkills: Array.isArray(taskPlan?.requiredSkills) ? taskPlan.requiredSkills : [],
+      });
+      baselineWorkerId = normalizePlanOrchestratorText(baselineSelected?.workerId);
+    }
     const selected = await routingApi.selectWorkerForTaskWithGuideDecision({
       artifact,
       taskDraft,
@@ -31,11 +42,13 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     if (workerId) {
       explanation = {
         matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+        matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
         matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
         decisionSource: normalizePlanOrchestratorText(selected?.decisionSource) || "guide_routing",
         decisionReason: normalizePlanOrchestratorText(selected?.decisionReason),
         decisionConfidence: normalizePlanOrchestratorText(selected?.decisionConfidence),
         fallbackAction: normalizePlanOrchestratorText(selected?.fallbackAction),
+        rerouteFromWorkerId: baselineWorkerId,
       };
     }
   } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
@@ -48,6 +61,7 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     workerId = normalizePlanOrchestratorText(selected?.workerId);
     explanation = {
       matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+      matchedResidentFunctions: Array.isArray(selected?.matchedResidentFunctions) ? selected.matchedResidentFunctions : [],
       matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
       decisionSource: "rule_based",
     };
@@ -56,6 +70,7 @@ async function selectWorkerForPlanTask(taskPlan, index, workers, assignmentCount
     workerId = normalizePlanOrchestratorText(workers[index % workers.length]?.id);
     explanation = {
       matchedSkills: [],
+      matchedResidentFunctions: [],
       matchedRoleTerms: [],
       decisionSource: "round_robin_fallback",
     };

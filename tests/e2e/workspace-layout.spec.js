@@ -881,6 +881,100 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#guideChat")).toContainText(/再計画を作成しました|新しいPlan/);
     });
 
+    test("guide-driven reroute keeps dispatch but records reroute progress", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "model");
+      const guideRuntimeTarget = await page.locator('[data-pal-runtime-target-select="guide-core"] option').first().getAttribute("value");
+      expect(guideRuntimeTarget).toBeTruthy();
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', String(guideRuntimeTarget));
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        const runtime = window.TomoshibikanCoreRuntime || window.PalpalCoreRuntime || {};
+        window.__routingCalls = 0;
+        const originalGuideChat = typeof runtime.guideChat === "function" ? runtime.guideChat.bind(runtime) : null;
+        runtime.guideChat = async (input) => {
+          if (input?.debugMeta?.stage === "orchestrator_routing") {
+            window.__routingCalls += 1;
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                selectedResidentId: "pal-delta",
+                reason: "このtaskは結果の整理と返却文の形づくりが主なので、書く人へ振り直す。",
+                confidence: "high",
+                fallbackAction: "reroute",
+              }),
+              toolCalls: [],
+              runId: "debug-reroute-run",
+            };
+          }
+          if (originalGuideChat) return originalGuideChat(input);
+          return {
+            provider: input?.provider || "openai",
+            modelName: input?.modelName || "gpt-4.1",
+            text: JSON.stringify({
+              status: "conversation",
+              reply: "ok",
+              plan: null,
+            }),
+            toolCalls: [],
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
+      });
+
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(async () => {
+        const artifact = await window.appendPlanArtifactWithFallback({
+          status: "approved",
+          replyText: "reroute test",
+          plan: {
+            goal: "返却文と説明を整理する",
+            completionDefinition: "読み手向けの説明方針がまとまる",
+            constraints: ["最小の1 taskだけ作る"],
+            tasks: [
+              {
+                title: "返却文の整理",
+                description: "保存不具合の説明を読み手向けに整理する",
+                requiredSkills: ["codex-file-read"],
+              },
+            ],
+          },
+          sourceRunId: "debug-reroute-plan",
+        });
+        await window.materializeApprovedPlanArtifact(artifact);
+      });
+
+      await expect.poll(async () => page.locator('[data-task-row]').count()).toBe(beforeTaskCount + 1);
+      await expect.poll(async () => page.evaluate(() => window.__routingCalls)).toBeGreaterThan(0);
+
+      const latestTaskId = await page.evaluate(() => {
+        const rows = Array.from(document.querySelectorAll("[data-task-row]"));
+        return rows.at(-1)?.getAttribute("data-task-row") || "";
+      });
+      expect(latestTaskId).toMatch(/^TASK-/);
+      await expect(page.locator(`[data-task-row="${latestTaskId}"]`)).toContainText("pal-delta");
+
+      await expect.poll(async () => {
+        return page.evaluate(async (taskId) => {
+          const entries = await window.listTaskProgressLogEntriesWithFallback({
+            targetKind: "task",
+            targetId: taskId,
+            limit: 10,
+          });
+          return entries.map((entry) => `${entry.actionType}:${entry.payload?.fromWorkerId || "-"}:${entry.payload?.workerId || "-"}`);
+        }, latestTaskId);
+      }).toContain(`reroute:pal-alpha:pal-delta`);
+
+      await page.click('[data-tab="task"]');
+      await page.click(`[data-action="detail"][data-task-id="${latestTaskId}"]`);
+      await expect(page.locator("#detailConversationLog")).toContainText(/振り直し|Reroute/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/pal-alpha/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/pal-delta/);
+    });
+
     test("worker runtime receives structured handoff payload", async ({ page }) => {
       await page.click('[data-tab="pal"]');
       await page.click('[data-pal-open-id="pal-alpha"]');

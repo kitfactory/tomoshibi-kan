@@ -668,9 +668,10 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - LLM routing の返答は `RoutingDecision` として parse / validate し、invalid decision は dispatch に使わない。
 - `RoutingDecision` が invalid、low-confidence、または no-fit の場合、Orchestrator は deterministic fallback へ落とすか、`reroute` または `replan_required` を起こす。
 - `RoutingInput` は少なくとも `taskKind`, `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
-- `candidateResidents[]` は resident ごとに `residentId`, `role`, `status`, `currentLoad`, `roleSummary[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
+- `candidateResidents[]` は resident ごとに `residentId`, `role`, `residentFunction`, `status`, `currentLoad`, `roleSummary[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
 - `RoutingDecision` は少なくとも `selectedResidentId`, `reason`, `confidence`, `fallbackAction` を持つ。
 - `fallbackAction` は `dispatch | reroute | replan_required` のみを取り、Orchestrator core が最終実行を担う。
+- deterministic fallback scorer は lexical match だけでなく、`taskKind` と resident function (`research | make | write`) の一致を主要判断材料として使う。
 
 ## 追加仕様 (2026-03-06): Orchestration Debug DB
 
@@ -725,9 +726,10 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - `message_for_user` は世界観に沿った自然文を許容するが、内部の `actual_actor` と `action_type` を欠落させてはならない。
 - task 一覧から task detail を開いた時、右列は `Guide / 住人 / 古参住人` の会話として progress log を時系列表示できること。内部 actor は保持したまま、通常表示では conversation-like timeline を優先する。
 - minimal 実装では `task_progress_logs` を `settings.sqlite` に追加し、`append`, `list`, `latest` の query を提供する。
-- minimal 実装で progress log へ必ず記録する action は `dispatch`, `worker_runtime`, `to_gate`, `gate_review`, `replan_required`, `replanned`, `resubmit`, `plan_completed` とする。
+- minimal 実装で progress log へ必ず記録する action は `dispatch`, `reroute`, `worker_runtime`, `to_gate`, `gate_review`, `replan_required`, `replanned`, `resubmit`, `plan_completed` とする。
 - Gate reject reason が進め方・前提・要件・スコープの見直しを示す場合、`PlanExecutionOrchestrator` は `replan_required` を progress log に追加してよい。
 - `replan_required` の後、active Guide の runtime / `SOUL.md` を使った Guide-driven replan が成功した場合、old target には `replanned` progress log を追加し、新しい Plan artifact と new task を保存してよい。
+- Guide-driven routing が `fallbackAction=reroute` を返し、selected resident が有効な候補である場合、Orchestrator はその resident へ task を付け替えて dispatch してよい。この時 old resident 候補との差分は `reroute` progress log として残す。
 - Guide は progress query で latest action が `replan_required` の target に対し、「再計画が必要で、進め方や前提を見直している」旨を自然文で説明してよい。
 - Guide は progress query で latest action が `replanned` の target に対し、「再計画を作成し、新しい task に引き継いだ」旨を自然文で説明してよい。
 - renderer は progress log を direct DB access せず、Electron bridge 経由で append/query する。

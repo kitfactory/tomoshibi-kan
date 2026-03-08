@@ -51,6 +51,19 @@
     );
   }
 
+  function inferResidentFunction(worker) {
+    const text = [
+      normalizeString(worker?.displayName),
+      normalizeString(worker?.persona),
+      normalizeString(worker?.roleText),
+    ].join("\n").toLowerCase();
+    if (!text) return "general";
+    if (/(調べる人|research|trace|investig|repro|evidence|調べ|再現|証拠|原因)/.test(text)) return "research";
+    if (/(作り手|maker|make|build|fix|patch|implement|修正|実装|変更)/.test(text)) return "make";
+    if (/(書く人|writer|write|summary|document|explain|書く|説明|要約|文書)/.test(text)) return "write";
+    return "general";
+  }
+
   function inferTaskKind(taskDraft, requiredSkills = []) {
     const combined = `${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}\n${uniqueList(requiredSkills).join("\n")}`.toLowerCase();
     if (!combined) return "general";
@@ -64,16 +77,20 @@
   function buildCandidateResidentSummaries(workers = [], assignmentCounts = new Map(), requiredSkills = [], taskDraft = null) {
     return (Array.isArray(workers) ? workers : []).map((worker) => {
       const score = scoreWorkerCandidate(taskDraft || {}, worker, requiredSkills);
+      const residentFunction = inferResidentFunction(worker);
       return {
         residentId: normalizeString(worker?.id),
         role: "worker",
+        residentFunction,
         displayName: normalizeString(worker?.displayName || worker?.id),
         status: normalizeString(worker?.status) || "available",
         currentLoad: Number(assignmentCounts.get(worker?.id) || 0),
         roleSummary: splitSummaryLines(worker?.roleText),
         capabilitySummary: uniqueList(worker?.skillSummaries),
         fitHints: uniqueList([
+          `function:${residentFunction}`,
           ...score.matchedSkills.map((item) => `skill:${item}`),
+          ...score.matchedResidentFunctions.map((item) => `function:${item}`),
           ...score.matchedRoleTerms.map((item) => `role:${item}`),
         ]),
       };
@@ -253,16 +270,22 @@
     const haystack = buildWorkerSearchText(worker);
     const taskTokens = tokenizeForMatching(`${normalizeString(taskDraft?.title)}\n${normalizeString(taskDraft?.description)}`);
     const roleText = normalizeString(worker?.roleText).toLowerCase();
+    const taskKind = inferTaskKind(taskDraft, requiredSkills);
+    const residentFunction = inferResidentFunction(worker);
     const enabledSkillIds = Array.isArray(worker?.enabledSkillIds)
       ? worker.enabledSkillIds.map((skillId) => normalizeSkillId(skillId)).filter(Boolean)
       : [];
     const matchedSkills = requiredSkills.filter((skillId) => enabledSkillIds.includes(normalizeSkillId(skillId)));
+    const matchedResidentFunctions = taskKind !== "general" && taskKind !== "review" && residentFunction === taskKind
+      ? [residentFunction]
+      : [];
     const matchedRoleTerms = taskTokens.filter((token) => roleText.includes(token.toLowerCase()));
     const matchedSkillTerms = taskTokens.filter((token) => haystack.includes(token.toLowerCase()));
-    const score = (matchedSkills.length * 100) + (matchedRoleTerms.length * 10) + matchedSkillTerms.length;
+    const score = (matchedSkills.length * 100) + (matchedResidentFunctions.length * 80) + (matchedRoleTerms.length * 10) + matchedSkillTerms.length;
     return {
       score,
       matchedSkills: uniqueList(matchedSkills),
+      matchedResidentFunctions: uniqueList(matchedResidentFunctions),
       matchedRoleTerms: uniqueList(matchedRoleTerms),
     };
   }
@@ -306,6 +329,7 @@
       workerId: normalizeString(bestWorker?.id),
       score: bestScore.score,
       matchedSkills: bestScore.matchedSkills,
+      matchedResidentFunctions: bestScore.matchedResidentFunctions,
       matchedRoleTerms: bestScore.matchedRoleTerms,
       requiredSkills,
     };
@@ -331,6 +355,7 @@
         requiredSkills: selected.requiredSkills,
         explanation: {
           matchedSkills: selected.matchedSkills,
+          matchedResidentFunctions: selected.matchedResidentFunctions,
           matchedRoleTerms: selected.matchedRoleTerms,
         },
       };

@@ -141,7 +141,64 @@ test("buildWorkerRoutingInput produces resident summaries for llm-assisted routi
   assert.equal(routingInput.planId, "PLAN-001");
   assert.equal(routingInput.candidateResidents.length, 1);
   assert.equal(routingInput.candidateResidents[0].residentId, "pal-alpha");
+  assert.equal(routingInput.candidateResidents[0].residentFunction, "research");
   assert.equal(routingInput.candidateResidents[0].currentLoad, 1);
+});
+
+test("selectWorkerForTask prefers resident function for research, make, and write tasks", () => {
+  const workers = [
+    {
+      id: "pal-alpha",
+      displayName: "調べる人",
+      roleText: "証拠と再現条件を集める",
+      enabledSkillIds: ["codex-file-search"],
+      skillSummaries: ["trace files and gather evidence"],
+    },
+    {
+      id: "pal-beta",
+      displayName: "作り手",
+      roleText: "実装と修正を進める",
+      enabledSkillIds: ["codex-file-edit"],
+      skillSummaries: ["apply patches and implement changes"],
+    },
+    {
+      id: "pal-delta",
+      displayName: "書く人",
+      roleText: "説明と返却文を整える",
+      enabledSkillIds: ["codex-file-read"],
+      skillSummaries: ["write summaries and shape explanations"],
+    },
+  ];
+
+  const research = selectWorkerForTask({
+    taskDraft: {
+      title: "再現確認",
+      description: "保存不具合の原因と証拠を調べる",
+    },
+    workers,
+  });
+  assert.equal(research.workerId, "pal-alpha");
+  assert.deepEqual(research.matchedResidentFunctions, ["research"]);
+
+  const make = selectWorkerForTask({
+    taskDraft: {
+      title: "修正実装",
+      description: "保存処理のパッチを実装する",
+    },
+    workers,
+  });
+  assert.equal(make.workerId, "pal-beta");
+  assert.deepEqual(make.matchedResidentFunctions, ["make"]);
+
+  const write = selectWorkerForTask({
+    taskDraft: {
+      title: "返却文整理",
+      description: "読み手向けの説明と要約を書く",
+    },
+    workers,
+  });
+  assert.equal(write.workerId, "pal-delta");
+  assert.deepEqual(write.matchedResidentFunctions, ["write"]);
 });
 
 test("parseRoutingDecisionResponse repairs wrapper text and validates candidate ids", () => {

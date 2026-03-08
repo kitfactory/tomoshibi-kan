@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-routing-precision-role-first] resident の主担当 (`調べる人 / 作り手 / 書く人`) を routing 前処理へ明示し、fallback scorer を role-first に改善する
+- [x] [DR-20260308-routing-precision-role-first] delta request/apply/verify/archive を実施し、taskKind と resident function を使った routing 精度改善を入れる
+- [x] [SEED-20260308-orchestrator-reroute-bridge] Guide-driven routing が `reroute` を返した時、Orchestrator が resident を付け替えて `reroute -> dispatch` を progress log に残す最小実装を入れる
+- [x] [DR-20260308-orchestrator-reroute-bridge] delta request/apply/verify/archive を実施し、worker dispatch に `reroute` 橋渡しを追加する
 - [x] [SEED-20260308-orchestrator-replan-bridge] Gate reject が `replan_required` を示した時、Orchestrator が active Guide の runtime / `SOUL.md` を使って新しい Plan を作り、old task を残したまま新 task へ橋渡しする最小実装を入れる
 - [x] [DR-20260308-orchestrator-replan-bridge] delta request/apply/verify/archive を実施し、`replan_required -> replanned -> new task dispatch` の最小橋渡しを追加する
 - [x] [SEED-20260308-orchestrator-routing-llm-impl] Plan artifact からの worker dispatch で、Orchestrator が active Guide の model / SOUL を借りて resident-aware な routing decision を返せる最小実装を入れる
