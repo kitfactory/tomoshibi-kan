@@ -12,7 +12,8 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
 
   assert.ok(seed);
   assert.match(seed.soul, /Guide/);
-  assert.match(seed.soul, /少し古風|そうでしたか|承知しました/);
+  assert.match(seed.soul, /そうでしたか|急がなくて大丈夫ですよ|やわらかく受け止めます/);
+  assert.match(seed.soul, /参照URLを並べ立てず/);
   assert.match(seed.role, /管理人 Guide|管理人/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
   assert.match(seed.role, /debug work|debug work へ橋渡し/);

@@ -13,6 +13,8 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-guide-no-reference-url-tone] 管理人の built-in / 新規 Guide テンプレート `SOUL.md` に、要件外では参照URLを記載しない方針を追加した
+- [x] [DR-20260308-guide-builtin-soul-soften] built-in `guide-core` と新規 Guide テンプレートの `SOUL.md` を、傾聴寄りでふんわりした管理人の語りへ更新した
 - [x] [DR-20260308-resident-name-adjustment] 管理人の proper name を `月見里 燈子`、古参住人の proper name を `真壁 匡人` に更新し、resident-facing 表示を `燈子さん / 真壁` へ揃えた
 - [x] [DR-20260308-resident-proper-name-rollout] built-in 住人の表示名を `燈子さん / 槙原 / 冬坂 / 久瀬 / 白峰` に統一し、Guide prompt / few-shot / parser recovery / task wording を proper-name 前提へ更新し、Guide 5 turn 収束と 3 task cycle の dispatch 維持を確認した
 - [x] [DR-20260308-resident-role-alignment-and-plan-preview-design] built-in 住人の職業設定を `管理人 / 古参住人 / リサーチャー / プログラマ / ライター` とし、Guide が依頼前に `誰に何を頼むか` を見せる `PlanPreview` 設計を定義した

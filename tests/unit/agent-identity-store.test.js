@@ -46,7 +46,8 @@ test("default identity templates switch by locale", () => {
   assert.match(buildDefaultRoleTemplate("en", "worker"), /resident of Tomoshibikan/);
   assert.match(buildDefaultRoleTemplate("en", "worker"), /Workstyle/);
   assert.match(buildDefaultSoulTemplate("ja", "guide"), /Guide/);
-  assert.match(buildDefaultSoulTemplate("ja", "guide"), /安心して言葉にできる空気/);
+  assert.match(buildDefaultSoulTemplate("ja", "guide"), /肩の力を抜いて言葉にできる空気/);
+  assert.match(buildDefaultSoulTemplate("ja", "guide"), /参照URLを並べ立てず/);
   assert.match(buildDefaultRoleTemplate("ja", "guide"), /日常会話の相手/);
   assert.match(buildDefaultSoulTemplate("en", "guide"), /caretaker of Tomoshibikan/);
   assert.match(buildDefaultRoleTemplate("en", "guide"), /Daily conversation partner/);
