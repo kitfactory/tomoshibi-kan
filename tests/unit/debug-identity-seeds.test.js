@@ -12,7 +12,7 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
 
   assert.ok(seed);
   assert.match(seed.soul, /Guide/);
-  assert.match(seed.soul, /玄関の灯り|話してよい/);
+  assert.match(seed.soul, /少し古風|そうでしたか|承知しました/);
   assert.match(seed.role, /管理人 Guide|管理人/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
   assert.match(seed.role, /debug work|debug work へ橋渡し/);
@@ -33,22 +33,19 @@ test("getBuiltInDebugIdentitySeed returns gate rubric content in English", () =>
 });
 
 test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
-  const researcher = getBuiltInDebugIdentitySeed({ id: "pal-alpha", role: "worker", skills: [] }, "en");
-  const maker = getBuiltInDebugIdentitySeed({ id: "pal-beta", role: "worker", skills: [] }, "en");
-  const writer = getBuiltInDebugIdentitySeed({ id: "pal-delta", role: "worker", skills: [] }, "en");
+  const researcher = getBuiltInDebugIdentitySeed({ id: "pal-alpha", role: "worker", skills: [] }, "ja");
+  const maker = getBuiltInDebugIdentitySeed({ id: "pal-beta", role: "worker", skills: [] }, "ja");
+  const writer = getBuiltInDebugIdentitySeed({ id: "pal-delta", role: "worker", skills: [] }, "ja");
 
-  assert.match(researcher.role, /researcher resident/);
-  assert.match(researcher.soul, /handがかり|fact|hints|evidence/);
-  assert.match(researcher.role, /trace \/ research work first/);
-  assert.match(researcher.role, /Do not edit files/);
-  assert.match(maker.role, /maker resident/);
-  assert.match(maker.soul, /small change|戻しやすく|scoped and reversible/);
-  assert.match(maker.role, /make \/ fix work first/);
-  assert.match(maker.role, /Prefer simple fixes over broad refactors/);
-  assert.match(writer.role, /writer resident/);
-  assert.match(writer.soul, /輪郭|names, summaries|言葉/);
-  assert.match(writer.role, /writing \/ naming \/ summary work first/);
-  assert.match(writer.role, /Do not widen the task into implementation or gate judgment/);
+  assert.match(researcher.soul, /そこは違うと思います|かなり引っかかります/);
+  assert.match(researcher.role, /「調べる人」/);
+  assert.match(researcher.role, /file を編集しない/);
+  assert.match(maker.soul, /たぶん、いけます|ちょっと触ってみます/);
+  assert.match(maker.role, /「作り手」/);
+  assert.match(maker.role, /simple fix/);
+  assert.match(writer.soul, /いったん、こう整理できます|言い換えると/);
+  assert.match(writer.role, /「書く人」/);
+  assert.match(writer.role, /Gate judgment/);
 });
 
 test("getBuiltInDebugIdentitySeed returns null for non built-in profile", () => {
