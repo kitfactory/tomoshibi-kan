@@ -284,7 +284,11 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   const prompt = buildGuidePlanFewShotExamples("ja");
   assert.match(prompt, /Guide の振る舞い例/);
   assert.match(prompt, /まずありそうなのは次の3案/);
+  assert.match(prompt, /reload 後の再読込に着目する案/);
+  assert.match(prompt, /永続化そのものに着目する案/);
+  assert.match(prompt, /UI state 反映に着目する案/);
   assert.match(prompt, /最も可能性が高い/);
+  assert.match(prompt, /書き込み側を見るのが早い/);
   assert.match(prompt, /でよいですか/);
   assert.match(prompt, /調べる人/);
   assert.match(prompt, /作り手/);

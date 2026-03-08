@@ -370,7 +370,7 @@
   function buildGuidePlanFewShotExamples(localeValue = "ja") {
     const exampleOneJa = {
       status: "needs_clarification",
-      reply: "まずありそうなのは次の3案です。1. 保存自体は通っているが reload 後の再読込で落ちている 2. Save 時の永続化そのものが失敗している 3. model 一覧の state 反映だけ保存対象から漏れている。まずは 2 が最も可能性が高いです。2 でよいですか？",
+      reply: "まずありそうなのは次の3案です。1. reload 後の再読込に着目する案: 保存自体は通っているが、reload 時の復元で落ちている。2. 永続化そのものに着目する案: Save 時の書き込みが失敗している。3. UI state 反映に着目する案: model 一覧だけ保存対象から漏れている。まずは 2 が最も可能性が高いです。保存直後から消えるなら書き込み側を見るのが早いので、2 でよいですか？",
       plan: null,
     };
     const exampleTwoJa = {
@@ -410,7 +410,7 @@
     };
     const exampleOneEn = {
       status: "needs_clarification",
-      reply: "The three most likely options are: 1. Saving succeeds but reload fails to rehydrate the state 2. The save itself is not persisted 3. Only the model list state is skipped during persistence. I recommend 2 first. Shall we go with 2?",
+      reply: "The three most likely options are: 1. Reload rehydration angle: saving succeeds, but reload fails to restore the state. 2. Persistence angle: the save itself is not being written. 3. UI state reflection angle: only the model list is skipped during persistence. I recommend 2 first because if it disappears immediately after Save, the write path is the fastest place to check. Shall we go with 2?",
       plan: null,
     };
     const exampleTwoEn = {

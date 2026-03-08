@@ -571,6 +571,7 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` の `OPERATING_RULES` は、latest user turn が仕事の依頼へ進もうとしているかどうかを判定し、plan / task 分解 / trace-fix-verify 分割 / 進め方の確定 / 調査 / 修正 / 確認依頼を `work intent` として扱う。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、task 作成を止める blocker が 1 つだけある時だけ follow-up を許し、軽微な不足は assumption として `constraints` に送る。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、短い `scope_unclear` turn では generic follow-up だけで止まらず、会話履歴からあり得そうな案件を具体化した 3 つの option を可能性順に提示し、1 つを recommendation として返し、短い choice で答えられる closing を付けられる。
+- `GuideConversationUseCase` の 3 option は、各案の観点（例: 永続化、再読込、UI state 反映）を短く明示し、recommendation には「なぜ今その観点を見るか」の一言理由を付ける。
 - `GuideConversationUseCase` の system prompt は、上記の `3 option + recommendation + short-answer closing` を few-shot example でも示し、model が rules を自然な返答へ写像しやすいよう補助してよい。
 - debug-purpose workspace では、`GuideConversationUseCase` は resident set built-in (`調べる人 / 作り手 / 書く人`) を優先候補として扱い、trace / fix / verify に分けやすい plan を出す。
 - debug-purpose workspace で明示的な breakdown 要求がある場合、`GuideConversationUseCase` の `OPERATING_RULES` は `調べる人 / 作り手 / 書く人` の resident trio plan を優先する。
