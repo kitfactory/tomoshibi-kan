@@ -35,7 +35,6 @@ test("getBuiltInDebugIdentitySeed returns gate rubric content in English", () =>
 test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
   const researcher = getBuiltInDebugIdentitySeed({ id: "pal-alpha", role: "worker", skills: [] }, "en");
   const maker = getBuiltInDebugIdentitySeed({ id: "pal-beta", role: "worker", skills: [] }, "en");
-  const arranger = getBuiltInDebugIdentitySeed({ id: "pal-gamma", role: "worker", skills: [] }, "en");
   const writer = getBuiltInDebugIdentitySeed({ id: "pal-delta", role: "worker", skills: [] }, "en");
 
   assert.match(researcher.role, /researcher resident/);
@@ -46,10 +45,6 @@ test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
   assert.match(maker.soul, /small change|戻しやすく|scoped and reversible/);
   assert.match(maker.role, /make \/ fix work first/);
   assert.match(maker.role, /Prefer simple fixes over broad refactors/);
-  assert.match(arranger.role, /arranger resident/);
-  assert.match(arranger.soul, /収まり|pass\/fail|friction/);
-  assert.match(arranger.role, /verify \/ adjust work first/);
-  assert.match(arranger.role, /Do not edit files/);
   assert.match(writer.role, /writer resident/);
   assert.match(writer.soul, /輪郭|names, summaries|言葉/);
   assert.match(writer.role, /writing \/ naming \/ summary work first/);

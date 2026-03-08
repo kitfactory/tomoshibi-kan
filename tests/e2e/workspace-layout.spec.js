@@ -505,7 +505,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
       const latestTask = page.locator('[data-task-row="TASK-004"]');
       await expect(latestTask).toHaveAttribute("data-plan-id", String(latestPlan.planId));
-      await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-gamma/);
+      await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-delta/);
       await expect(latestTask).toContainText(/Assigned|割り当て済み/);
     });
 
@@ -1756,23 +1756,21 @@ for (const viewport of VIEWPORTS) {
       await page.goto(WIREFRAME_URL);
 
       const saves = await page.evaluate(() => window.__palpalIdentitySaves);
-      expect(saves).toHaveLength(6);
+      expect(saves).toHaveLength(5);
 
       const guide = saves.find((item) => item.agentId === "guide-core");
       const gate = saves.find((item) => item.agentId === "gate-core");
       const researchResident = saves.find((item) => item.agentId === "pal-alpha");
       const makerResident = saves.find((item) => item.agentId === "pal-beta");
-      const arrangerResident = saves.find((item) => item.agentId === "pal-gamma");
       const writerResident = saves.find((item) => item.agentId === "pal-delta");
 
       expect(guide.role).toMatch(/trace \/ fix \/ verify/);
       expect(gate.rubric).toMatch(/Decision Shape/);
       expect(researchResident.role).toMatch(/調べる人|researcher resident/);
       expect(makerResident.role).toMatch(/作り手|maker resident/);
-      expect(arrangerResident.role).toMatch(/整える人|arranger resident/);
       expect(writerResident.role).toMatch(/書く人|writer resident/);
       expect(researchResident.enabledSkillIds).toContain("codex-file-search");
-      expect(arrangerResident.enabledSkillIds).toContain("codex-test-runner");
+      expect(writerResident.enabledSkillIds).toContain("codex-test-runner");
     });
 
     test("identity files can be edited from pal settings modal", async ({ page }) => {
@@ -1870,7 +1868,7 @@ for (const viewport of VIEWPORTS) {
             { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "古参住人 Gate", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
             { id: "pal-alpha", role: "worker", runtimeKind: "tool", displayName: "Trace担当の住人", persona: "old trace", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-search"], status: "active" },
             { id: "pal-beta", role: "worker", runtimeKind: "tool", displayName: "Fix担当の住人", persona: "old fix", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-edit"], status: "active" },
-            { id: "pal-gamma", role: "worker", runtimeKind: "tool", displayName: "Verify担当の住人", persona: "old verify", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-test-runner"], status: "active" },
+            { id: "pal-gamma", role: "worker", runtimeKind: "tool", displayName: "整える人", persona: "old arranger", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-test-runner"], status: "active" },
           ],
           activeGuideId: "guide-core",
           defaultGateId: "gate-core",
@@ -1920,14 +1918,14 @@ for (const viewport of VIEWPORTS) {
       await page.click("#settingsSyncBuiltInResidents");
 
       const saves = await page.evaluate(() => window.__palpalIdentitySaves);
-      expect(saves).toHaveLength(6);
+      expect(saves).toHaveLength(5);
       expect(saves.some((item) => item.agentId === "pal-delta")).toBeTruthy();
+      expect(saves.some((item) => item.agentId === "pal-gamma")).toBeFalsy();
 
       await page.click('[data-tab="pal"]');
       await expect(page.locator("#palList")).toContainText("書く人");
       await expect(page.locator("#palList")).toContainText("調べる人");
       await expect(page.locator("#palList")).toContainText("作り手");
-      await expect(page.locator("#palList")).toContainText("整える人");
       await expect(page.locator("#palList")).toContainText("古参");
       await expect(page.locator("#palList")).toContainText("管理人");
     });

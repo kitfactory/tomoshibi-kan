@@ -572,7 +572,7 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` の `OPERATING_RULES` は、task 作成を止める blocker が 1 つだけある時だけ follow-up を許し、軽微な不足は assumption として `constraints` に送る。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、短い `scope_unclear` turn では generic follow-up だけで止まらず、会話履歴からあり得そうな案件を具体化した 3 つの option を可能性順に提示し、1 つを recommendation として返し、短い choice で答えられる closing を付けられる。
 - `GuideConversationUseCase` の system prompt は、上記の `3 option + recommendation + short-answer closing` を few-shot example でも示し、model が rules を自然な返答へ写像しやすいよう補助してよい。
-- debug-purpose workspace では、`GuideConversationUseCase` は resident set built-in (`調べる人 / 作り手 / 整える人`) を優先候補として扱い、trace / fix / verify に分けやすい plan を出す。
+- debug-purpose workspace では、`GuideConversationUseCase` は resident set built-in (`調べる人 / 作り手 / 書く人`) を優先候補として扱い、trace / fix / verify に分けやすい plan を出す。
 - debug-purpose workspace で明示的な breakdown 要求がある場合、`GuideConversationUseCase` の `OPERATING_RULES` は `Trace / Fix / Verify` の 3 段 plan を優先する。
 - `GuideConversationUseCase` の controller は latest user text を planning trigger として再評価できる。trigger が立つ場合は runtime adapter に assist prompt を追加し、`conversation` に留まらず `needs_clarification` か `plan_ready` へ進める。
 - `GuideConversationUseCase` の controller は planning trigger に加えて planning readiness も判定できる。`explicit_breakdown` かつ再現手順・期待結果が揃う時は readiness assist を追加し、軽微な不足を assumption に寄せて `plan_ready` を優先させる。
@@ -611,7 +611,7 @@ interface JobRunRepositoryPort {
 - Gate の suggestion をそのまま自動確定する full auto review は未導入とする。
 - agent ごとの個別 override は別 delta とする。
 - `wireframe/guide-task-planner.js` は現行 prototype の task draft 生成補助であり、正本の planning 主体ではない。将来は Guide 出力の `Plan` parse / validate / normalize 補助へ置き換える。
-- built-in resident sync は non built-in custom profile を上書きせず、`guide-core / gate-core / pal-alpha / pal-beta / pal-gamma / pal-delta` だけを対象に current built-in seed/template を適用する。
+- built-in resident sync は non built-in custom profile を上書きせず、`guide-core / gate-core / pal-alpha / pal-beta / pal-delta` だけを対象に current built-in seed/template を適用する。legacy built-in `pal-gamma` は sync 時に profile list から外す。
 
 ### Handoff Schema
 ```ts

@@ -1034,7 +1034,7 @@ const jobs = [
     id: "JOB-002",
     title: "E2E結果の週次サマリー",
     description: "毎週金曜に E2E の成功率と失敗パターンを集計して Gate へ提出する",
-    palId: "pal-gamma",
+    palId: "pal-delta",
     schedule: "Fri 17:00",
     instruction: "npm run test:e2e の実行結果を集計し、気になる点を1つ添えて報告する",
     status: "to_gate",
@@ -1095,18 +1095,6 @@ const INITIAL_PAL_PROFILES = [
     status: "active",
   },
   {
-    id: "pal-gamma",
-    role: "worker",
-    runtimeKind: "tool",
-    displayName: "整える人",
-    persona: "灯火館の住人として、見え方や使い心地を静かに整え、検証と調整で負担を減らす。",
-    provider: "google",
-    models: [],
-    cliTools: ["Codex"],
-    skills: ["codex-test-runner", "codex-file-read", "browser-chrome"],
-    status: "active",
-  },
-  {
     id: "pal-delta",
     role: "worker",
     runtimeKind: "tool",
@@ -1115,11 +1103,15 @@ const INITIAL_PAL_PROFILES = [
     provider: "openai",
     models: [],
     cliTools: ["Codex"],
-    skills: ["codex-file-read", "codex-file-edit"],
+    skills: ["codex-file-read", "codex-file-edit", "codex-test-runner"],
     status: "active",
   },
 ];
 const BUILT_IN_PROFILE_IDS = new Set(INITIAL_PAL_PROFILES.map((pal) => pal.id));
+const LEGACY_BUILT_IN_PROFILE_IDS = new Set([
+  ...BUILT_IN_PROFILE_IDS,
+  "pal-gamma",
+]);
 const DEFAULT_AGENT_SELECTION = {
   activeGuideId: "guide-core",
   defaultGateId: "gate-core",
@@ -1433,6 +1425,7 @@ function normalizePalProfilesSnapshot(snapshot) {
   const normalized = incomingProfiles.length > 0
     ? incomingProfiles
       .map((profile, index) => normalizePalProfileRecord(profile, index))
+      .filter((profile) => !LEGACY_BUILT_IN_PROFILE_IDS.has(normalizeText(profile.id)) || isBuiltInProfileId(profile.id))
       .filter((profile, index, list) => profile.id && list.findIndex((item) => item.id === profile.id) === index)
     : INITIAL_PAL_PROFILES.map((pal) => clonePalProfileRecord(pal));
   if (!normalized.some((pal) => pal.role === "guide")) {
@@ -1507,7 +1500,7 @@ function syncBuiltInProfileMetadata() {
     nextProfiles.push(clonePalProfileRecord(builtInProfile));
   });
   palProfiles
-    .filter((profile) => !isBuiltInProfileId(profile.id))
+    .filter((profile) => !LEGACY_BUILT_IN_PROFILE_IDS.has(normalizeText(profile.id)))
     .forEach((profile) => {
       nextProfiles.push(clonePalProfileRecord(profile));
     });
@@ -4045,7 +4038,7 @@ function buildFallbackGuidePlanOutputInstruction() {
       "If the user explicitly asks for a plan or task breakdown and gives the target, expected outcome, relevant files, or available tools, prefer status=plan_ready.",
       "When minor details are missing, make reasonable assumptions and put them in constraints instead of asking another confirmation question.",
       "Do not ask the user to pick the assignee Pal when suitable Pals and tools are already available in context; choose the best fit yourself.",
-      "In the debug workspace, prefer resident specialists: trace work to the Research resident, fix work to the Maker resident, and verification work to the Arranger resident.",
+      "In the debug workspace, prefer resident specialists: trace work to the Research resident, fix work to the Maker resident, and verification work to the Writer resident.",
       "Use status=plan_ready only when you have enough information to create an actionable plan.",
     ].join("\n")
     : [
@@ -4056,7 +4049,7 @@ function buildFallbackGuidePlanOutputInstruction() {
       "ユーザーが plan や task 分解を明示し、対象・期待結果・関連ファイル・使える tools を示しているなら status=plan_ready を優先する。",
       "細部が不足しているだけなら、確認質問を増やさず assumptions を constraints に入れる。",
       "文脈に suitable Pals and tools があるなら、ユーザーに assignee Pal を選ばせず自分で選ぶ。",
-      "debug workspace では住人の主担当を優先し、trace は調べる人、fix は作り手、verification は整える人に割り当てる。",
+      "debug workspace では住人の主担当を優先し、trace は調べる人、fix は作り手、verification は書く人に割り当てる。",
       "実行可能な計画が作れる時だけ status=plan_ready を返す。",
     ].join("\n");
 }
@@ -6446,7 +6439,7 @@ function renderSettingsTab() {
       guideAssistHint: "既定は OFF。ON にすると planning trigger / readiness を controller が補助します",
       residentSection: "Built-in 住人定義",
       residentItem: "住人定義を同期",
-      residentHint: "管理人 / 古参 / 作り手 / 書く人 / 整える人 / 調べる人 の built-in 定義で workspace 側の identity を上書きします",
+      residentHint: "管理人 / 古参 / 作り手 / 書く人 / 調べる人 の built-in 定義で workspace 側の identity を上書きします",
       residentSync: "built-in 定義を workspace に同期",
       handoffMinimal: "Minimal",
       handoffBalanced: "Balanced",

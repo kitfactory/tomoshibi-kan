@@ -555,7 +555,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide の `OPERATING_RULES` は、task 作成を止める blocker が 1 つだけある時だけ追加確認し、軽微な不足は `constraints` の assumption に落として同じ確認を繰り返さないこと。
 - Guide の `OPERATING_RULES` は、短い `scope_unclear` ターンでは generic な聞き返しだけで止まらず、会話履歴からあり得そうな案件を具体化した 3 択を可能性順に提案し、1 つを推薦し、番号や短い yes/no で返答できる締めを付けてよい。
 - Guide の system prompt には、`3 択 + recommendation + short-answer closing` を再現しやすくする few-shot example を含めてよい。
-- debug-purpose workspace では、Guide は resident set の built-in 住人 (`調べる人 / 作り手 / 整える人`) を優先し、trace / fix / verify の順に素直に task を割り当てられる plan を好む。
+- debug-purpose workspace では、Guide は resident set の built-in 住人 (`調べる人 / 作り手 / 書く人`) を優先し、trace / fix / verify の順に素直に task を割り当てられる plan を好む。
 - debug-purpose workspace で明示的な breakdown 要求がある場合、Guide の `OPERATING_RULES` は `Trace / Fix / Verify` の 3 段 plan を優先してよい。
 - controller は user text から planning trigger を検知できるようにし、明示的な plan / task breakdown 要求時は Guide runtime へ `conversation` に留まらず `needs_clarification` か `plan_ready` を返す補助指示を追加してよい。
 - controller は `planningIntent=explicit_breakdown` かつ対象画面・再現手順・期待結果が user text に揃っている場合、readiness assist を追加し、ファイルパスやログ未提示だけでは `needs_clarification` に留まらないよう Guide を補助してよい。
@@ -706,7 +706,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
 - `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
-- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-gamma / pal-delta` の 6 件とし、resident-facing の表示は `管理人 / 古参 / 調べる人 / 作り手 / 整える人 / 書く人` を正とする。
+- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-delta` の 5 件とし、resident-facing の表示は `管理人 / 古参 / 調べる人 / 作り手 / 書く人` を正とする。
 - Settings には built-in 住人定義を current workspace に同期する導線を持ち、built-in identity (`SOUL.md / ROLE.md / RUBRIC.md`) と resident-facing metadata を current seed/template 内容で上書きできるようにする。
 - `PlanExecutionOrchestrator` が内部で dispatch / retry / reroute / replan_required を起こした場合でも、表示上は Guide の進行コメントとして見せてよい。
 - progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。

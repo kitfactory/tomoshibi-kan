@@ -127,7 +127,7 @@
         "Treat minor missing details as assumptions in constraints.",
         "Do not stay in status=needs_clarification for missing file paths or logs alone.",
         "Prefer status=plan_ready and produce exactly three tasks: Trace, Fix, Verify.",
-        "When possible, assign the Research resident for Trace, the Maker resident for Fix, and the Arranger resident for Verify.",
+        "When possible, assign the Research resident for Trace, the Maker resident for Fix, and the Writer resident for Verify.",
       ].join("\n");
     }
     return [
@@ -135,7 +135,7 @@
       "軽微な不足情報は constraints の assumptions として扱う。",
       "ファイルパスやログが未提示という理由だけで status=needs_clarification に留まらない。",
       "status=plan_ready を優先し、Task は Trace / Fix / Verify の3件を返す。",
-      "可能なら 調べる人 を Trace、作り手 を Fix、整える人 を Verify に割り当てる。",
+      "可能なら 調べる人 を Trace、作り手 を Fix、書く人 を Verify に割り当てる。",
     ].join("\n");
   }
 

@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-resident-set-remove-arranger] `整える人` を resident set と built-in 初期住人から外し、5人構成へ揃える
+- [x] [DR-20260308-resident-set-remove-arranger] delta request/apply/verify/archive を実施し、resident set・built-in・Settings 同期を 5人構成へ更新する
 - [x] [SEED-20260308-built-in-soul-deepen] built-in 6人の `SOUL.md` を resident set / worldbuilding に沿って厚くし、キャラクター性を強める
 - [x] [DR-20260308-built-in-soul-deepen] delta request/apply/verify/archive を実施し、built-in の `SOUL.md` 深掘りだけを archive まで閉じる
 - [x] [SEED-20260308-built-in-resident-set-sync] `docs/tomoshibikan_resident_set_v0_1.md` を built-in 初期住人セットへ反映し、Settings から workspace 側 identity を同期できるようにする
@@ -133,6 +135,7 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260308-resident-set-remove-arranger] `整える人` を resident set と built-in 初期住人セットから外し、legacy built-in `pal-gamma` も Settings 同期時に profile list から落とすようにした
 - [x] [DR-20260308-built-in-soul-deepen] built-in 6人の `SOUL.md` を resident set / worldbuilding に沿って深掘りし、`ROLE.md` を変えずにキャラクター性だけを強めた
 - [x] [DR-20260308-built-in-resident-set-sync] `docs/tomoshibikan_resident_set_v0_1.md` を built-in 初期住人セットへ反映し、Settings から current workspace の built-in identity を同期できるようにした
 - [x] [DR-20260308-orchestrator-dispatch-extraction] `PlanOrchestrator` module を追加し、Guide send フローから task materialization / worker selection / dispatch 相当の責務を分離した
