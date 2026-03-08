@@ -252,7 +252,7 @@ interface SkillCatalogPort {
 ### 6.0 Presentation State 境界（現行プロトタイプ）
 - `focus / sending / saving / selection / open / filtered / paged` などの UI 状態は Renderer の presentation state として扱い、Domain 状態へ昇格させない。
 - 具体例:
-  - Guide Chat: composer focus と送信中状態に応じて send button / guide character を更新する。
+  - Guide Chat: composer focus と送信中状態に応じて send button / guide character を更新し、message text は safe Markdown renderer を通して表示する。
   - Settings: `saved / dirty / saving` と add form open state を Renderer で保持する。
   - Task Board / Cron / Gate: row 選択、detail drawer open、gate panel open を Renderer で描画する。
   - Event Log: toolbar filter 結果、pager 境界、row type/result を Renderer で描画する。
@@ -569,7 +569,9 @@ interface JobRunRepositoryPort {
 - `GuideConversationUseCase` の output instruction は schema と形式制約だけを持ち、`conversation / needs_clarification / plan_ready` の使い分け判断は `OPERATING_RULES` 側へ集約する。
 - `GuideConversationUseCase` の prompt contract は、ユーザーが明示的に plan / task 分解を依頼し、対象・期待結果・関連ファイル・利用 tool の主要情報が揃っている場合、軽微な不足は `constraints` の assumption として補って `plan_ready` を優先させる。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、latest user turn が仕事の依頼へ進もうとしているかどうかを判定し、plan / task 分解 / trace-fix-verify 分割 / 進め方の確定 / 調査 / 修正 / 確認依頼を `work intent` として扱う。
+- `GuideConversationUseCase` の `OPERATING_RULES` は、依頼の輪郭がまだ半分ほどで対象・問題・期待結果がぼんやりしている段階では、3案提示を急がず、相槌 + 視点提案 + オープンな質問を優先する。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、task 作成を止める blocker が 1 つだけある時だけ follow-up を許し、軽微な不足は assumption として `constraints` に送る。
+- `GuideConversationUseCase` の `OPERATING_RULES` は、3案提示が必要な時だけ Markdown の番号付き箇条書きで案を返せるようにする。
 - `GuideConversationUseCase` の `OPERATING_RULES` は、短い `scope_unclear` turn では generic follow-up だけで止まらず、会話履歴からあり得そうな案件を具体化した 3 つの option を可能性順に提示し、1 つを recommendation として返し、短い choice で答えられる closing を付けられる。
 - `GuideConversationUseCase` の 3 option は、各案の観点（例: 永続化、再読込、UI state 反映）を短く明示し、recommendation には「なぜ今その観点を見るか」の一言理由を付ける。
 - `GuideConversationUseCase` の system prompt は、上記の `3 option + recommendation + short-answer closing` を few-shot example でも示し、model が rules を自然な返答へ写像しやすいよう補助してよい。

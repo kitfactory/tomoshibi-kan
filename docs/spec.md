@@ -552,6 +552,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide の output instruction は判断規則を持たず、`status / reply / plan` schema、compact JSON、必須フィールド、余分なキー禁止といった形式制約だけを持つ。
 - ユーザーが明示的に plan / task 分解を求め、対象・期待結果・関連ファイル・利用 tool の主要情報が揃っている場合、Guide は軽微な不足情報を `constraints` 内の assumption として補い、`needs_clarification` より `plan_ready` を優先する。
 - Guide の `OPERATING_RULES` は、まず最新のユーザー発話が仕事の依頼へ進もうとしているかどうかを判定し、plan / task 分解 / trace-fix-verify 分割 / 進め方の確定 / 調査依頼 / 修正依頼 / 確認依頼を `work intent` として扱うこと。
+- Guide は、要件の輪郭がまだ半分ほどで対象・問題・期待結果がぼんやりしている段階では、3案提示を急がず、相槌 + 視点提案 + オープンな質問で自然に聞き取ること。
+- Guide が複数案を提示する時は、Markdown の番号付き箇条書きで案を示してよい。
+- Guide Chat の表示は Markdown を解釈し、箇条書き・インラインコード・コードブロックを安全に表示できること。
 - Guide の `OPERATING_RULES` は、task 作成を止める blocker が 1 つだけある時だけ追加確認し、軽微な不足は `constraints` の assumption に落として同じ確認を繰り返さないこと。
 - Guide の `OPERATING_RULES` は、短い `scope_unclear` ターンでは generic な聞き返しだけで止まらず、会話履歴からあり得そうな案件を具体化した 3 択を可能性順に提案し、1 つを推薦し、番号や短い yes/no で返答できる締めを付けてよい。
 - Guide の 3 択提案は、各案が何に着目しているかを短く明示し、推薦した案には「なぜ今その観点を見るか」の一言を添えること。

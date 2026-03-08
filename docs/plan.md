@@ -13,6 +13,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-guide-gentle-clarification-and-chat-markdown] 管理人が要件50%未満の曖昧段階では相槌＋視点提案＋オープン質問を優先し、3案提示を急がないようにするとともに、Guide Chat で Markdown を表示できるようにした
 - [x] [DR-20260308-guide-no-reference-url-tone] 管理人の built-in / 新規 Guide テンプレート `SOUL.md` に、要件外では参照URLを記載しない方針を追加した
 - [x] [DR-20260308-guide-builtin-soul-soften] built-in `guide-core` と新規 Guide テンプレートの `SOUL.md` を、傾聴寄りでふんわりした管理人の語りへ更新した
 - [x] [DR-20260308-resident-name-adjustment] 管理人の proper name を `月見里 燈子`、古参住人の proper name を `真壁 匡人` に更新し、resident-facing 表示を `燈子さん / 真壁` へ揃えた

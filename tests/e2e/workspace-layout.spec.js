@@ -559,6 +559,31 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
     });
 
+    test("guide chat renders markdown lists and code blocks", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      await page.evaluate(() => {
+        if (typeof window.requestGuideModelReplyWithFallback !== "function") {
+          throw new Error("guide reply request function is unavailable");
+        }
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "needs_clarification",
+            reply: "まず見たいのは次の2点です。\n\n1. **保存処理そのもの**\n2. **reload 後の復元**\n\n```ts\nconsole.log('save-check');\n```",
+            plan: null,
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "保存まわりの違和感を見て");
+      await page.click("#guideSend");
+      const lastGuideMarkdown = page.locator("#guideChat .guide-markdown").last();
+      await expect(lastGuideMarkdown.locator("ol li")).toHaveCount(2);
+      await expect(lastGuideMarkdown).toContainText(/保存処理そのもの/);
+      await expect(lastGuideMarkdown.locator("pre code")).toContainText(/save-check/);
+    });
+
     test("project tab supports add and /use focus switch", async ({ page }) => {
       await page.click('[data-tab="project"]');
       await expect(page.locator("#projectTabContent")).toBeVisible();

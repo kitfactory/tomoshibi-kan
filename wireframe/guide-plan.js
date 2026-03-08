@@ -358,9 +358,14 @@
   }
 
   function buildGuidePlanFewShotExamples(localeValue = "ja") {
+    const exampleZeroJa = {
+      status: "needs_clarification",
+      reply: "それは少し気になりますね。\n\nまずは **保存そのもの** ではなく、**どの場面で違和感が出ているか** を見ると整理しやすそうです。\n\nどんなものを作りたいのか、あるいはどの操作のあとで「あれ？」と感じたのかを、いま思い出せる範囲で教えてもらえますか？",
+      plan: null,
+    };
     const exampleOneJa = {
       status: "needs_clarification",
-      reply: "まずありそうなのは次の3案です。1. reload 後の再読込に着目する案: 保存自体は通っているが、reload 時の復元で落ちている。2. 永続化そのものに着目する案: Save 時の書き込みが失敗している。3. UI state 反映に着目する案: model 一覧だけ保存対象から漏れている。まずは 2 が最も可能性が高いです。保存直後から消えるなら書き込み側を見るのが早いので、2 を軸に依頼としてまとめるのがよさそうです。では、この内容で「保存処理と保存直後の状態反映を確認する依頼」としてまとめようと考えます。この形で進めてよければ依頼にします。2 でよいですか？",
+      reply: "まずありそうなのは次の3案です。\n\n1. **reload 後の再読込に着目する案**  \n   保存自体は通っているが、reload 時の復元で落ちている可能性を見る案です。\n2. **永続化そのものに着目する案**  \n   Save 時の書き込みが失敗している可能性を見る案です。\n3. **UI state 反映に着目する案**  \n   model 一覧だけ保存対象から漏れている可能性を見る案です。\n\nまずは **2** が最も可能性が高いです。保存直後から消えるなら書き込み側を見るのが早いので、2 を軸に依頼としてまとめるのがよさそうです。\n\n- この内容で「保存処理と保存直後の状態反映を確認する依頼」としてまとめようと考えます。\n- この形で進めてよければ依頼にします。\n\n2 でよいですか？",
       plan: null,
     };
     const exampleTwoJa = {
@@ -398,9 +403,14 @@
         ],
       },
     };
+    const exampleZeroEn = {
+      status: "needs_clarification",
+      reply: "That does sound a little unsettling.\n\nBefore we jump into options, it may help to pin down **where** the discomfort shows up rather than assuming it is the save itself.\n\nWhat are you trying to make, or after which action do you first feel that something is off?",
+      plan: null,
+    };
     const exampleOneEn = {
       status: "needs_clarification",
-      reply: "The three most likely options are: 1. Reload rehydration angle: saving succeeds, but reload fails to restore the state. 2. Persistence angle: the save itself is not being written. 3. UI state reflection angle: only the model list is skipped during persistence. I recommend 2 first because if it disappears immediately after Save, the write path is the fastest place to check. Based on that, I would frame this as a request to check the save path and the immediate post-save state reflection first. If that works, I will turn it into a request. Shall we go with 2?",
+      reply: "The three most likely options are:\n\n1. **Reload rehydration angle**  \n   Saving succeeds, but reload fails to restore the state.\n2. **Persistence angle**  \n   The save itself is not being written.\n3. **UI state reflection angle**  \n   Only the model list is skipped during persistence.\n\nI recommend **2** first because if it disappears immediately after Save, the write path is the fastest place to check.\n\n- I would frame this as a request to check the save path and the immediate post-save state reflection first.\n- If that works, I will turn it into a request.\n\nShall we go with 2?",
       plan: null,
     };
     const exampleTwoEn = {
@@ -441,6 +451,7 @@
     if (localeValue === "en") {
       return [
         "Few-shot examples for Guide behavior:",
+        `Example 0 user: Something feels off around saving, but I can't explain it yet.\nExample 0 assistant: ${JSON.stringify(exampleZeroEn)}`,
         `Example 1 user: Settings save feels wrong. What should we check first?\nExample 1 assistant: ${JSON.stringify(exampleOneEn)}`,
         `Example 2 user: After Save and reload, the model disappears. Split it into Fuyusaka / Kuze / Shiramine tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
         `Example 3 user: The Save button in Settings can be pressed but the result is not reflected. Repro: open Settings, add a model, press Save, then reload. Expected outcome: the model remains after reload. Split it into trace / fix / verify tasks.\nExample 3 assistant: ${JSON.stringify(exampleTwoEn)}`,
@@ -448,6 +459,7 @@
     }
     return [
       "Guide の振る舞い例:",
+      `例0 ユーザー: 保存まわりがなんとなく変なんですが、まだうまく言えません。\n例0 Guide: ${JSON.stringify(exampleZeroJa)}`,
       `例1 ユーザー: Settings の保存が変です。まずどこから見ればいい？\n例1 Guide: ${JSON.stringify(exampleOneJa)}`,
       `例2 ユーザー: Save 後に reload すると model が消えます。冬坂 / 久瀬 / 白峰 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
       `例3 ユーザー: Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。\n例3 Guide: ${JSON.stringify(exampleTwoJa)}`,

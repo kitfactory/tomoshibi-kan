@@ -290,8 +290,11 @@ function buildOperatingRulesPrompt(role, localeValue, targetKind = "task") {
       "- まず最新のユーザー発話が、仕事の依頼へ進もうとしているかどうかを判定する。",
       "- plan、task 分解、冬坂 / 久瀬 / 白峰 への分割、trace / fix / verify への分割、進め方の確定、調査依頼、実装依頼、確認依頼は work intent として扱う。",
       "- work intent であれば、目的を満たすために必要な情報を Guide から提案し、必要に応じて質問する。可能なら質問だけで止まらず提案で前へ進める。",
-      "- 短い曖昧入力では、これまでの会話からあり得そうな具体的な仕事案を 3 つ、可能性の高い順で提示し、最も有力な 1 案を推薦する。",
-      "- 3 案はそれぞれ、何に着目した案かを短く明示する。例えば、保存処理そのものを見る案、reload 後の再読込を見る案、UI state 反映を見る案、のように観点を分ける。",
+      "- 依頼の輪郭がまだ半分ほどで、対象・問題・期待結果がぼんやりしている段階では、3 案提示を急がない。まず相槌で受け止め、見立てや視点を 1 つ添え、答えやすいオープンな質問を 1 つ返す。",
+      "- ぼんやりした段階では、少ないターンで結論を急ぎすぎず、5〜10ターンかけてもよいので自然に輪郭を整える。",
+      "- 3 案提示は、対象や困りごとの輪郭がある程度見えてから使う。ユーザーが『まず何を見ればよいか』を求める時や、比較候補を出した方が前に進む時に限って使う。",
+      "- 3 案を出す時は、これまでの会話からあり得そうな具体的な仕事案を 3 つ、可能性の高い順で提示し、最も有力な 1 案を推薦する。",
+      "- 3 案は Markdown の番号付き箇条書きで出し、それぞれ、何に着目した案かを短く明示する。例えば、保存処理そのものを見る案、reload 後の再読込を見る案、UI state 反映を見る案、のように観点を分ける。",
       "- 提案は短く返答しやすい形にし、対象・問題・期待結果が分かる粒度で出す。",
       "- 推薦する案では、なぜそれを先に見るのかを一言で添える。",
       "- 3 案を出した後は、`1でよいですか？` のように番号や yes/no で返答しやすい締めにする。",
@@ -307,8 +310,11 @@ function buildOperatingRulesPrompt(role, localeValue, targetKind = "task") {
       "- First decide whether the latest user turn is moving toward a work request.",
       "- Treat requests for a plan, task breakdown, Fuyusaka / Kuze / Shiramine split, trace / fix / verify split, execution flow, investigation, implementation, or verification as work intent.",
       "- When work intent exists, help the user complete the request by proposing and, if needed, asking for the missing information. Prefer proposal over a bare follow-up question.",
-      "- For a short ambiguous turn, propose three concrete likely work options grounded in the conversation so far, ordered by likelihood, and recommend the most plausible one.",
-      "- Make each option explicit about its angle, such as persistence itself, reload rehydration, or UI state reflection.",
+      "- When the request shape is still under roughly half clear and the target, problem, or expected outcome is still blurry, do not rush into three options. First acknowledge the concern, offer one perspective, and ask one open question that helps the user keep talking.",
+      "- Do not optimize for ending in very few turns when the request is still blurry. It is acceptable to spend 5-10 turns clarifying naturally before planning.",
+      "- Use three options only after the rough request shape is visible, or when the user explicitly asks what to check first or asks for comparable paths forward.",
+      "- When you do use three options, propose three concrete likely work options grounded in the conversation so far, ordered by likelihood, and recommend the most plausible one.",
+      "- Render the options as a numbered Markdown list and make each option explicit about its angle, such as persistence itself, reload rehydration, or UI state reflection.",
       "- Make options easy to answer with a short choice, keep each option specific about target, problem, and expected outcome, and close with a short prompt such as `Shall we go with 1?`.",
       "- When you recommend one option, add one short reason for why that angle should be checked first.",
       "- When the main inputs are already present in a work request (target, problem, expected outcome, repro steps, relevant files, or available tools), prefer creating the plan.",
@@ -1184,6 +1190,62 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function renderInlineMarkdown(text) {
+  let escaped = escapeHtml(text);
+  escaped = escaped.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_match, label, url) => {
+    const safeLabel = label;
+    const safeUrl = escapeHtml(url);
+    return `<a href="${safeUrl}" target="_blank" rel="noreferrer noopener">${safeLabel}</a>`;
+  });
+  escaped = escaped.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  escaped = escaped.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  escaped = escaped.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  return escaped;
+}
+
+function renderMarkdownText(text) {
+  const normalized = String(text || "").replace(/\r\n/g, "\n").trim();
+  if (!normalized) return "";
+
+  const codeBlocks = [];
+  const withPlaceholders = normalized.replace(/```([\w-]*)\n([\s\S]*?)```/g, (_match, language, code) => {
+    const index = codeBlocks.length;
+    codeBlocks.push({
+      language: escapeHtml(language || ""),
+      code: escapeHtml(code.replace(/\n$/, "")),
+    });
+    return `@@CODE_BLOCK_${index}@@`;
+  });
+
+  const rendered = withPlaceholders
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => {
+      if (/^@@CODE_BLOCK_\d+@@$/.test(block)) return block;
+      const lines = block.split("\n");
+      const ordered = lines.every((line) => /^\d+\.\s+/.test(line.trim()));
+      const unordered = lines.every((line) => /^[-*]\s+/.test(line.trim()));
+      if (ordered || unordered) {
+        const tag = ordered ? "ol" : "ul";
+        const items = lines
+          .map((line) => line.trim().replace(ordered ? /^\d+\.\s+/ : /^[-*]\s+/, ""))
+          .map((line) => `<li>${renderInlineMarkdown(line)}</li>`)
+          .join("");
+        return `<${tag}>${items}</${tag}>`;
+      }
+      return `<p>${lines.map((line) => renderInlineMarkdown(line.trim())).join("<br>")}</p>`;
+    })
+    .join("");
+
+  return rendered.replace(/@@CODE_BLOCK_(\d+)@@/g, (_match, indexText) => {
+    const block = codeBlocks[Number(indexText)];
+    if (!block) return "";
+    const languageClass = block.language ? ` class="language-${block.language}"` : "";
+    return `<pre><code${languageClass}>${block.code}</code></pre>`;
+  });
 }
 
 function normalizeProjectName(value) {
@@ -5034,7 +5096,7 @@ function renderGuideChat() {
   ul.innerHTML = guideMessages
     .map((m) => {
       const text = (m.text && (m.text[locale] || m.text.ja)) || "";
-      const escapedText = escapeHtml(text).replace(/\n/g, "<br>");
+      const renderedText = renderMarkdownText(text);
       let alignClass = "chat-start";
       let rowClass = "guide-chat-item guide-chat-item-guide";
       let bubbleClass = "chat-bubble guide-bubble guide-bubble-guide";
@@ -5049,7 +5111,7 @@ function renderGuideChat() {
       }
       return `<li class="chat ${alignClass} ${rowClass}" data-guide-sender="${escapeHtml(m.sender)}">
         <div class="chat-header guide-chat-meta text-xs text-base-content/60">${m.timestamp} / ${senderLabel(m.sender)}</div>
-        <div class="${bubbleClass} max-w-[min(720px,100%)] text-sm leading-relaxed">${escapedText}</div>
+        <div class="${bubbleClass} max-w-[min(720px,100%)] text-sm leading-relaxed"><div class="guide-markdown">${renderedText}</div></div>
       </li>`;
     })
     .join("");

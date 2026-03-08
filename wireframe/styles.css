@@ -587,6 +587,61 @@ body {
   color: hsl(220 12% 28%);
 }
 
+.guide-markdown {
+  display: grid;
+  gap: 10px;
+}
+
+.guide-markdown p {
+  margin: 0;
+}
+
+.guide-markdown ul,
+.guide-markdown ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 4px;
+}
+
+.guide-markdown li {
+  margin: 0;
+}
+
+.guide-markdown pre {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  overflow-x: auto;
+  background: hsl(214 18% 18% / 0.92);
+  color: hsl(36 24% 96%);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.guide-markdown code {
+  border-radius: 6px;
+  padding: 0.12rem 0.32rem;
+  background: hsl(214 18% 18% / 0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.guide-markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.guide-markdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.guide-bubble-user .guide-markdown code {
+  background: hsl(0 0% 100% / 0.12);
+}
+
 .drawer {
   position: fixed;
   right: 16px;
