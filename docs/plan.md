@@ -11,6 +11,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-full-role-routing-real-observation] `ROLE全文 + summary` で real-model resident routing を観測し、resident trio の割当維持と explicit assignee 優先を確認した
 - [x] [DR-20260308-full-role-routing-context] resident routing の LLM 入力へ `ROLE.md` 全文を追加し、summary と併用して判断できるようにした
 - [x] [DR-20260308-role-first-routing-without-taskkind] `taskKind` を廃止し、ROLE の得意な依頼 / 得意な作成物を軸に resident routing を行うように切り替えた
 - [x] [DR-20260308-resident-variation-real-observation] resident 主体の依頼を real-model で観測し、`調べる人` / `作り手` は `plan_ready` 手前で止まり、`書く人` は progress query 誤判定に衝突することを確認した
