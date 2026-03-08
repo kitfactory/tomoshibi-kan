@@ -801,6 +801,86 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#guideChat")).toContainText(/再計画が必要|進め方と前提を見直す/);
     });
 
+    test("gate replan bridge creates new tasks and updates progress query", async ({ page }) => {
+      await page.click('[data-tab="pal"]');
+      await page.click('[data-pal-open-id="guide-core"]');
+      await page.selectOption('[data-pal-runtime-select="guide-core"]', "model");
+      const guideRuntimeTarget = await page.locator('[data-pal-runtime-target-select="guide-core"] option').first().getAttribute("value");
+      expect(guideRuntimeTarget).toBeTruthy();
+      await page.selectOption('[data-pal-runtime-target-select="guide-core"]', String(guideRuntimeTarget));
+      await page.click("#palConfigSave");
+
+      await page.evaluate(() => {
+        window.__replanGuideCalls = 0;
+        window.requestGuideModelReplyWithFallback = async (userText) => {
+          window.__replanGuideCalls += 1;
+          if (String(userText || "").includes("Replan the current")) {
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                status: "plan_ready",
+                reply: "進め方を組み直しました。",
+                plan: {
+                  goal: "保存不具合の進め方を見直す",
+                  completionDefinition: "原因切り分けと修正方針が揃う",
+                  constraints: ["旧taskは履歴として残す"],
+                  tasks: [
+                    {
+                      title: "前提確認",
+                      description: "保存処理と再読込処理の前提差を確認する",
+                      requiredSkills: ["codex-file-search"],
+                    },
+                    {
+                      title: "修正方針整理",
+                      description: "修正前提を文章で整理する",
+                      requiredSkills: ["codex-file-read"],
+                    },
+                  ],
+                },
+              }),
+              toolCalls: [],
+              runId: "debug-replan-run",
+            };
+          }
+          return {
+            provider: "openai",
+            modelName: "gpt-4.1",
+            text: JSON.stringify({
+              status: "conversation",
+              reply: "ok",
+              plan: null,
+            }),
+            toolCalls: [],
+          };
+        };
+      });
+
+      await page.click('[data-tab="task"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.click('[data-action="submit"][data-task-id="TASK-001"]');
+      await page.click('[data-action="gate"][data-task-id="TASK-001"]');
+      await page.fill("#gateReason", "この件は再計画が必要です。進め方と前提を見直してください。");
+      await page.click("#rejectTask");
+
+      await expect.poll(async () => page.locator('[data-task-row]').count()).toBe(beforeTaskCount + 2);
+      await expect.poll(async () => page.evaluate(() => window.__replanGuideCalls)).toBeGreaterThan(0);
+      await expect.poll(async () => {
+        return page.evaluate(async () => {
+          const latest = await window.getLatestTaskProgressLogEntryWithFallback({
+            targetKind: "task",
+            targetId: "TASK-001",
+          });
+          return latest ? `${latest.actionType}:${latest.status}:${latest.payload?.createdCount || 0}` : "";
+        });
+      }).toContain("replanned:ok:2");
+
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "TASK-001 はどうなった？");
+      await page.click("#guideSend");
+      await expect(page.locator("#guideChat")).toContainText(/再計画を作成しました|新しいPlan/);
+    });
+
     test("worker runtime receives structured handoff payload", async ({ page }) => {
       await page.click('[data-tab="pal"]');
       await page.click('[data-pal-open-id="pal-alpha"]');

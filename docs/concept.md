@@ -148,4 +148,5 @@
 
 - Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / 住人 / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
 - Task Detail Conversation Log: task 一覧から詳細を開いた時、右列には `Guide / 住人 / 古参住人` のやり取りとして progress log が時系列表示される。管理人が住人へ託し、住人が途中経過をつぶやき、古参住人が助言や判定を返す流れが読めることを重視する。
+- Guide-driven Replan Bridge: Gate が「進め方そのものを見直すべき」と判断した時、Orchestrator は active Guide の頭脳を借りて新しい Plan を作り、old task を履歴として残したまま新しい task へ橋渡しする。
 

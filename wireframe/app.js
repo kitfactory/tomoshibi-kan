@@ -344,6 +344,14 @@ function normalizeText(value) {
   return String(value || "").trim();
 }
 
+function safeStringify(value, fallback = "{}") {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return fallback;
+  }
+}
+
 function resolveWindowBridge(nextName, legacyName) {
   if (typeof window === "undefined") return null;
   return window[nextName] || window[legacyName] || null;
@@ -3836,6 +3844,93 @@ async function materializeApprovedPlanArtifact(artifact) {
   return { created: created.length };
 }
 
+function buildGuideReplanUserText(targetKind, target, planArtifact, gateResult) {
+  const targetLabel = targetKind === "job" ? "job" : "task";
+  const payload = {
+    targetKind,
+    targetId: normalizeText(target?.id),
+    targetTitle: normalizeText(target?.title),
+    currentInstruction: normalizeText(target?.description || target?.instruction),
+    currentPlanId: normalizeText(planArtifact?.planId || resolveTargetPlanId(target)),
+    previousPlan: planArtifact?.plan && typeof planArtifact.plan === "object" ? planArtifact.plan : null,
+    gateResult: gateResult && typeof gateResult === "object"
+      ? {
+        decision: normalizeText(gateResult.decision),
+        reason: normalizeText(gateResult.reason),
+        fixes: Array.isArray(gateResult.fixes) ? gateResult.fixes : [],
+      }
+      : null,
+  };
+  return [
+    `Replan the current ${targetLabel}.`,
+    "The previous execution was rejected and requires a revised plan.",
+    "Return a valid Guide plan response. Keep the goal, revise tasks and constraints to address the rejection.",
+    safeStringify(payload, "{}"),
+  ].join("\n\n");
+}
+
+async function executeGuideDrivenReplanForTarget(targetKind, target, gateResult) {
+  const guideState = resolveGuideModelStateWithFallback();
+  if (!guideState?.ready || !target) return null;
+  const currentPlanId = resolveTargetPlanId(target);
+  const planArtifact = await findPlanArtifactByIdWithFallback(currentPlanId);
+  const replanUserText = buildGuideReplanUserText(targetKind, target, planArtifact, gateResult);
+  const contextBuild = await buildGuideContextWithFallback(replanUserText);
+  const guideReplyRequester =
+    typeof window !== "undefined" && typeof window.requestGuideModelReplyWithFallback === "function"
+      ? window.requestGuideModelReplyWithFallback
+      : requestGuideModelReplyWithFallback;
+  const modelReply = await guideReplyRequester(replanUserText, guideState, contextBuild);
+  const parsedPlanResponse = parseGuidePlanResponseWithFallback(modelReply?.text || "", {
+    planningIntent: "replan_required",
+    planningReadiness: "replan_required",
+  });
+  if (!parsedPlanResponse?.ok || parsedPlanResponse.status !== "plan_ready" || !parsedPlanResponse.plan) {
+    const replyText = normalizeText(parsedPlanResponse?.reply || modelReply?.text);
+    await appendTaskProgressLogForTarget(targetKind, normalizeText(target.id), "replan_required", {
+      planId: currentPlanId,
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "pending",
+      messageJa: replyText || `${target.id} の再計画には、もう少し確認が必要です。`,
+      messageEn: replyText || `${target.id} still needs more clarification before replanning.`,
+      payload: {
+        gateResult,
+      },
+      sourceRunId: normalizeText(modelReply?.runId),
+    });
+    rerenderAll();
+    return null;
+  }
+  const nextArtifact = await appendPlanArtifactWithFallback({
+    status: "approved",
+    replyText: parsedPlanResponse.reply,
+    plan: parsedPlanResponse.plan,
+    sourceRunId: normalizeText(modelReply?.runId),
+  });
+  const created = await materializeApprovedPlanArtifact(nextArtifact);
+  await appendTaskProgressLogForTarget(targetKind, normalizeText(target.id), "replanned", {
+    planId: currentPlanId,
+    actualActor: "orchestrator",
+    displayActor: "Guide",
+    status: "ok",
+    messageJa: `${target.id} を再計画し、新しいtaskへ引き継ぎました。`,
+    messageEn: `${target.id} was replanned and handed off as new tasks.`,
+    payload: {
+      previousPlanId: currentPlanId,
+      nextPlanId: normalizeText(nextArtifact?.planId),
+      createdCount: Number(created?.created || 0),
+      gateResult,
+    },
+    sourceRunId: normalizeText(modelReply?.runId),
+  });
+  rerenderAll();
+  return {
+    nextPlanId: normalizeText(nextArtifact?.planId),
+    createdCount: Number(created?.created || 0),
+  };
+}
+
 function resolveGuideModelStateWithFallback() {
   const external = resolveGuideChatModelApi();
   if (external) {
@@ -4653,6 +4748,13 @@ async function getLatestPlanArtifactWithFallback(options = {}) {
   return rows[0] || null;
 }
 
+async function findPlanArtifactByIdWithFallback(planId) {
+  const normalizedPlanId = normalizeText(planId);
+  if (!normalizedPlanId) return null;
+  const rows = await listPlanArtifactsWithFallback({ limit: 50 });
+  return rows.find((entry) => normalizeText(entry?.planId) === normalizedPlanId) || null;
+}
+
 if (typeof window !== "undefined" && (!window.TomoshibikanPlanArtifacts || typeof window.TomoshibikanPlanArtifacts !== "object")) {
   const fallbackPlanArtifactApi = {
     append: (payload) => appendPlanArtifactLocal(payload),
@@ -5058,6 +5160,22 @@ function buildGuideReplanRequiredText(targetKind, target, latestEntry) {
   return `${display} requires replanning. The current approach and assumptions need to be revisited.${suffix}`.trim();
 }
 
+function buildGuideReplannedText(targetKind, target, latestEntry) {
+  const label = targetKind === "job" ? "Job" : "Task";
+  const display = normalizeText(target?.title) || normalizeText(target?.id) || label;
+  const payload = latestEntry?.payload || {};
+  const createdCount = Number(payload.createdCount || 0);
+  const nextPlanId = normalizeText(payload.nextPlanId);
+  if (locale === "ja") {
+    const createdText = createdCount > 0 ? ` ${createdCount}件の新しいtaskに分け直しています。` : "";
+    const planText = nextPlanId ? ` 新しいPlanは ${nextPlanId} です。` : "";
+    return `${display} は再計画を作成しました。${createdText}${planText}`.trim();
+  }
+  const createdText = createdCount > 0 ? ` It has been split into ${createdCount} new tasks.` : "";
+  const planText = nextPlanId ? ` The new plan is ${nextPlanId}.` : "";
+  return `${display} has been replanned.${createdText}${planText}`.trim();
+}
+
 function buildGuideProgressStatusText(targetKind, target) {
   const label = targetKind === "job" ? "Job" : "Task";
   const display = normalizeText(target?.title) || normalizeText(target?.id) || label;
@@ -5141,6 +5259,8 @@ async function buildGuideProgressQueryReply(text) {
   const target = resolveBoardTargetRecord(targetKind, targetId);
   const summary = normalizeText(latestEntry.actionType) === "replan_required"
     ? buildGuideReplanRequiredText(targetKind, target || { id: targetId }, latestEntry)
+    : normalizeText(latestEntry.actionType) === "replanned"
+      ? buildGuideReplannedText(targetKind, target || { id: targetId }, latestEntry)
     : buildGuideProgressStatusText(targetKind, target || { id: targetId });
   const suffix = buildGuideProgressLogSuffix(latestEntry);
   return {
@@ -7511,6 +7631,7 @@ function detailActionLabel(actionType) {
       gate_review: "見立て",
       resubmit: "再提出",
       replan_required: "見直し",
+      replanned: "再計画",
       plan_completed: "完了",
     }
     : {
@@ -7520,6 +7641,7 @@ function detailActionLabel(actionType) {
       gate_review: "Review",
       resubmit: "Resubmit",
       replan_required: "Replan",
+      replanned: "Replanned",
       plan_completed: "Completed",
     };
   return labels[action] || normalizeText(actionType) || "-";
@@ -8755,6 +8877,7 @@ function runGate(decision) {
     isRejectDecision ? "rejected" : "approved",
     reason
   );
+  const requiresReplan = isRejectDecision && shouldRequireReplanFromGateResult(gateResult);
   if (isRejectDecision) {
     const count = reason
       .split(/[\n,]/)
@@ -8782,7 +8905,7 @@ function runGate(decision) {
         gateResult,
       },
     });
-    if (shouldRequireReplanFromGateResult(gateResult)) {
+    if (requiresReplan) {
       void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "replan_required", {
         planId: resolveTargetPlanId(target),
         actualActor: "orchestrator",
@@ -8831,6 +8954,11 @@ function runGate(decision) {
       messageEn: "Plan completion announced",
     });
     setMessage("MSG-PPH-0008");
+  }
+  if (requiresReplan) {
+    rerenderAll();
+    void executeGuideDrivenReplanForTarget(isJob ? "job" : "task", target, gateResult);
+    return;
   }
   if (isRejectDecision) {
     navigateToResubmitTarget(target.id, isJob ? "job" : "task");

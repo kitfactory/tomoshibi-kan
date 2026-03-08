@@ -1,5 +1,7 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-orchestrator-replan-bridge] Gate reject が `replan_required` を示した時、Orchestrator が active Guide の runtime / `SOUL.md` を使って新しい Plan を作り、old task を残したまま新 task へ橋渡しする最小実装を入れる
+- [x] [DR-20260308-orchestrator-replan-bridge] delta request/apply/verify/archive を実施し、`replan_required -> replanned -> new task dispatch` の最小橋渡しを追加する
 - [x] [SEED-20260308-orchestrator-routing-llm-impl] Plan artifact からの worker dispatch で、Orchestrator が active Guide の model / SOUL を借りて resident-aware な routing decision を返せる最小実装を入れる
 - [x] [DR-20260308-orchestrator-routing-llm-impl] delta request/apply/verify/archive を実施し、worker dispatch の LLM-assisted routing と fallback を最小実装する
 - [x] [SEED-20260308-orchestrator-routing-llm-design] Orchestrator が管理人と同じ model / SOUL を使って routing 判断できるよう、前処理・structured decision・fallback 境界を設計する
@@ -493,7 +495,6 @@
 - `RoutingInput / RoutingDecision` 実装後に、worker routing を lexical match から resident-aware / role-first の LLM-assisted selection へ切り替える
 - `reroute / replan_required` を structured decision で返し、Orchestrator が Guide-driven replan bridge へ接続する
 - [ ] [SEED-20260308-orchestrator-dispatch-extraction] dispatch / worker selection / gate submit 起動を Guide 送信フローから `PlanExecutionOrchestrator` へ抽出する
-- [ ] [SEED-20260308-orchestrator-replan-bridge] `replan_required` 発生時に Orchestrator が Guide の model / SOUL を使って再計画要求を返せる境界を実装する
 - [ ] [SEED-20260308-routing-precision-after-boundary] Plan artifact / Orchestrator 境界の固定後に、worker routing 精度を role-first に改善する
 - [ ] [SEED-20260306-guide-output-parser-hardening] Guide の `plan_ready` 出力に混ざる wrapper token と軽微な JSON 破損を修復し、parse 成功率を上げる
 - [ ] [SEED-20260306-guide-structured-output-adoption] Guide runtime に native structured output / schema mode を導入できるか検証し、可能なら採用する

@@ -875,6 +875,7 @@ type TaskProgressLogEntry = {
 - Gate 提出待ちへ移した時に `actualActor=orchestrator`, `displayActor=Guide`, `actionType=to_gate` を残す。
 - Gate approve/reject 時に `actualActor=gate`, `displayActor=Gate`, `actionType=gate_review` を残す。
 - Gate reject のうち進め方や前提の見直しが必要と判断した場合、続けて `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replan_required`, `status=blocked` を残してよい。
+- `replan_required` の後に Guide-driven replan が成功した場合、old target へ `actualActor=orchestrator`, `displayActor=Guide`, `actionType=replanned`, `status=ok` を残し、`previousPlanId`, `nextPlanId`, `createdCount` を payload に保持する。
 - resubmit と plan completion も同じ table に append し、task/job 単位の直近イベント列で追えるようにする。
 
 ### Progress query
@@ -883,6 +884,7 @@ type TaskProgressLogEntry = {
 - progress query は `task_id/job_id` が明示される場合だけでなく、「さっきお願いした件」のような最新依頼照会にも対応できるよう、`plan_id -> latest task/job` の補助解決を持ってよい。
 - minimal 実装では renderer に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
 - progress query path は model 呼び出し前に処理し、追加の LLM 呼び出しなしで completion / pending / rejected / replan_required / in_progress / assigned を返す。
+- `PlanExecutionOrchestrator` は Gate reject が `replan_required` を示す時、active Guide の runtime / `SOUL.md` を使って replan request を生成してよい。replan 成功時は new Plan artifact 保存 -> materialize -> old target に `replanned` append の順で橋渡しする。
 
 ### 表示責務
 - `WorkspacePresenter` は内部の `actualActor` をそのまま前面表示せず、`displayActor + messageForUser` を通常表示の主材料にする。
