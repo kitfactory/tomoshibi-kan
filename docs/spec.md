@@ -556,10 +556,10 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide の `OPERATING_RULES` は、短い `scope_unclear` ターンでは generic な聞き返しだけで止まらず、会話履歴からあり得そうな案件を具体化した 3 択を可能性順に提案し、1 つを推薦し、番号や短い yes/no で返答できる締めを付けてよい。
 - Guide の system prompt には、`3 択 + recommendation + short-answer closing` を再現しやすくする few-shot example を含めてよい。
 - debug-purpose workspace では、Guide は resident set の built-in 住人 (`調べる人 / 作り手 / 書く人`) を優先し、trace / fix / verify の順に素直に task を割り当てられる plan を好む。
-- debug-purpose workspace で明示的な breakdown 要求がある場合、Guide の `OPERATING_RULES` は `Trace / Fix / Verify` の 3 段 plan を優先してよい。
+- debug-purpose workspace で明示的な breakdown 要求がある場合、Guide の `OPERATING_RULES` は `調べる人 / 作り手 / 書く人` の resident trio plan を優先してよい。
 - controller は user text から planning trigger を検知できるようにし、明示的な plan / task breakdown 要求時は Guide runtime へ `conversation` に留まらず `needs_clarification` か `plan_ready` を返す補助指示を追加してよい。
 - controller は `planningIntent=explicit_breakdown` かつ対象画面・再現手順・期待結果が user text に揃っている場合、readiness assist を追加し、ファイルパスやログ未提示だけでは `needs_clarification` に留まらないよう Guide を補助してよい。
-- debug-purpose の `trace / fix / verify` breakdown を含む `plan_ready` で task 配列が壊れている場合、parser は reply 内の breakdown だけでなく controller が付与した `planningIntent` / `planningReadiness` cue も使って simple-role 3 task (`Trace / Fix / Verify`) へ recovery してよい。
+- debug-purpose の resident breakdown (`調べる人 / 作り手 / 書く人`) を含む `plan_ready` で task 配列が壊れている場合、parser は reply 内の breakdown だけでなく controller が付与した `planningIntent` / `planningReadiness` cue も使って resident trio 3 task (`調べる人 / 作り手 / 書く人`) へ recovery してよい。
 - controller assist は暫定安定化策として保持してよいが、workspace 設定で明示的に有効化した時だけ使う。既定値は OFF とする。
 - `conversation` は雑談、壁打ち、通常相談など、ユーザーが task 化や実行計画化を明示していない状態を表す。この状態では Plan を生成せず、task/job materialize も開始しない。
 - Guide の最新出力が valid な `Plan` オブジェクトとして parse / validate できない場合、システムは `GuideConversationUseCase` に留まり、Guide との対話を継続する。

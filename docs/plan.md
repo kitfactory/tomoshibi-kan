@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-guide-resident-plan-stabilization] Guide の `plan_ready` を resident set (`調べる人 / 作り手 / 書く人`) 前提で 3 task に安定化し、real-model で materialization まで届きやすくする
+- [x] [DR-20260308-guide-resident-plan-stabilization] delta request/apply/verify/archive を実施し、few-shot / assist / parser recovery を resident set 基準へ揃える
+- [x] [SEED-20260308-resident-routing-real-observation] 実モデルで `調べる人 / 作り手 / 書く人` への resident routing を観測し、現状の割当精度とズレ方を記録する
+- [x] [DR-20260308-resident-routing-real-observation] delta request/apply/verify/archive を実施し、real-model resident routing の観測結果を記録する
 - [x] [SEED-20260308-routing-precision-role-first] resident の主担当 (`調べる人 / 作り手 / 書く人`) を routing 前処理へ明示し、fallback scorer を role-first に改善する
 - [x] [DR-20260308-routing-precision-role-first] delta request/apply/verify/archive を実施し、taskKind と resident function を使った routing 精度改善を入れる
 - [x] [SEED-20260308-orchestrator-reroute-bridge] Guide-driven routing が `reroute` を返した時、Orchestrator が resident を付け替えて `reroute -> dispatch` を progress log に残す最小実装を入れる
@@ -157,6 +161,8 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260308-guide-resident-plan-stabilization] resident trio (`調べる人 / 作り手 / 書く人`) を基準に Guide の few-shot / assist / parser recovery を揃え、real-model で 3 task materialization (`pal-alpha / pal-beta / pal-delta`) を確認した
+- [x] [DR-20260308-resident-routing-real-observation] 実モデル resident routing を観測し、assist OFF では planning 到達が不安定である一方、assist ON + 強い明示では `plan_ready -> 1 task materialize -> pal-alpha dispatch` まで確認できることを記録した
 - [x] [DR-20260308-orchestrator-routing-llm-design] Orchestrator core が resident 候補を前処理し、必要時だけ active Guide の model / `SOUL.md` を借りて routing 判断する境界と、`RoutingInput / RoutingDecision` / fallback 契約を concept/spec/architecture に同期した
 - [x] [DR-20260308-orchestrator-routing-llm-impl] Orchestrator が resident-aware な `RoutingInput` を前処理し、必要時だけ active Guide の runtime / `SOUL.md` を借りて worker routing を判断し、invalid/no-fit/low-confidence は rule-based selector へ fallback する最小実装を追加した
 - [x] [DR-20260308-resident-set-remove-arranger] `整える人` を resident set と built-in 初期住人セットから外し、legacy built-in `pal-gamma` も Settings 同期時に profile list から落とすようにした

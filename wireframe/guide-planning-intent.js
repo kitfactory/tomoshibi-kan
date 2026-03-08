@@ -34,6 +34,9 @@
       /修正/,
       /検証/,
       /デバッグ/,
+      /調べる人/,
+      /作り手/,
+      /書く人/,
     ]);
     if (!planningRequested) {
       return {
@@ -43,6 +46,7 @@
     }
     const explicitBreakdown = containsAny(lower, [
       /trace\s*\/\s*fix\s*\/\s*verify/,
+      /調べる人\s*\/\s*作り手\s*\/\s*書く人/,
       /task に分け/,
       /taskに分け/,
       /plan にして/,
@@ -126,16 +130,16 @@
         "The latest user message already includes a target area, reproducible steps, and an expected result.",
         "Treat minor missing details as assumptions in constraints.",
         "Do not stay in status=needs_clarification for missing file paths or logs alone.",
-        "Prefer status=plan_ready and produce exactly three tasks: Trace, Fix, Verify.",
-        "When possible, assign the Research resident for Trace, the Maker resident for Fix, and the Writer resident for Verify.",
+        "Prefer status=plan_ready and produce exactly three tasks for the Research Resident, Maker Resident, and Writer Resident.",
+        "When possible, assign the Research Resident to evidence gathering, the Maker Resident to implementation, and the Writer Resident to the final explanation.",
       ].join("\n");
     }
     return [
       "最新のユーザー発話には対象画面、再現手順、期待結果がすでに含まれている。",
       "軽微な不足情報は constraints の assumptions として扱う。",
       "ファイルパスやログが未提示という理由だけで status=needs_clarification に留まらない。",
-      "status=plan_ready を優先し、Task は Trace / Fix / Verify の3件を返す。",
-      "可能なら 調べる人 を Trace、作り手 を Fix、書く人 を Verify に割り当てる。",
+      "status=plan_ready を優先し、Task は 調べる人 / 作り手 / 書く人 の3件を返す。",
+      "可能なら 調べる人 は証拠集め、作り手 は実装、書く人 は最後の説明に割り当てる。",
     ].join("\n");
   }
 

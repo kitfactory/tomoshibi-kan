@@ -132,7 +132,7 @@ test("buildGuideContext uses planning-oriented Guide operating rules in Japanese
   assert.match(result.messages[0].content, /これまでの会話からあり得そうな案件を具体化した 3 つの選択肢を、可能性の高い順に提示/);
   assert.match(result.messages[0].content, /最も妥当な候補を 1 つ推薦/);
   assert.match(result.messages[0].content, /1でよいですか？/);
-  assert.match(result.messages[0].content, /Trace \/ Fix \/ Verify の3段/);
+  assert.match(result.messages[0].content, /調べる人 \/ 作り手 \/ 書く人 の3段/);
   assert.match(result.messages[0].content, /担当 Pal をユーザーへ聞き返さず自分で選ぶ/);
 });
 
@@ -144,7 +144,7 @@ test("buildGuideContext uses planning-oriented Guide operating rules in English"
   });
   assert.equal(result.ok, true);
   assert.match(result.messages[0].content, /moving toward a work request/);
-  assert.match(result.messages[0].content, /trace \/ fix \/ verify split/);
+  assert.match(result.messages[0].content, /Research Resident \/ Maker Resident \/ Writer Resident split/);
   assert.match(result.messages[0].content, /propose three concrete likely work options grounded in the conversation so far, ordered by likelihood/);
   assert.match(result.messages[0].content, /recommend the most plausible one/);
   assert.match(result.messages[0].content, /Shall we go with 1\?/);

@@ -114,6 +114,18 @@
     return /trace/.test(text) && /fix/.test(text) && /verify/.test(text);
   }
 
+  function hasExplicitResidentBreakdown(reply) {
+    const text = normalizeString(reply);
+    if (!text) return false;
+    return /調べる人/.test(text) && /作り手/.test(text) && /書く人/.test(text);
+  }
+
+  function isExplicitResidentBreakdownContext(options) {
+    const planningIntent = normalizeString(options?.planningIntent);
+    const planningReadiness = normalizeString(options?.planningReadiness);
+    return planningIntent === "explicit_breakdown" || planningReadiness === "debug_repro_ready";
+  }
+
   function hasExplicitDebugBreakdownContext(options) {
     const planningIntent = normalizeString(options?.planningIntent);
     const planningReadiness = normalizeString(options?.planningReadiness);
@@ -130,43 +142,63 @@
     return false;
   }
 
-  function buildRecoveredDebugTasks() {
+  function isExpectedResidentAssignee(task) {
+    const title = normalizeString(task?.title);
+    const assignee = normalizeString(task?.assigneePalId).replace(/[^a-z0-9-]/gi, "");
+    if (!title) return false;
+    if (title === "調べる人") return assignee === "pal-alpha";
+    if (title === "作り手") return assignee === "pal-beta";
+    if (title === "書く人") return assignee === "pal-delta";
+    return false;
+  }
+
+  function isResidentTaskSetValid(tasks) {
+    const titles = tasks.map((task) => normalizeString(task?.title));
+    const expectedTitles = ["調べる人", "作り手", "書く人"];
+    if (titles.length !== expectedTitles.length) return false;
+    if (titles.some((title, index) => title !== expectedTitles[index])) return false;
+    return tasks.every((task) => !isSuspiciousTask(task) && isExpectedResidentAssignee(task));
+  }
+
+  function buildRecoveredResidentTasks() {
     return [
       {
-        title: "Trace",
-        description: "保存処理の再現手順、イベントハンドラ、関連ファイルを確認して証拠を集める。",
+        title: "調べる人",
+        description: "保存処理の再現手順、SQLite への書き込み、reload 時の読み込み箇所を追い、証拠と原因候補を集める。",
         expectedOutput: "再現結果、関連ファイル、原因候補の trace summary",
         requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
         reviewFocus: ["repro", "traceability"],
-        assigneePalId: "",
+        assigneePalId: "pal-alpha",
       },
       {
-        title: "Fix",
-        description: "trace の結果に基づいて保存処理の不整合を最小変更で修正する。",
+        title: "作り手",
+        description: "調べる人 の結果に基づいて、保存処理または読み込み処理の不整合を最小変更で修正する。",
         expectedOutput: "修正内容、影響ファイル、残リスクの summary",
         requiredSkills: ["codex-file-read", "codex-file-edit"],
         reviewFocus: ["scope", "minimal_fix"],
-        assigneePalId: "",
+        assigneePalId: "pal-beta",
       },
       {
-        title: "Verify",
-        description: "再現手順を再実行し、reload 後も model が残ることを確認する。",
-        expectedOutput: "pass/fail evidence と残っている不確実性",
-        requiredSkills: ["codex-test-runner", "codex-file-read"],
-        reviewFocus: ["expected_outcome", "regression"],
-        assigneePalId: "",
+        title: "書く人",
+        description: "修正後の挙動と残る注意点を整理し、reload 後も model が残ることと利用者向けの説明をまとめる。",
+        expectedOutput: "検証要約、利用者向け説明、残る不確実性",
+        requiredSkills: ["codex-file-read"],
+        reviewFocus: ["expected_outcome", "user_clarity"],
+        assigneePalId: "pal-delta",
       },
     ];
   }
 
   function recoverGuidePlanTasks(tasks, reply, options = {}) {
     const normalizedTasks = Array.isArray(tasks) ? tasks : [];
-    if (!hasExplicitDebugBreakdown(reply) && !hasExplicitDebugBreakdownContext(options)) {
+    const residentBreakdownRequested = hasExplicitResidentBreakdown(reply) || isExplicitResidentBreakdownContext(options);
+    if (!hasExplicitDebugBreakdown(reply) && !hasExplicitDebugBreakdownContext(options) && !residentBreakdownRequested) {
       return normalizedTasks;
     }
+    if (residentBreakdownRequested && isResidentTaskSetValid(normalizedTasks)) return normalizedTasks;
     const suspiciousCount = normalizedTasks.filter((task) => isSuspiciousTask(task)).length;
     if (normalizedTasks.length >= 3 && suspiciousCount === 0) return normalizedTasks;
-    return buildRecoveredDebugTasks();
+    return buildRecoveredResidentTasks();
   }
 
   function normalizeGuidePlan(plan, reply = "", options = {}) {
@@ -343,35 +375,35 @@
     };
     const exampleTwoJa = {
       status: "plan_ready",
-      reply: "2 を前提に進めます。Trace / Fix / Verify の3段に分けました。",
+      reply: "1 を前提に進めます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
       plan: {
         goal: "Settings 保存後に reload しても model が残る状態に戻す",
-        completionDefinition: "Save 後に reload しても登録した model が一覧に残り、Verify で再現不能を確認できる",
+        completionDefinition: "Save 後に reload しても登録した model が一覧に残り、利用者向け説明まで整っている",
         constraints: ["既存設定フローは壊さない", "最小修正で進める"],
         tasks: [
           {
-            title: "Trace",
+            title: "調べる人",
             description: "Save と reload 周辺の状態遷移と永続化ポイントを追跡し、消失箇所を特定する",
             expectedOutput: "trace summary と再現手順",
             requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
             reviewFocus: ["repro", "traceability"],
-            assigneePalId: "",
+            assigneePalId: "pal-alpha",
           },
           {
-            title: "Fix",
-            description: "Trace で特定した箇所に最小修正を入れて model 一覧が再読込後も残るようにする",
+            title: "作り手",
+            description: "調べる人 の結果に基づいて最小修正を入れ、model 一覧が再読込後も残るようにする",
             expectedOutput: "修正 diff と変更要約",
             requiredSkills: ["codex-file-read", "codex-file-edit"],
             reviewFocus: ["scope", "minimal_fix"],
-            assigneePalId: "",
+            assigneePalId: "pal-beta",
           },
           {
-            title: "Verify",
-            description: "Save から reload まで再実行し、model が残ることと副作用がないことを確認する",
-            expectedOutput: "pass/fail evidence",
-            requiredSkills: ["codex-test-runner", "codex-file-read"],
-            reviewFocus: ["expected_outcome", "regression"],
-            assigneePalId: "",
+            title: "書く人",
+            description: "修正後の挙動と残る注意点を整理し、利用者向けにどう説明するかをまとめる",
+            expectedOutput: "検証要約と利用者向け説明",
+            requiredSkills: ["codex-file-read"],
+            reviewFocus: ["expected_outcome", "user_clarity"],
+            assigneePalId: "pal-delta",
           },
         ],
       },
@@ -383,35 +415,35 @@
     };
     const exampleTwoEn = {
       status: "plan_ready",
-      reply: "Proceeding with option 2. I split the work into Trace / Fix / Verify.",
+      reply: "Proceeding with option 1. I split the work into Research Resident / Maker Resident / Writer Resident tasks.",
       plan: {
         goal: "Keep the saved model visible after reload",
-        completionDefinition: "After Save and reload, the registered model still appears and Verify confirms the issue no longer reproduces",
+        completionDefinition: "After Save and reload, the registered model still appears and the final explanation is ready to return",
         constraints: ["Do not break the existing settings flow", "Prefer the smallest viable fix"],
         tasks: [
           {
-            title: "Trace",
+            title: "Research Resident",
             description: "Trace the save and reload path to find where the model entry disappears",
             expectedOutput: "trace summary and reproduction notes",
             requiredSkills: ["browser-chrome", "codex-file-search", "codex-file-read"],
             reviewFocus: ["repro", "traceability"],
-            assigneePalId: "",
+            assigneePalId: "pal-alpha",
           },
           {
-            title: "Fix",
+            title: "Maker Resident",
             description: "Apply the smallest fix that keeps the model list after reload",
             expectedOutput: "diff summary",
             requiredSkills: ["codex-file-read", "codex-file-edit"],
             reviewFocus: ["scope", "minimal_fix"],
-            assigneePalId: "",
+            assigneePalId: "pal-beta",
           },
           {
-            title: "Verify",
-            description: "Repeat Save and reload, then confirm the model remains and no regression appears",
-            expectedOutput: "pass/fail evidence",
-            requiredSkills: ["codex-test-runner", "codex-file-read"],
-            reviewFocus: ["expected_outcome", "regression"],
-            assigneePalId: "",
+            title: "Writer Resident",
+            description: "Summarize the result and prepare a clear user-facing explanation with remaining caveats",
+            expectedOutput: "verification summary and user-facing explanation",
+            requiredSkills: ["codex-file-read"],
+            reviewFocus: ["expected_outcome", "user_clarity"],
+            assigneePalId: "pal-delta",
           },
         ],
       },
@@ -420,13 +452,13 @@
       return [
         "Few-shot examples for Guide behavior:",
         `Example 1 user: Settings save feels wrong. What should we check first?\nExample 1 assistant: ${JSON.stringify(exampleOneEn)}`,
-        `Example 2 user: After Save and reload, the model disappears. Split it into Trace / Fix / Verify tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
+        `Example 2 user: After Save and reload, the model disappears. Split it into Research Resident / Maker Resident / Writer Resident tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
       ].join("\n\n");
     }
     return [
       "Guide の振る舞い例:",
       `例1 ユーザー: Settings の保存が変です。まずどこから見ればいい？\n例1 Guide: ${JSON.stringify(exampleOneJa)}`,
-      `例2 ユーザー: Save 後に reload すると model が消えます。Trace / Fix / Verify の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
+      `例2 ユーザー: Save 後に reload すると model が消えます。調べる人 / 作り手 / 書く人 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
     ].join("\n\n");
   }
 

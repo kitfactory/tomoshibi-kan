@@ -155,9 +155,12 @@ test("parseGuidePlanResponse recovers trace fix verify tasks from malformed debu
   assert.equal(parsed.plan.tasks.length, 3);
   assert.deepEqual(
     parsed.plan.tasks.map((task) => task.title),
-    ["Trace", "Fix", "Verify"]
+    ["調べる人", "作り手", "書く人"]
   );
   assert.deepEqual(parsed.plan.tasks[0].requiredSkills, ["browser-chrome", "codex-file-search", "codex-file-read"]);
+  assert.equal(parsed.plan.tasks[0].assigneePalId, "pal-alpha");
+  assert.equal(parsed.plan.tasks[1].assigneePalId, "pal-beta");
+  assert.equal(parsed.plan.tasks[2].assigneePalId, "pal-delta");
 });
 
 test("parseGuidePlanResponse recovers debug tasks from controller intent context even when reply is short", () => {
@@ -187,8 +190,50 @@ test("parseGuidePlanResponse recovers debug tasks from controller intent context
   assert.equal(parsed.status, "plan_ready");
   assert.deepEqual(
     parsed.plan.tasks.map((task) => task.title),
-    ["Trace", "Fix", "Verify"]
+    ["調べる人", "作り手", "書く人"]
   );
+});
+
+test("parseGuidePlanResponse recovers resident trio when plan_ready returns partial malformed resident tasks", () => {
+  const parsed = parseGuidePlanResponse(`{
+    "status":"plan_ready",
+    "reply":"1 を前提に進めます。調べる人 / 作り手 / 書く人 の3 task に分けました。",
+    "plan":{
+      "goal":"Settings save を直す",
+      "completionDefinition":"reload 後も model が残る",
+      "constraints":["既存設定画面を壊さない"],
+      "tasks":[
+        {
+          "title":"調べる人",
+          "description":"保存処理の再現手順とログを追う",
+          "expectedOutput":"trace summary",
+          "requiredSkills":["browser-chrome","codex-file-search"],
+          "reviewFocus":["repro"],
+          "assigneePalId":"pal-alpha"
+        },
+        {
+          "title":"作り手",
+          "description":"調べる",
+          "expectedOutput":"fix summary",
+          "requiredSkills":["codex-file-edit"],
+          "reviewFocus":["scope"],
+          "assigneePalId":"??"
+        }
+      ]
+    }
+  }`, {
+    planningIntent: "explicit_breakdown",
+    planningReadiness: "debug_repro_ready",
+  });
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.status, "plan_ready");
+  assert.deepEqual(
+    parsed.plan.tasks.map((task) => task.title),
+    ["調べる人", "作り手", "書く人"]
+  );
+  assert.equal(parsed.plan.tasks[0].assigneePalId, "pal-alpha");
+  assert.equal(parsed.plan.tasks[1].assigneePalId, "pal-beta");
+  assert.equal(parsed.plan.tasks[2].assigneePalId, "pal-delta");
 });
 
 test("parseGuidePlanResponse rejects invalid plan_ready payload", () => {
@@ -241,7 +286,7 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   assert.match(prompt, /まずありそうなのは次の3案/);
   assert.match(prompt, /最も可能性が高い/);
   assert.match(prompt, /でよいですか/);
-  assert.match(prompt, /Trace/);
-  assert.match(prompt, /Fix/);
-  assert.match(prompt, /Verify/);
+  assert.match(prompt, /調べる人/);
+  assert.match(prompt, /作り手/);
+  assert.match(prompt, /書く人/);
 });
