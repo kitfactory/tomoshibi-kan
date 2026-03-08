@@ -12,6 +12,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-guide-finalization-proposal] 3案提示と推薦の後で、Guide が最終依頼案を短く提案して少ないターンで収束しやすくした
 - [x] [DR-20260308-reroute-replan-real-observation] `reroute` は自然発火せず、`replan_required` は観測できたが `replanned` には届かないことを real-model 条件で確認した
 - [x] [DR-20260308-progress-voice-log-rendering] `Progress Voice` を task detail 右列の会話ログ本文生成へ反映し、管理人 / 住人 / 古参住人らしい言い回しを強めた
 - [x] [DR-20260308-open-delta-archive-normalization] 3件の open delta 記録を validator が読める archive 形式へ正規化した

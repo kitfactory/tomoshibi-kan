@@ -289,6 +289,9 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   assert.match(prompt, /UI state 反映に着目する案/);
   assert.match(prompt, /最も可能性が高い/);
   assert.match(prompt, /書き込み側を見るのが早い/);
+  assert.match(prompt, /としてまとめようと考えます/);
+  assert.match(prompt, /保存処理と保存直後の状態反映を確認する依頼/);
+  assert.match(prompt, /この形で進めてよければ依頼にします/);
   assert.match(prompt, /でよいですか/);
   assert.match(prompt, /調べる人/);
   assert.match(prompt, /作り手/);

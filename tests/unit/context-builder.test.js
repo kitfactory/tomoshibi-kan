@@ -133,6 +133,9 @@ test("buildGuideContext uses planning-oriented Guide operating rules in Japanese
   assert.match(result.messages[0].content, /何に着目した案かを短く明示/);
   assert.match(result.messages[0].content, /最も妥当な候補を 1 つ推薦/);
   assert.match(result.messages[0].content, /なぜそれを先に見るのかを一言/);
+  assert.match(result.messages[0].content, /最終依頼案を短く提示/);
+  assert.match(result.messages[0].content, /誰に何を頼む形になるか/);
+  assert.match(result.messages[0].content, /この形で進めてよければ依頼にします/);
   assert.match(result.messages[0].content, /1でよいですか？/);
   assert.match(result.messages[0].content, /調べる人 \/ 作り手 \/ 書く人 の3段/);
   assert.match(result.messages[0].content, /担当 Pal をユーザーへ聞き返さず自分で選ぶ/);
@@ -151,6 +154,9 @@ test("buildGuideContext uses planning-oriented Guide operating rules in English"
   assert.match(result.messages[0].content, /Make each option explicit about its angle/);
   assert.match(result.messages[0].content, /recommend the most plausible one/);
   assert.match(result.messages[0].content, /add one short reason/);
+  assert.match(result.messages[0].content, /propose the final request shape yourself/);
+  assert.match(result.messages[0].content, /what kind of request this will become/);
+  assert.match(result.messages[0].content, /If that works, I will turn it into a request/);
   assert.match(result.messages[0].content, /Shall we go with 1\?/);
   assert.match(result.messages[0].content, /one blocking fact prevents task creation/);
 });

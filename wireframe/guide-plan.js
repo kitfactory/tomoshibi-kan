@@ -370,7 +370,7 @@
   function buildGuidePlanFewShotExamples(localeValue = "ja") {
     const exampleOneJa = {
       status: "needs_clarification",
-      reply: "まずありそうなのは次の3案です。1. reload 後の再読込に着目する案: 保存自体は通っているが、reload 時の復元で落ちている。2. 永続化そのものに着目する案: Save 時の書き込みが失敗している。3. UI state 反映に着目する案: model 一覧だけ保存対象から漏れている。まずは 2 が最も可能性が高いです。保存直後から消えるなら書き込み側を見るのが早いので、2 でよいですか？",
+      reply: "まずありそうなのは次の3案です。1. reload 後の再読込に着目する案: 保存自体は通っているが、reload 時の復元で落ちている。2. 永続化そのものに着目する案: Save 時の書き込みが失敗している。3. UI state 反映に着目する案: model 一覧だけ保存対象から漏れている。まずは 2 が最も可能性が高いです。保存直後から消えるなら書き込み側を見るのが早いので、2 を軸に依頼としてまとめるのがよさそうです。では、この内容で「保存処理と保存直後の状態反映を確認する依頼」としてまとめようと考えます。この形で進めてよければ依頼にします。2 でよいですか？",
       plan: null,
     };
     const exampleTwoJa = {
@@ -410,7 +410,7 @@
     };
     const exampleOneEn = {
       status: "needs_clarification",
-      reply: "The three most likely options are: 1. Reload rehydration angle: saving succeeds, but reload fails to restore the state. 2. Persistence angle: the save itself is not being written. 3. UI state reflection angle: only the model list is skipped during persistence. I recommend 2 first because if it disappears immediately after Save, the write path is the fastest place to check. Shall we go with 2?",
+      reply: "The three most likely options are: 1. Reload rehydration angle: saving succeeds, but reload fails to restore the state. 2. Persistence angle: the save itself is not being written. 3. UI state reflection angle: only the model list is skipped during persistence. I recommend 2 first because if it disappears immediately after Save, the write path is the fastest place to check. Based on that, I would frame this as a request to check the save path and the immediate post-save state reflection first. If that works, I will turn it into a request. Shall we go with 2?",
       plan: null,
     };
     const exampleTwoEn = {
