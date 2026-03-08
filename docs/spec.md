@@ -712,6 +712,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。
 - progress log は task/job 単位で最新状態と直近イベント列を引けること。Guide はこのログを使って途中経過を自然文で説明してよい。
 - `message_for_user` は世界観に沿った自然文を許容するが、内部の `actual_actor` と `action_type` を欠落させてはならない。
+- task 一覧から task detail を開いた時、右列は `Guide / 住人 / 古参住人` の会話として progress log を時系列表示できること。内部 actor は保持したまま、通常表示では conversation-like timeline を優先する。
 - minimal 実装では `task_progress_logs` を `settings.sqlite` に追加し、`append`, `list`, `latest` の query を提供する。
 - minimal 実装で progress log へ必ず記録する action は `dispatch`, `worker_runtime`, `to_gate`, `gate_review`, `replan_required`, `resubmit`, `plan_completed` とする。
 - Gate reject reason が進め方・前提・要件・スコープの見直しを示す場合、`PlanExecutionOrchestrator` は `replan_required` を progress log に追加してよい。
@@ -719,6 +720,24 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - renderer は progress log を direct DB access せず、Electron bridge 経由で append/query する。
 - Guide はユーザーが task/job の進捗確認を求めた時、progress log と現行 board state だけを使ってローカル reply を返してよい。
 - minimal 実装では、明示 ID (`TASK-xxx`, `JOB-xxx`) がある時はその target を優先し、無ければ最新 progress entry を参照する。
+
+## 追加仕様 (2026-03-08): Resident ROLE Strategy
+
+- `ROLE.md` は `SOUL.md` を踏まえても、人格説明ではなく作業契約を担う。
+- Guide/Worker の `ROLE.md` は少なくとも次の節を持つ。
+  - `Mission`
+  - `Primary Responsibilities`
+  - `Inputs`
+  - `Outputs`
+  - `Done Criteria`
+  - `Constraints`
+  - `Hand-off Rules`
+  - `Progress Voice`
+  - `Progress Note Triggers`
+- Gate は `ROLE.md` の代わりに `RUBRIC.md` を持つが、conversation-like progress log を成立させるために `message_for_user` のトーンは resident-facing worldbuilding と整合してよい。
+- `Progress Voice` は、その役が task progress log にどの温度と距離感で語るかを定義する。
+- `Progress Note Triggers` は、その役がどのイベントで log を残すかを定義する。
+- `ROLE.md` は `SOUL.md` の性格を理解したうえで、少なくとも「何を受け取り、何を返し、どの条件で次の役へ渡すか」を曖昧にしない。
 
 
 

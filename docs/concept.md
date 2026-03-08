@@ -145,4 +145,5 @@
 - Guide-driven Orchestrator: `PlanExecutionOrchestrator` は独立モジュールとして動くが、replan や結果解釈のような LLM が必要な判断では active Guide と同じ model / `SOUL.md` を使う。実行制御は Orchestrator、意味判断は Guide の頭脳で支える。
 
 - Task-centric Progress Log: task/job ごとに途中経過を追える進捗ログ。ユーザーは「依頼した task が今どうなっているか」を確認でき、見た目上は `Guide / 住人 / Gate` が語るが、内部では `Orchestrator` を含む実 actor を保持する。
+- Task Detail Conversation Log: task 一覧から詳細を開いた時、右列には `Guide / 住人 / 古参住人` のやり取りとして progress log が時系列表示される。管理人が住人へ託し、住人が途中経過をつぶやき、古参住人が助言や判定を返す流れが読めることを重視する。
 

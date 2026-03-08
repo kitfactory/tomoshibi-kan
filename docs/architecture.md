@@ -840,6 +840,23 @@ type TaskProgressLogEntry = {
 - `WorkspacePresenter` は内部の `actualActor` をそのまま前面表示せず、`displayActor + messageForUser` を通常表示の主材料にする。
 - `Event Log` や将来の debug view では `actualActor` と `displayActor` の両方を出し分けられるようにする。
 - `PlanExecutionOrchestrator` が内部で付与した progress comment も、通常 UX では Guide の進行メモとして見せてよい。
+- `TaskDetailPresenter` は task detail 右列に `Guide / 住人 / 古参住人` の conversation-like timeline を描画してよい。内部的には progress log entry の列だが、通常 UX では住人同士のやり取りとして読めることを優先する。
+
+### ROLE contract guidance
+- built-in resident rollout では、`ROLE.md` を personality file として使わず、作業契約として扱う。
+- `ROLE.md` の最小契約は次の 8 節とする。
+  - `Mission`
+  - `Primary Responsibilities`
+  - `Inputs`
+  - `Outputs`
+  - `Done Criteria`
+  - `Constraints`
+  - `Hand-off Rules`
+  - `Progress Voice`
+  - `Progress Note Triggers`
+- `Progress Voice` は `TaskDetailPresenter` が progress log を conversation-like timeline として見せる時の語り口の基準になる。
+- `Progress Note Triggers` は `PlanExecutionOrchestrator` または各 UseCase が progress log を append する判断材料になる。
+- `SOUL.md` が人格と気質を持ち、`ROLE.md` が task 入出力と hand-off 境界を固定する。この責務を混ぜない。
 
 
 

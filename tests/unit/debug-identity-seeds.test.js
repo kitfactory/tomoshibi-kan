@@ -16,20 +16,24 @@ test("getBuiltInDebugIdentitySeed returns guide debug content in Japanese", () =
   assert.match(seed.role, /管理人 Guide|管理人/);
   assert.match(seed.role, /trace \/ fix \/ verify/);
   assert.match(seed.role, /debug work|debug work へ橋渡し/);
+  assert.match(seed.role, /Progress Voice|Progress Note Triggers/);
+  assert.match(seed.role, /Hand-off Rules/);
   assert.deepEqual(seed.enabledSkillIds, ["codex-file-search", "browser-chrome"]);
 });
 
-test("getBuiltInDebugIdentitySeed returns gate rubric content in English", () => {
+test("getBuiltInDebugIdentitySeed returns gate rubric content in Japanese", () => {
   const seed = getBuiltInDebugIdentitySeed({
     id: "gate-core",
     role: "gate",
     skills: [],
-  }, "en");
+  }, "ja");
 
   assert.ok(seed);
-  assert.match(seed.soul, /senior resident|evidence-oriented/);
+  assert.match(seed.soul, /古参|悪くないと思うなぁ|本筋はたぶんそこじゃない/);
   assert.equal(typeof seed.role, "undefined");
-  assert.match(seed.rubric, /Decision Shape/);
+  assert.match(seed.rubric, /Review Goal/);
+  assert.match(seed.rubric, /Progress Voice/);
+  assert.match(seed.rubric, /Progress Note Triggers/);
 });
 
 test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
@@ -40,12 +44,16 @@ test("getBuiltInDebugIdentitySeed returns resident worker seeds", () => {
   assert.match(researcher.soul, /そこは違うと思います|かなり引っかかります/);
   assert.match(researcher.role, /「調べる人」/);
   assert.match(researcher.role, /file を編集しない/);
+  assert.match(researcher.role, /Progress Voice/);
+  assert.match(researcher.role, /Progress Note Triggers/);
   assert.match(maker.soul, /たぶん、いけます|ちょっと触ってみます/);
   assert.match(maker.role, /「作り手」/);
   assert.match(maker.role, /simple fix/);
+  assert.match(maker.role, /Hand-off Rules/);
   assert.match(writer.soul, /いったん、こう整理できます|言い換えると/);
   assert.match(writer.role, /「書く人」/);
   assert.match(writer.role, /Gate judgment/);
+  assert.match(writer.role, /Progress Voice/);
 });
 
 test("getBuiltInDebugIdentitySeed returns null for non built-in profile", () => {

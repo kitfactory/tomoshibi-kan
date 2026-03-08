@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-resident-role-rollout] built-in 5人の `ROLE.md` を resident set / task conversation log 方針に合わせ、`Mission / Inputs / Outputs / Done Criteria / Constraints / Hand-off / Progress Voice / Progress Note Triggers` を定義する
+- [x] [DR-20260308-resident-role-rollout] delta request/apply/verify/archive を実施し、built-in 5人の `ROLE.md` を最小更新する
+- [x] [SEED-20260308-role-strategy-for-task-conversation-log] task 詳細右列の住人会話ログを成立させるための `ROLE` 方針を concept/spec/architecture に同期する
+- [x] [DR-20260308-role-strategy-for-task-conversation-log] delta request/apply/verify/archive を実施し、`ROLE` の必須項目と task detail conversation log の位置づけを正本へ同期する
 - [x] [SEED-20260308-resident-set-v04-soul-align] `docs/tomoshibikan_resident_set_v0_4.md` に合わせて built-in 5人の `SOUL.md` を更新する
 - [x] [DR-20260308-resident-set-v04-soul-align] delta request/apply/verify/archive を実施し、built-in `SOUL.md` を resident set v0.4 準拠へ揃える
 - [x] [SEED-20260308-resident-set-remove-arranger] `整える人` を resident set と built-in 初期住人から外し、5人構成へ揃える
@@ -508,6 +512,8 @@
 - [x] [DR-20260306-guide-autonomous-check] 実モデルで Guide 単体確認を行い、`guide_chat` debug record と task assignment の所見を CLI で観測した
 - [x] [DR-20260307-resident-facing-ui-labels] `Pal List` / `Pal Settings` / `Add Pal` などの visible label と fallback 名を `住人` 系へ寄せ、E2E と docs 最小同期を通した
 - [x] [DR-20260308-resident-set-v04-soul-align] `docs/tomoshibikan_resident_set_v0_4.md` を git 管理に追加し、built-in 5人の `SOUL.md` を resident set v0.4 の性格・話し方へ同期した
+- [x] [DR-20260308-role-strategy-for-task-conversation-log] task detail 右列を `Guide / 住人 / 古参住人` の会話として見せる前提と、`ROLE.md` の必須項目 (`Mission / Inputs / Outputs / Done Criteria / Constraints / Hand-off / Progress Voice / Progress Note Triggers`) を concept/spec/architecture に同期した
+- [x] [DR-20260308-resident-role-rollout] built-in 5人の `ROLE.md / RUBRIC.md` を resident set v0.4 と task conversation log 方針に合わせて更新し、`Progress Voice / Progress Note Triggers` を含む作業契約へ揃えた
 
 
 
