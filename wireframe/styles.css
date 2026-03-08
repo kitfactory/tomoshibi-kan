@@ -612,6 +612,44 @@ body {
   background: linear-gradient(180deg, hsl(0 0% 100% / 0.98), hsl(214 12% 96% / 0.94));
 }
 
+.detail-conversation-log {
+  display: grid;
+  gap: 10px;
+}
+
+.detail-log-entry {
+  position: relative;
+  border-color: hsl(216 12% 78% / 0.84);
+  background: linear-gradient(180deg, hsl(0 0% 100% / 0.98), hsl(214 12% 96% / 0.94));
+}
+
+.detail-log-entry-guide {
+  border-color: hsl(31 34% 66% / 0.9);
+  background: linear-gradient(180deg, hsl(38 44% 97%), hsl(36 28% 93%));
+}
+
+.detail-log-entry-resident {
+  border-color: hsl(208 24% 70% / 0.9);
+  background: linear-gradient(180deg, hsl(210 34% 98%), hsl(212 24% 94%));
+}
+
+.detail-log-entry-gate {
+  border-color: hsl(214 10% 62% / 0.9);
+  background: linear-gradient(180deg, hsl(214 12% 94%), hsl(216 10% 89%));
+}
+
+.detail-log-action {
+  letter-spacing: 0.02em;
+}
+
+.detail-log-message {
+  color: hsl(220 18% 22%);
+}
+
+.detail-log-empty {
+  padding: 4px 0;
+}
+
 .task-detail-drawer .btn-sm.btn-outline {
   border-color: hsl(216 12% 68%);
   color: hsl(220 16% 28%);

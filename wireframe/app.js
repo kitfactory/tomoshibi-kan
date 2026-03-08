@@ -1140,6 +1140,7 @@ let events = [
 ];
 let progressLogEntries = [];
 let planArtifacts = [];
+let detailRenderToken = 0;
 
 function makeEvent(type, targetId, result, summary, timestamp) {
   eventSeq += 1;
@@ -7357,9 +7358,87 @@ function selectedTask() {
   return tasks.find((t) => t.id === selectedTaskId) || null;
 }
 
-function renderDetail() {
+function detailActorLabel(displayActor) {
+  const actor = normalizeText(displayActor).toLowerCase();
+  if (locale === "ja") {
+    if (actor === "guide") return "管理人";
+    if (actor === "gate") return "古参住人";
+    if (actor === "resident") return "住人";
+    return normalizeText(displayActor) || "住人";
+  }
+  if (actor === "guide") return "Guide";
+  if (actor === "gate") return "Gate";
+  if (actor === "resident") return "Resident";
+  return normalizeText(displayActor) || "Resident";
+}
+
+function detailActorToneClass(displayActor) {
+  const actor = normalizeText(displayActor).toLowerCase();
+  if (actor === "guide") return "detail-log-entry-guide";
+  if (actor === "gate") return "detail-log-entry-gate";
+  return "detail-log-entry-resident";
+}
+
+function detailActionLabel(actionType) {
+  const action = normalizeText(actionType).toLowerCase();
+  const labels = locale === "ja"
+    ? {
+      dispatch: "依頼",
+      worker_runtime: "作業",
+      to_gate: "見てもらう",
+      gate_review: "見立て",
+      resubmit: "再提出",
+      replan_required: "見直し",
+      plan_completed: "完了",
+    }
+    : {
+      dispatch: "Dispatch",
+      worker_runtime: "Work",
+      to_gate: "To Gate",
+      gate_review: "Review",
+      resubmit: "Resubmit",
+      replan_required: "Replan",
+      plan_completed: "Completed",
+    };
+  return labels[action] || normalizeText(actionType) || "-";
+}
+
+function detailStatusLabel(status) {
+  const normalized = normalizeText(status).toLowerCase();
+  if (normalized === "approved") return locale === "ja" ? "承認" : "Approved";
+  if (normalized === "rejected") return locale === "ja" ? "差し戻し" : "Rejected";
+  if (normalized === "pending") return locale === "ja" ? "保留" : "Pending";
+  if (normalized === "ok") return locale === "ja" ? "記録" : "Recorded";
+  return normalizeText(status) || "-";
+}
+
+function renderTaskConversationLog(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) {
+    return `<div class="detail-log-empty text-sm text-base-content/60">${escapeHtml(locale === "ja" ? "まだ会話ログはありません。" : "No conversation log yet.")}</div>`;
+  }
+  const ordered = [...entries].reverse();
+  return ordered.map((entry) => {
+    const actorLabel = detailActorLabel(entry.displayActor);
+    const actionLabel = detailActionLabel(entry.actionType);
+    const statusLabel = detailStatusLabel(entry.status);
+    const createdAt = normalizeText(entry.createdAt).replace("T", " ").replace("Z", "");
+    const message = normalizeText(entry.messageForUser) || "-";
+    return `<article class="detail-log-entry ${detailActorToneClass(entry.displayActor)} rounded-box border border-base-300 bg-base-100 p-3" data-detail-actor="${escapeHtml(normalizeText(entry.displayActor).toLowerCase() || "resident")}" data-detail-action="${escapeHtml(normalizeText(entry.actionType))}" data-detail-status="${escapeHtml(normalizeText(entry.status))}">
+      <div class="detail-log-meta flex flex-wrap items-center gap-2 text-xs text-base-content/60">
+        <span class="badge badge-outline badge-sm">${escapeHtml(actorLabel)}</span>
+        <span class="detail-log-action font-semibold text-base-content/70">${escapeHtml(actionLabel)}</span>
+        <span>${escapeHtml(statusLabel)}</span>
+        <span>${escapeHtml(createdAt || "-")}</span>
+      </div>
+      <div class="detail-log-message mt-2 text-sm leading-6">${escapeHtml(message)}</div>
+    </article>`;
+  }).join("");
+}
+
+async function renderDetail() {
   const drawer = document.getElementById("detailDrawer");
   const body = document.getElementById("detailBody");
+  const renderToken = ++detailRenderToken;
   const task = selectedTask();
   if (!task || workspaceTab !== "task") {
     drawer.classList.add("hidden");
@@ -7371,34 +7450,52 @@ function renderDetail() {
   drawer.setAttribute("data-detail-state", "open");
   body.innerHTML = `<div class="grid gap-3">
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <span class="text-xs text-base-content/60">${escapeHtml(locale === "ja" ? "プラン / タスク / 状態" : "Plan / Task / Status")}</span>
+          <div class="mt-1"><strong>${escapeHtml(task.planId || "-")}</strong> / ${escapeHtml(task.id)} / ${escapeHtml(tUi(STATUS_UI_ID[task.status]))}</div>
+        </div>
+        <span class="badge ${statusBadgeClass(task.status)} badge-sm">${escapeHtml(tUi(STATUS_UI_ID[task.status]))}</span>
+      </div>
+    </div>
+    <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("selectedTask")}</span>
-      <div><strong>${task.id}</strong> / ${task.title}</div>
+      <div><strong>${escapeHtml(task.id)}</strong> / ${escapeHtml(task.title)}</div>
     </div>
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("description")}</span>
-      <div>${task.description}</div>
+      <div>${escapeHtml(task.description)}</div>
     </div>
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("constraints")}</span>
-      <div>${task.constraintsCheckResult}</div>
+      <div>${escapeHtml(task.constraintsCheckResult)}</div>
     </div>
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("evidence")}</span>
-      <div>${task.evidence}</div>
+      <div>${escapeHtml(task.evidence)}</div>
       <span class="mt-2 inline-block text-xs text-base-content/60">${tDyn("replay")}</span>
-      <div>${task.replay}</div>
+      <div>${escapeHtml(task.replay)}</div>
     </div>
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("gateDecision")}</span>
-      <div>${task.gateResult?.decision || "-"}</div>
+      <div>${escapeHtml(task.gateResult?.decision || "-")}</div>
       <span class="mt-2 inline-block text-xs text-base-content/60">${tDyn("gateReason")}</span>
-      <div>${task.gateResult?.reason || "-"}</div>
+      <div>${escapeHtml(task.gateResult?.reason || "-")}</div>
       <span class="mt-2 inline-block text-xs text-base-content/60">${tDyn("gateFixes")}</span>
-      <div>${task.gateResult?.fixes?.length ? task.gateResult.fixes.join("<br>") : "-"}</div>
+      <div>${task.gateResult?.fixes?.length ? task.gateResult.fixes.map((item) => escapeHtml(item)).join("<br>") : "-"}</div>
     </div>
     <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
       <span class="text-xs text-base-content/60">${tDyn("fixCondition")}</span>
-      <div>${task.fixCondition}</div>
+      <div>${escapeHtml(task.fixCondition)}</div>
+    </div>
+    <div class="detail-card rounded-box border border-base-300 bg-base-100 p-3">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs text-base-content/60">${escapeHtml(locale === "ja" ? "館のやり取り" : "Conversation Log")}</span>
+        <span class="text-xs text-base-content/50">${escapeHtml(locale === "ja" ? "管理人 / 住人 / 古参住人" : "Guide / Resident / Gate")}</span>
+      </div>
+      <div id="detailConversationLog" class="detail-conversation-log mt-3">
+        <div class="detail-log-empty text-sm text-base-content/60">${escapeHtml(locale === "ja" ? "会話ログを読み込んでいます..." : "Loading conversation log...")}</div>
+      </div>
     </div>
     <div class="flex flex-wrap gap-2">
       <button class="btn btn-sm btn-outline" id="detailStart">${tDyn("start")}</button>
@@ -7407,6 +7504,16 @@ function renderDetail() {
       <button class="btn btn-sm btn-primary" id="detailGate">${tDyn("openGate")}</button>
     </div>
   </div>`;
+  const logEl = document.getElementById("detailConversationLog");
+  if (logEl) {
+    const entries = await listTaskProgressLogEntriesWithFallback({
+      targetKind: "task",
+      targetId: task.id,
+      limit: 30,
+    });
+    if (renderToken !== detailRenderToken || selectedTaskId !== task.id || workspaceTab !== "task") return;
+    logEl.innerHTML = renderTaskConversationLog(entries);
+  }
   bindDetailButtons(task);
 }
 

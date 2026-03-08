@@ -1,5 +1,9 @@
 ﻿# plan.md�E�忁E��書く：最新版！E
 # current
+- [x] [SEED-20260308-task-detail-conversation-ui] タスク一覧から開く右列を、`Guide / 住人 / 古参住人` の会話として読める task detail conversation log UI に改修する
+- [x] [DR-20260308-task-detail-conversation-ui] delta request/apply/verify/archive を実施し、task detail 右列の会話ログ UI を最小実装する
+- [x] [SEED-20260308-resident-microtests] 各住人が `SOUL/ROLE` に沿った想定動作をするかを、小さな resident microtests で確認する
+- [x] [DR-20260308-resident-microtests] delta request/apply/verify/archive を実施し、管理人 / 古参 / 調べる人 / 作り手 / 書く人 の小テストを追加する
 - [x] [SEED-20260308-built-in-role-sync-verify] Settings の `built-in 住人定義を同期` で最新 `ROLE.md / RUBRIC.md` が workspace 側へ入ることを E2E で確認する
 - [x] [DR-20260308-built-in-role-sync-verify] delta request/apply/verify/archive を実施し、built-in role sync の verify を archive まで閉じる
 - [x] [SEED-20260308-resident-role-rollout] built-in 5人の `ROLE.md` を resident set / task conversation log 方針に合わせ、`Mission / Inputs / Outputs / Done Criteria / Constraints / Hand-off / Progress Voice / Progress Note Triggers` を定義する
@@ -494,6 +498,8 @@
 - [ ] [SEED-20260306-full-loop-autonomous-check] Guide -> Orchestrator -> Pal -> Gate の自律ループを通しで確認する
 
 # archive
+- [x] [DR-20260308-resident-microtests] built-in 5人について resident-specific microtests を追加し、character cue と `Progress Voice / Progress Note Triggers / Hand-off Rules / Done Criteria` の最低限を固定した
+- [x] [DR-20260308-task-detail-conversation-ui] task detail 右列に progress log を `Guide / 住人 / 古参住人` の会話タイムラインとして表示し、dispatch / gate flow / replan_required を読める最小 UI を追加した
 - [x] [SEED-20260307-guide-codex-cli-autonomous-check] Guide を `Codex` CLI runtime に固定した real runner を回し、Plan 作成と task materialization の可否を観測した
 - [x] [DR-20260307-guide-codex-cli-autonomous-check] delta request/apply/verify/archive を実施し、Guide Codex CLI autonomous check を archive まで閉じた
 - [x] [SEED-20260307-guide-codex-cli-runtime] Guide が `Codex` CLI tool runtime を設定した時に send 前 validation で落ちず、core runtime bridge 経由で実行できるようにした

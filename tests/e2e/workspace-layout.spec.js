@@ -712,6 +712,44 @@ for (const viewport of VIEWPORTS) {
       }).toContain("gate_review:gate:Gate:approved");
     });
 
+    test("task detail drawer renders conversation log timeline", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "plan_ready",
+            reply: "実行プランを作成しました。",
+            plan: {
+              goal: "保存不具合を解消する",
+              completionDefinition: "保存と再読み込みが成功する",
+              constraints: ["既存フローを壊さない"],
+              tasks: [
+                {
+                  title: "再現確認",
+                  description: "保存不具合の再現手順を確認する",
+                  requiredSkills: ["browser-chrome", "codex-file-search"],
+                },
+              ],
+            },
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "設定保存の不具合を調べたい");
+      await page.click("#guideSend");
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 1);
+
+      await page.click('[data-action="detail"][data-task-id="TASK-004"]');
+      await expect(page.locator("#detailConversationLog")).toBeVisible();
+      await expect(page.locator('#detailConversationLog [data-detail-actor="guide"]')).toContainText(/管理人|Guide/);
+      await expect(page.locator('#detailConversationLog [data-detail-action="dispatch"]')).toContainText(/依頼|Dispatch/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/割り当てました|dispatched to/);
+    });
+
     test("guide progress query reports completed task without model call", async ({ page }) => {
       await page.evaluate(() => {
         window.__guideProgressModelCalled = false;
