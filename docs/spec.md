@@ -751,6 +751,10 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - renderer は progress log を direct DB access せず、Electron bridge 経由で append/query する。
 - Guide はユーザーが task/job の進捗確認を求めた時、progress log と現行 board state だけを使ってローカル reply を返してよい。
 - minimal 実装では、明示 ID (`TASK-xxx`, `JOB-xxx`) がある時はその target を優先し、無ければ最新 progress entry を参照する。
+- Guide は定期実行やイベント起点の継続作業要求を受けた時、`plan_ready` の `plan.jobs[]` に分解してよい。
+- `plan.jobs[]` を含む approved `Plan artifact` は `PlanExecutionOrchestrator` を通じて Cron Board へ materialize されること。
+- `plan.jobs[]` の各要素は少なくとも `title`, `description`, `schedule`, `instruction` を持ち、必要なら `expectedOutput`, `requiredSkills`, `reviewFocus`, `assigneePalId` を持ってよい。
+- 新規 project 前提の依頼で project context が未設定なら、Guide は Project タブで対象 project を設定するよう案内し、task/job の開始や materialize を行ってはならない。
 
 ## 追加仕様 (2026-03-08): Resident ROLE Strategy
 

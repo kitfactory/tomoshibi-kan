@@ -834,6 +834,9 @@ CREATE TABLE orchestration_debug_runs (
 - `PlanExecutionOrchestrator` が LLM に依存する意味判断を行う場合、`activeGuideProfileId` から解決した Guide の model / `SOUL.md` / `ROLE.md` を使う。これを `GuideReasoningContext` として扱う。
 - `GuideReasoningContext` を使う対象は、少なくとも `replan`, `outcome interpretation`, `user-facing progress summary` のような意味判断に限る。
 - `dispatch`, `retry count`, `timeout`, `gate submit`, `state machine` は `GuideReasoningContext` に依存せず、Orchestrator core の責務に留める。
+- `GuideConversationUseCase` は recurring / event-driven work を `plan.jobs[]` として返してよい。
+- `PlanExecutionOrchestrator` は `Plan artifact` の `tasks[]` だけでなく `jobs[]` も materialize 対象とし、Task Board と Cron Board をそれぞれ更新する。
+- Guide が新規 project 前提の依頼を受け、project context が未設定なら、model 呼び出し前に onboarding guard を評価し、Project タブへの案内 reply を返して Orchestrator を開始しない。
 
 ### Plan Artifact
 ```ts

@@ -121,3 +121,50 @@ test("PlanOrchestrator prefers guide-driven routing when available and falls bac
   assert.equal(result.createdTasks[0].explanation.decisionSource, "guide_routing");
   assert.equal(result.createdTasks[0].explanation.decisionConfidence, "high");
 });
+
+test("PlanOrchestrator materializes cron jobs from approved plan artifact", async () => {
+  const api = loadPlanOrchestrator();
+  const result = await api.materializePlanArtifact({
+    artifact: {
+      planId: "PLAN-ART-003",
+      status: "approved",
+      plan: {
+        tasks: [],
+        jobs: [
+          {
+            title: "毎朝 Settings 保存まわりを確認する",
+            description: "毎朝の保存確認を行う",
+            schedule: "0 9 * * 1-5",
+            instruction: "保存と reload 復元を確認する",
+            requiredSkills: ["browser-chrome"],
+            assigneePalId: "pal-alpha",
+          },
+        ],
+      },
+    },
+    workers: [
+      { id: "pal-alpha" },
+      { id: "pal-beta" },
+    ],
+    nextTaskSequence: 1,
+    nextJobSequence: 4,
+    buildJobRecord(input) {
+      return {
+        id: input.id,
+        planId: input.planId,
+        title: input.title,
+        description: input.description,
+        schedule: input.schedule,
+        instruction: input.instruction,
+        palId: input.palId,
+      };
+    },
+  });
+
+  assert.equal(result.createdTasks.length, 0);
+  assert.equal(result.createdJobs.length, 1);
+  assert.equal(result.createdJobs[0].job.id, "JOB-004");
+  assert.equal(result.createdJobs[0].workerId, "pal-alpha");
+  assert.equal(result.createdJobs[0].job.schedule, "0 9 * * 1-5");
+  assert.equal(result.nextJobSequence, 5);
+});

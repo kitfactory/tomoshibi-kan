@@ -509,6 +509,62 @@ for (const viewport of VIEWPORTS) {
       await expect(latestTask).toContainText(/Assigned|割り当て済み/);
     });
 
+    test("guide chat can materialize cron jobs from approved plan", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeJobCount = await page.locator('[data-job-row]').count();
+      await page.evaluate(() => {
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "plan_ready",
+            reply: "定期確認の依頼としてまとめました。",
+            plan: {
+              goal: "毎朝の保存確認を回す",
+              completionDefinition: "毎朝の確認結果が残る",
+              constraints: ["Project は設定済み"],
+              tasks: [],
+              jobs: [
+                {
+                  title: "毎朝 Settings 保存まわりを確認する",
+                  description: "毎朝の保存確認を行う",
+                  schedule: "0 9 * * 1-5",
+                  instruction: "Settings を開いて保存と reload 復元を確認する",
+                  expectedOutput: "確認結果",
+                  requiredSkills: ["browser-chrome"],
+                  reviewFocus: ["consistency"],
+                  assigneePalId: "pal-alpha",
+                },
+              ],
+            },
+          }),
+          toolCalls: [],
+        });
+      });
+      await page.fill("#guideInput", "毎営業日の朝に保存確認を回したい");
+      await page.click("#guideSend");
+      await page.click('[data-tab="job"]');
+      await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount + 1);
+      const latestJob = page.locator('[data-job-row]').last();
+      await expect(latestJob).toContainText(/毎朝 Settings 保存まわりを確認する/);
+      await expect(latestJob).toContainText(/pal-alpha/);
+    });
+
+    test("guide prompts project setup before starting a new project request", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      const beforeJobCount = await page.locator('[data-job-row]').count();
+      await page.fill("#guideInput", "新規プロジェクトを立ち上げて、最初の依頼を整理したい");
+      await page.click("#guideSend");
+      await expect(page.locator('[data-tab="project"]')).toHaveClass(/tab-active/);
+      await expect(page.locator("#guideChat")).toContainText(/Project/);
+      await expect(page.locator("#guideChat")).toContainText(/プロジェクト/);
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+      await page.click('[data-tab="job"]');
+      await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount);
+    });
+
     test("guide chat keeps dialog open when plan is not ready", async ({ page }) => {
       await page.click('[data-tab="guide"]');
       const beforeTaskCount = await page.locator('[data-task-row]').count();

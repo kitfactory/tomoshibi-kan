@@ -108,6 +108,25 @@
     };
   }
 
+  function normalizeGuidePlanJob(job, index) {
+    if (!job || typeof job !== "object" || Array.isArray(job)) return null;
+    const title = normalizeString(job.title) || `Job ${index + 1}`;
+    const description = normalizeString(job.description);
+    const schedule = normalizeString(job.schedule);
+    const instruction = normalizeString(job.instruction);
+    if (!description || !schedule || !instruction) return null;
+    return {
+      title,
+      description,
+      schedule,
+      instruction,
+      expectedOutput: normalizeString(job.expectedOutput),
+      requiredSkills: uniqueList(job.requiredSkills),
+      reviewFocus: uniqueList(job.reviewFocus),
+      assigneePalId: normalizeString(job.assigneePalId),
+    };
+  }
+
   function hasExplicitDebugBreakdown(reply) {
     const text = normalizeString(reply).toLowerCase();
     if (!text) return false;
@@ -210,12 +229,17 @@
       .map((task, index) => normalizeGuidePlanTask(task, index))
       .filter(Boolean)
       .slice(0, 5), reply, options);
-    if (!goal || !completionDefinition || tasks.length === 0) return null;
+    const jobs = (Array.isArray(plan.jobs) ? plan.jobs : [])
+      .map((job, index) => normalizeGuidePlanJob(job, index))
+      .filter(Boolean)
+      .slice(0, 5);
+    if (!goal || !completionDefinition || (tasks.length === 0 && jobs.length === 0)) return null;
     return {
       goal,
       completionDefinition,
       constraints,
       tasks,
+      jobs,
     };
   }
 
@@ -293,7 +317,7 @@
                 {
                   type: "object",
                   additionalProperties: false,
-                  required: ["goal", "completionDefinition", "constraints", "tasks"],
+                  required: ["goal", "completionDefinition", "constraints", "tasks", "jobs"],
                   properties: {
                     goal: { type: "string" },
                     completionDefinition: { type: "string" },
@@ -330,6 +354,39 @@
                         },
                       },
                     },
+                    jobs: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        additionalProperties: false,
+                        required: [
+                          "title",
+                          "description",
+                          "schedule",
+                          "instruction",
+                          "expectedOutput",
+                          "requiredSkills",
+                          "reviewFocus",
+                          "assigneePalId",
+                        ],
+                        properties: {
+                          title: { type: "string" },
+                          description: { type: "string" },
+                          schedule: { type: "string" },
+                          instruction: { type: "string" },
+                          expectedOutput: { type: "string" },
+                          requiredSkills: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                          reviewFocus: {
+                            type: "array",
+                            items: { type: "string" },
+                          },
+                          assigneePalId: { type: "string" },
+                        },
+                      },
+                    },
                   },
                 },
               ],
@@ -344,14 +401,14 @@
     if (localeValue === "en") {
       return [
         "Return compact JSON only. Do not use markdown fences.",
-        'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+        'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
         "Use only the status values defined in the schema.",
         "Return all required fields. Do not add extra keys.",
       ].join("\n");
     }
     return [
       "JSONのみを返す。Markdown や code fence は使わない。",
-      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
       "status は schema に定義された値だけを使う。",
       "必須フィールドをすべて返し、余分なキーを追加しない。",
     ].join("\n");
@@ -401,6 +458,29 @@
             assigneePalId: "pal-delta",
           },
         ],
+        jobs: [],
+      },
+    };
+    const exampleCronJa = {
+      status: "plan_ready",
+      reply: "この内容で定期確認の依頼としてまとめます。冬坂が朝の確認を受け持ちます。",
+      plan: {
+        goal: "毎営業日の朝に保存まわりの確認を定期実行する",
+        completionDefinition: "毎朝の確認結果が job として残り、異常時に気づける",
+        constraints: ["Project が設定済みである", "既存の Cron フローに合わせる"],
+        tasks: [],
+        jobs: [
+          {
+            title: "毎朝 Settings 保存まわりを確認する",
+            description: "冬坂が毎営業日の朝に Settings の保存と reload 復元を確認し、異常があれば記録する。",
+            schedule: "0 9 * * 1-5",
+            instruction: "Settings を開き、model を追加して Save し、reload 後も model が残るか確認する。異常があれば再現条件をメモする。",
+            expectedOutput: "毎朝の確認結果と異常時の再現メモ",
+            requiredSkills: ["browser-chrome", "codex-file-read"],
+            reviewFocus: ["consistency", "repro"],
+            assigneePalId: "pal-alpha",
+          },
+        ],
       },
     };
     const exampleZeroEn = {
@@ -446,6 +526,29 @@
             assigneePalId: "pal-delta",
           },
         ],
+        jobs: [],
+      },
+    };
+    const exampleCronEn = {
+      status: "plan_ready",
+      reply: "I will turn this into a recurring request. Fuyusaka will handle the morning check.",
+      plan: {
+        goal: "Run a recurring morning check for the settings save flow",
+        completionDefinition: "The morning check is scheduled as a job and leaves a record when something goes wrong",
+        constraints: ["The project is already configured", "Use the existing cron flow"],
+        tasks: [],
+        jobs: [
+          {
+            title: "Run the morning settings save check",
+            description: "Fuyusaka checks the settings save and reload flow every weekday morning and records any anomaly.",
+            schedule: "0 9 * * 1-5",
+            instruction: "Open Settings, add a model, click Save, reload, and confirm the model still remains. Record repro notes if it fails.",
+            expectedOutput: "daily verification note and repro memo when it fails",
+            requiredSkills: ["browser-chrome", "codex-file-read"],
+            reviewFocus: ["consistency", "repro"],
+            assigneePalId: "pal-alpha",
+          },
+        ],
       },
     };
     if (localeValue === "en") {
@@ -455,6 +558,7 @@
         `Example 1 user: Settings save feels wrong. What should we check first?\nExample 1 assistant: ${JSON.stringify(exampleOneEn)}`,
         `Example 2 user: After Save and reload, the model disappears. Split it into Fuyusaka / Kuze / Shiramine tasks.\nExample 2 assistant: ${JSON.stringify(exampleTwoEn)}`,
         `Example 3 user: The Save button in Settings can be pressed but the result is not reflected. Repro: open Settings, add a model, press Save, then reload. Expected outcome: the model remains after reload. Split it into trace / fix / verify tasks.\nExample 3 assistant: ${JSON.stringify(exampleTwoEn)}`,
+        `Example 4 user: I want the settings save check to run every weekday morning.\nExample 4 assistant: ${JSON.stringify(exampleCronEn)}`,
       ].join("\n\n");
     }
     return [
@@ -463,6 +567,7 @@
       `例1 ユーザー: Settings の保存が変です。まずどこから見ればいい？\n例1 Guide: ${JSON.stringify(exampleOneJa)}`,
       `例2 ユーザー: Save 後に reload すると model が消えます。冬坂 / 久瀬 / 白峰 の Task に分けて進めたいです。\n例2 Guide: ${JSON.stringify(exampleTwoJa)}`,
       `例3 ユーザー: Settingsタブの保存ボタンが押せるのに保存が反映されない。再現手順は Settings を開いて model を追加し Save を押して reload、期待結果は reload 後も model が残ること。trace / fix / verify の Task に分けて進めたい。\n例3 Guide: ${JSON.stringify(exampleTwoJa)}`,
+      `例4 ユーザー: 毎営業日の朝に保存まわりの確認を回したいです。\n例4 Guide: ${JSON.stringify(exampleCronJa)}`,
     ].join("\n\n");
   }
 

@@ -3481,6 +3481,14 @@ function nextTaskSequenceNumber() {
   }, 0) + 1;
 }
 
+function nextJobSequenceNumber() {
+  return jobs.reduce((max, job) => {
+    const matched = String(job?.id || "").match(/^JOB-(\d+)$/i);
+    if (!matched) return max;
+    return Math.max(max, Number(matched[1] || 0));
+  }, 0) + 1;
+}
+
 async function resolveWorkerAssignmentProfiles() {
   const workers = palProfiles.filter((pal) => pal.role === "worker");
   if (workers.length === 0) return [];
@@ -3769,14 +3777,17 @@ async function createPlannedTasksFromGuideRequest(userText) {
 async function createPlannedTasksFromGuidePlan(plan, options = {}) {
   const normalizedPlan = plan && typeof plan === "object" ? plan : null;
   const taskList = Array.isArray(normalizedPlan?.tasks) ? normalizedPlan.tasks : [];
-  if (taskList.length === 0) return { created: 0 };
+  const jobList = Array.isArray(normalizedPlan?.jobs) ? normalizedPlan.jobs : [];
+  if (taskList.length === 0 && jobList.length === 0) return { created: 0 };
   const planId = normalizeText(options.planId) || "PLAN-001";
   const workers = await resolveWorkerAssignmentProfiles();
   if (workers.length === 0) return { created: 0 };
   const routingApi = resolveAgentRoutingApi();
   const assignmentCounts = new Map(workers.map((worker) => [worker.id, 0]));
-  let sequence = nextTaskSequenceNumber();
-  const created = [];
+  let taskSequence = nextTaskSequenceNumber();
+  let jobSequence = nextJobSequenceNumber();
+  const createdTasks = [];
+  const createdJobs = [];
 
   taskList.forEach((taskPlan, index) => {
     const explicitWorker = workers.find((worker) => worker.id === normalizeText(taskPlan?.assigneePalId)) || null;
@@ -3822,8 +3833,8 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     if (!workerId) return;
 
     assignmentCounts.set(workerId, (assignmentCounts.get(workerId) || 0) + 1);
-    const id = `TASK-${String(sequence).padStart(3, "0")}`;
-    sequence += 1;
+    const id = `TASK-${String(taskSequence).padStart(3, "0")}`;
+    taskSequence += 1;
     const task = createTaskRecord({
       id,
       planId,
@@ -3832,7 +3843,7 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
       palId: workerId,
     });
     tasks.push(task);
-    created.push(task);
+    createdTasks.push(task);
     const routingExplanation = formatWorkerRoutingExplanation(explanation);
     const summaryJa = routingExplanation.ja
       ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
@@ -3855,12 +3866,96 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     });
   });
 
-  if (created.length > 0 && !selectedTaskId) {
-    selectedTaskId = created[0].id;
+  jobList.forEach((jobPlan, index) => {
+    const explicitWorker = workers.find((worker) => worker.id === normalizeText(jobPlan?.assigneePalId)) || null;
+    const jobDraft = {
+      title: normalizeText(jobPlan?.title) || `Job ${index + 1}`,
+      description: normalizeText(jobPlan?.description),
+      instruction: normalizeText(jobPlan?.instruction),
+    };
+    if (!jobDraft.description || !jobDraft.instruction) return;
+
+    let workerId = normalizeText(explicitWorker?.id);
+    let explanation = null;
+    if (workerId) {
+      explanation = {
+        matchedRoleTerms: ["explicit_assignee"],
+        matchedResidentFocus: [],
+        matchedPreferredOutputs: [],
+        matchedSkills: [],
+      };
+    } else if (routingApi && typeof routingApi.selectWorkerForTask === "function") {
+      const selected = routingApi.selectWorkerForTask({
+        taskDraft: {
+          title: jobDraft.title,
+          description: `${jobDraft.description}\n${jobDraft.instruction}`,
+        },
+        workers,
+        assignmentCounts,
+        requiredSkills: Array.isArray(jobPlan?.requiredSkills) ? jobPlan.requiredSkills : [],
+      });
+      workerId = normalizeText(selected?.workerId);
+      explanation = {
+        matchedSkills: Array.isArray(selected?.matchedSkills) ? selected.matchedSkills : [],
+        matchedResidentFocus: Array.isArray(selected?.matchedResidentFocus) ? selected.matchedResidentFocus : [],
+        matchedPreferredOutputs: Array.isArray(selected?.matchedPreferredOutputs) ? selected.matchedPreferredOutputs : [],
+        matchedRoleTerms: Array.isArray(selected?.matchedRoleTerms) ? selected.matchedRoleTerms : [],
+      };
+    }
+    if (!workerId) {
+      workerId = normalizeText(workers[index % workers.length]?.id);
+      explanation = {
+        matchedSkills: [],
+        matchedResidentFocus: [],
+        matchedPreferredOutputs: [],
+        matchedRoleTerms: [],
+      };
+    }
+    if (!workerId) return;
+
+    assignmentCounts.set(workerId, (assignmentCounts.get(workerId) || 0) + 1);
+    const id = `JOB-${String(jobSequence).padStart(3, "0")}`;
+    jobSequence += 1;
+    const job = createJobRecord({
+      id,
+      planId,
+      title: jobDraft.title,
+      description: jobDraft.description,
+      instruction: jobDraft.instruction,
+      schedule: normalizeText(jobPlan?.schedule),
+      palId: workerId,
+    });
+    jobs.push(job);
+    createdJobs.push(job);
+    const routingExplanation = formatWorkerRoutingExplanation(explanation);
+    const summaryJa = routingExplanation.ja
+      ? `${job.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
+      : `${job.id} を ${workerId} に割り当てました。`;
+    const summaryEn = routingExplanation.en
+      ? `${job.id} dispatched to ${workerId} (${routingExplanation.en}).`
+      : `${job.id} dispatched to ${workerId}.`;
+    appendEvent("dispatch", job.id, "ok", summaryJa, summaryEn);
+    void appendTaskProgressLogForTarget("job", job.id, "dispatch", {
+      planId,
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: summaryJa,
+      messageEn: summaryEn,
+      payload: {
+        workerId,
+        routingExplanation,
+      },
+    });
+  });
+
+  if (createdTasks.length > 0 && !selectedTaskId) {
+    selectedTaskId = createdTasks[0].id;
   }
   renderTaskBoard();
+  renderJobBoard();
   writeBoardStateSnapshot();
-  return { created: created.length };
+  return { created: createdTasks.length + createdJobs.length, createdTasks, createdJobs };
 }
 
 async function materializeApprovedPlanArtifact(artifact) {
@@ -3882,11 +3977,14 @@ async function materializeApprovedPlanArtifact(artifact) {
   const result = await orchestratorApi.materializePlanArtifact({
     artifact,
     workers,
-    nextSequence: nextTaskSequenceNumber(),
+    nextTaskSequence: nextTaskSequenceNumber(),
+    nextJobSequence: nextJobSequenceNumber(),
     routingApi,
     buildTaskRecord: (input) => createTaskRecord(input),
+    buildJobRecord: (input) => createJobRecord(input),
   });
   const createdTasks = Array.isArray(result?.createdTasks) ? result.createdTasks : [];
+  const createdJobs = Array.isArray(result?.createdJobs) ? result.createdJobs : [];
   const created = [];
   createdTasks.forEach((entry) => {
     const task = entry?.task;
@@ -3935,10 +4033,58 @@ async function materializeApprovedPlanArtifact(artifact) {
       },
     });
   });
+  createdJobs.forEach((entry) => {
+    const job = entry?.job;
+    if (!job || typeof job !== "object") return;
+    jobs.push(job);
+    created.push(job);
+    const workerId = normalizeText(entry?.workerId || job.palId);
+    const routingExplanation = formatWorkerRoutingExplanation(entry?.explanation);
+    const rerouteFromWorkerId = normalizeText(entry?.explanation?.rerouteFromWorkerId);
+    const shouldLogReroute = normalizeText(entry?.explanation?.fallbackAction) === "reroute" && rerouteFromWorkerId && rerouteFromWorkerId !== workerId;
+    if (shouldLogReroute) {
+      const rerouteMessageJa = `${job.id} は ${rerouteFromWorkerId} ではなく ${workerId} に振り直しました。`;
+      const rerouteMessageEn = `${job.id} was rerouted from ${rerouteFromWorkerId} to ${workerId}.`;
+      appendEvent("dispatch", job.id, "reroute", rerouteMessageJa, rerouteMessageEn);
+      void appendTaskProgressLogForTarget("job", job.id, "reroute", {
+        planId: normalizedPlanId,
+        actualActor: "orchestrator",
+        displayActor: "Guide",
+        status: "ok",
+        messageJa: rerouteMessageJa,
+        messageEn: rerouteMessageEn,
+        payload: {
+          fromWorkerId: rerouteFromWorkerId,
+          workerId,
+          routingExplanation,
+        },
+      });
+    }
+    const summaryJa = routingExplanation.ja
+      ? `${job.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
+      : `${job.id} を ${workerId} に割り当てました。`;
+    const summaryEn = routingExplanation.en
+      ? `${job.id} dispatched to ${workerId} (${routingExplanation.en}).`
+      : `${job.id} dispatched to ${workerId}.`;
+    appendEvent("dispatch", job.id, "ok", summaryJa, summaryEn);
+    void appendTaskProgressLogForTarget("job", job.id, "dispatch", {
+      planId: normalizedPlanId,
+      actualActor: "orchestrator",
+      displayActor: "Guide",
+      status: "ok",
+      messageJa: summaryJa,
+      messageEn: summaryEn,
+      payload: {
+        workerId,
+        routingExplanation,
+      },
+    });
+  });
   if (created.length > 0 && !selectedTaskId) {
     selectedTaskId = created[0].id;
   }
   renderTaskBoard();
+  renderJobBoard();
   writeBoardStateSnapshot();
   return { created: created.length };
 }
@@ -4027,6 +4173,27 @@ async function executeGuideDrivenReplanForTarget(targetKind, target, gateResult)
   return {
     nextPlanId: normalizeText(nextArtifact?.planId),
     createdCount: Number(created?.created || 0),
+  };
+}
+
+function createJobRecord(input) {
+  return {
+    id: input.id,
+    planId: normalizeText(input?.planId) || "PLAN-001",
+    title: input.title,
+    description: input.description,
+    palId: input.palId,
+    schedule: normalizeText(input?.schedule) || "-",
+    instruction: normalizeText(input?.instruction) || "-",
+    status: "assigned",
+    updatedAt: formatNow(),
+    decisionSummary: "-",
+    fixCondition: "-",
+    gateResult: buildGateResultRecord("none", ""),
+    lastRunAt: "-",
+    evidence: "-",
+    replay: "-",
+    gateProfileId: normalizeText(input?.gateProfileId),
   };
 }
 
@@ -5688,6 +5855,27 @@ function buildGuideModelFailedPrompt() {
   };
 }
 
+function isNewProjectIntent(text) {
+  const normalized = normalizeText(text).toLowerCase();
+  if (!normalized) return false;
+  return /新規プロジェクト|新しいプロジェクト|新しい企画|新規案件|new project|start a project|kick off a project/.test(normalized);
+}
+
+function hasGuideProjectContext(context) {
+  if (!context || typeof context !== "object") return false;
+  if (Array.isArray(context.references) && context.references.length > 0) return true;
+  const focus = context.focus;
+  if (!focus) return false;
+  return normalizeText(focus.id) !== "project-tomoshibi-kan";
+}
+
+function buildGuideProjectSetupReply() {
+  if (locale === "en") {
+    return "I can help once the project is set up.\n\n- Open the **Project** tab first\n- Add the new project or target directory\n- If needed, switch focus to that project\n\nWhen that is ready, tell me what you want to do in that project and I will turn it into a request.";
+  }
+  return "その依頼は、まず **Project** タブで対象のプロジェクトを設定してから進めるのがよさそうです。\n\n- 先に **Project** タブを開く\n- 新しいプロジェクトや対象ディレクトリを追加する\n- 必要ならそのプロジェクトを focus に切り替える\n\n準備ができたら、そのプロジェクトで何をしたいかを教えてください。そこから依頼の形に整えます。";
+}
+
 async function sendGuideMessage() {
   if (guideSendInFlight) return;
   const input = document.getElementById("guideInput");
@@ -5743,6 +5931,22 @@ async function sendGuideMessage() {
     input.value = "";
     closeGuideMentionMenu();
     renderGuideChat();
+    setMessage("MSG-PPH-0009");
+    return;
+  }
+  if (isNewProjectIntent(text) && !hasGuideProjectContext(modelInput.context)) {
+    guideMessages.push({
+      timestamp: formatNow().slice(11),
+      sender: "guide",
+      text: {
+        ja: buildGuideProjectSetupReply(),
+        en: buildGuideProjectSetupReply(),
+      },
+    });
+    input.value = "";
+    closeGuideMentionMenu();
+    renderGuideChat();
+    setWorkspaceTab("project");
     setMessage("MSG-PPH-0009");
     return;
   }

@@ -55,6 +55,37 @@ test("parseGuidePlanResponse normalizes valid plan_ready payload", () => {
   assert.equal(parsed.status, "plan_ready");
   assert.equal(parsed.plan.goal, "設定画面の保存不具合を調査する");
   assert.deepEqual(parsed.plan.tasks[0].requiredSkills, ["browser-chrome", "codex-file-search"]);
+  assert.deepEqual(parsed.plan.jobs, []);
+});
+
+test("parseGuidePlanResponse accepts jobs-only plan_ready payload", () => {
+  const parsed = parseGuidePlanResponse(JSON.stringify({
+    status: "plan_ready",
+    reply: "定期確認の依頼としてまとめます。",
+    plan: {
+      goal: "毎朝の保存確認を定期実行する",
+      completionDefinition: "確認結果が job として残る",
+      constraints: ["Project は設定済み"],
+      tasks: [],
+      jobs: [
+        {
+          title: "毎朝 Settings 保存まわりを確認する",
+          description: "毎朝の保存確認を行う",
+          schedule: "0 9 * * 1-5",
+          instruction: "保存と reload 復元を確認する",
+          expectedOutput: "確認結果",
+          requiredSkills: ["browser-chrome"],
+          reviewFocus: ["consistency"],
+          assigneePalId: "pal-alpha",
+        },
+      ],
+    },
+  }));
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.status, "plan_ready");
+  assert.equal(parsed.plan.tasks.length, 0);
+  assert.equal(parsed.plan.jobs.length, 1);
+  assert.equal(parsed.plan.jobs[0].schedule, "0 9 * * 1-5");
 });
 
 test("parseGuidePlanResponse recovers empty reply for valid plan_ready payload", () => {
@@ -290,6 +321,8 @@ test("buildGuidePlanResponseFormat returns json_schema contract", () => {
   assert.equal(responseFormat.type, "json_schema");
   assert.equal(responseFormat.json_schema.name, "guide_plan_response");
   assert.equal(responseFormat.json_schema.strict, true);
+  assert.match(JSON.stringify(responseFormat), /"jobs"/);
+  assert.match(JSON.stringify(responseFormat), /"schedule"/);
 });
 
 test("buildGuidePlanFewShotExamples includes recommendation and short closing examples", () => {
@@ -314,4 +347,6 @@ test("buildGuidePlanFewShotExamples includes recommendation and short closing ex
   assert.match(prompt, /白峰/);
   assert.match(prompt, /原因調査/);
   assert.match(prompt, /返却文/);
+  assert.match(prompt, /毎営業日の朝に保存まわりの確認を回したい/);
+  assert.match(prompt, /毎朝 Settings 保存まわりを確認する/);
 });
