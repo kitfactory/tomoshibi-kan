@@ -721,7 +721,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
 - `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
-- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-delta` の 5 件とし、resident-facing の表示は `燈子さん / 槙原 / 冬坂 / 久瀬 / 白峰` を正とする。
+- built-in 初期住人セットは `guide-core / gate-core / pal-alpha / pal-beta / pal-delta` の 5 件とし、resident-facing の表示は `燈子さん / 真壁 / 冬坂 / 久瀬 / 白峰` を正とする。
 - resident trio の user-facing 名称は固有名 `冬坂 / 久瀬 / 白峰` を基本とする。`ROLE.md` では次の職業設定を明示する:
   - `冬坂` -> `リサーチャー`
   - `久瀬` -> `プログラマ`

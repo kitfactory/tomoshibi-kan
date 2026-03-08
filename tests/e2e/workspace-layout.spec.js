@@ -2145,7 +2145,7 @@ for (const viewport of VIEWPORTS) {
         const oldSnapshot = {
           profiles: [
             { id: "guide-core", role: "guide", runtimeKind: "model", displayName: "燈子さん", persona: "old guide", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-search"], status: "active" },
-            { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "槙原", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
+            { id: "gate-core", role: "gate", runtimeKind: "model", displayName: "真壁", persona: "old gate", provider: "openai", models: ["gpt-4o-mini"], cliTools: [], skills: ["codex-file-read"], status: "active" },
             { id: "pal-alpha", role: "worker", runtimeKind: "tool", displayName: "冬坂", persona: "old trace", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-search"], status: "active" },
             { id: "pal-beta", role: "worker", runtimeKind: "tool", displayName: "久瀬", persona: "old fix", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-file-edit"], status: "active" },
             { id: "pal-gamma", role: "worker", runtimeKind: "tool", displayName: "整える人", persona: "old arranger", provider: "openai", models: [], cliTools: ["Codex"], skills: ["codex-test-runner"], status: "active" },
@@ -2214,7 +2214,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#palList")).toContainText("白峰");
       await expect(page.locator("#palList")).toContainText("冬坂");
       await expect(page.locator("#palList")).toContainText("久瀬");
-      await expect(page.locator("#palList")).toContainText("槙原");
+      await expect(page.locator("#palList")).toContainText("真壁");
       await expect(page.locator("#palList")).toContainText("燈子さん");
 
       await page.click('[data-pal-open-id="guide-core"]');

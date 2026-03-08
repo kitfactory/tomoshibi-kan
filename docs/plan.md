@@ -13,8 +13,9 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-resident-name-adjustment] 管理人の proper name を `月見里 燈子`、古参住人の proper name を `真壁 匡人` に更新し、resident-facing 表示を `燈子さん / 真壁` へ揃えた
 - [x] [DR-20260308-resident-proper-name-rollout] built-in 住人の表示名を `燈子さん / 槙原 / 冬坂 / 久瀬 / 白峰` に統一し、Guide prompt / few-shot / parser recovery / task wording を proper-name 前提へ更新し、Guide 5 turn 収束と 3 task cycle の dispatch 維持を確認した
-- [x] [DR-20260308-resident-role-alignment-and-plan-preview-design] built-in 住人の職業設定を `管理人 / 世話人 / リサーチャー / プログラマ / ライター` とし、Guide が依頼前に `誰に何を頼むか` を見せる `PlanPreview` 設計を定義した
+- [x] [DR-20260308-resident-role-alignment-and-plan-preview-design] built-in 住人の職業設定を `管理人 / 古参住人 / リサーチャー / プログラマ / ライター` とし、Guide が依頼前に `誰に何を頼むか` を見せる `PlanPreview` 設計を定義した
 - [x] [DR-20260308-guide-five-turn-convergence] Guide の収束基準を `3ターン固定` から `5ターン以内で自然に依頼化` へ切り替え、runner と観測基準を更新した
 - [x] [DR-20260308-llm-routing-precision-improvement] resident routing の LLM 入力を `ROLE全文 + capability + fitHints` 中心に整理し、通常経路を LLM 側へ寄せた
 - [x] [DR-20260308-fallback-scorer-necessity-evaluation] fallback scorer は削除せず、`invalid / low-confidence / no-fit / runtime unavailable` 時だけ使う safety net として残すと判断した

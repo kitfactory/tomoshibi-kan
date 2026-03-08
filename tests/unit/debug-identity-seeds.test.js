@@ -29,7 +29,7 @@ test("getBuiltInDebugIdentitySeed returns gate rubric content in Japanese", () =
   }, "ja");
 
   assert.ok(seed);
-  assert.match(seed.soul, /世話人|悪くないと思うなぁ|本筋はたぶんそこじゃない/);
+  assert.match(seed.soul, /古参住人|悪くないと思うなぁ|本筋はたぶんそこじゃない/);
   assert.equal(typeof seed.role, "undefined");
   assert.match(seed.rubric, /Review Goal/);
   assert.match(seed.rubric, /Progress Voice/);
