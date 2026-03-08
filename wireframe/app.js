@@ -3499,9 +3499,9 @@ function buildGuideRoutingOperatingRulesPrompt(localeValue) {
         "あなたは灯火館の管理人として、住人への割り当て判断だけを行います。",
         "- 入力の task と候補住人一覧だけを見て、最も適した住人を 1 人選ぶ。",
         "- 候補外の住人は選ばない。",
-        "- 住人の Mission, 得意な依頼, 得意な作成物, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, capability summary を優先して判断する。",
-        "- 必要に応じて resident の ROLE.md 全文も参照してよいが、まずは得意な依頼 / 得意な作成物を軸に比較する。",
-        "- displayName の印象ではなく、ROLE に書かれた得意領域と作成物を一次ソースにする。",
+        "- 各住人の ROLE.md 全文を最も重要な根拠として読み、Mission, 得意な依頼, 得意な作成物, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules を比較する。",
+        "- capability summary は『その住人が今ここで実行できること』として使い、ROLE と矛盾しない候補を選ぶ。",
+        "- fitHints は補助材料に留め、displayName や印象で決めない。",
         "- `currentLoad` は補助材料として使うが、適性より優先しない。",
         "- 適任が見当たらない時だけ `replan_required` を返す。",
         "- 返答は JSON schema に厳密に従い、余計な説明文を付けない。",
@@ -3510,9 +3510,10 @@ function buildGuideRoutingOperatingRulesPrompt(localeValue) {
         "As the Tomoshibi-kan manager, make only the resident assignment decision.",
         "- Choose exactly one resident from the provided candidates for the task.",
         "- Never choose a resident outside the provided candidates.",
-        "- Prioritize Mission, preferred requests, preferred outputs, Inputs, Outputs, Done Criteria, Constraints, Hand-off Rules, and capability summary.",
-        "- You may read the full ROLE.md contract when needed, but compare candidates primarily through preferred requests and preferred outputs.",
-        "- Use the ROLE contract as the primary source of fitness, not the display name.",
+        "- Read each resident's full ROLE.md contract as the primary source of fitness.",
+        "- Compare Mission, preferred requests, preferred outputs, Inputs, Outputs, Done Criteria, Constraints, and Hand-off Rules before deciding.",
+        "- Use capability summary as evidence of what the resident can execute right now.",
+        "- Treat fitHints only as supporting hints, not as the main decision source, and never decide by display name.",
         "- Treat currentLoad as a secondary signal, not stronger than fitness.",
         "- Return `replan_required` only when none of the candidates is a reasonable fit.",
         "- Follow the JSON schema strictly and do not add extra prose.",
@@ -3520,7 +3521,11 @@ function buildGuideRoutingOperatingRulesPrompt(localeValue) {
 }
 
 function buildGuideRoutingUserText(routingInput) {
-  const payload = routingInput && typeof routingInput === "object" ? routingInput : {};
+  const baseRoutingApi = resolveAgentRoutingApi();
+  const rawPayload = routingInput && typeof routingInput === "object" ? routingInput : {};
+  const payload = baseRoutingApi && typeof baseRoutingApi.buildWorkerRoutingLlmInput === "function"
+    ? baseRoutingApi.buildWorkerRoutingLlmInput(rawPayload)
+    : rawPayload;
   return [
     "Select the best resident for this task from the provided candidates.",
     "Return only the structured routing decision.",

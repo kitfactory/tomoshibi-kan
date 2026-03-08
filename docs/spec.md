@@ -665,12 +665,13 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 ### LLM-assisted routing
 - resident routing で LLM を使う場合でも、dispatch 実行・state 遷移・retry count・persistence は `PlanExecutionOrchestrator` core の責務とする。
 - resident routing の前に、Orchestrator は task を `RoutingInput` へ正規化し、resident 候補を role/status/capability で前処理して絞り込む。
-- LLM へ渡す resident 候補は、display name ではなく `roleContractText`, `roleSummary`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
+- LLM へ渡す resident 候補は、display name ではなく `roleContractText`, `capabilitySummary`, `status`, `currentLoad`, `fitHints` のような構造化 summary に限る。
 - LLM routing の返答は `RoutingDecision` として parse / validate し、invalid decision は dispatch に使わない。
 - `RoutingDecision` が invalid、low-confidence、または no-fit の場合、Orchestrator は deterministic fallback へ落とすか、`reroute` または `replan_required` を起こす。
 - deterministic fallback scorer は resident routing の主役ではなく safety net として扱い、`invalid / low-confidence / no-fit / runtime unavailable` の時だけ resident 選定に使う。
 - `RoutingInput` は少なくとも `goal`, `title`, `instruction`, `constraints[]`, `expectedOutput`, `requiredSkills[]`, `needsEvidence`, `scopeRisk`, `candidateResidents[]`, `historySummary[]?` を持つ。
 - `candidateResidents[]` は resident ごとに `residentId`, `role`, `status`, `currentLoad`, `roleContractText`, `roleSummary[]`, `residentFocus[]`, `preferredOutputs[]`, `capabilitySummary[]`, `fitHints[]` を持つ。
+- LLM routing に渡す `candidateResidents[]` は resident ごとに `residentId`, `status`, `currentLoad`, `roleContractText`, `capabilitySummary[]`, `fitHints[]` を持つ最小構成とし、`roleSummary[]`, `residentFocus[]`, `preferredOutputs[]` は fallback scorer と audit 用に保持する。
 - `RoutingDecision` は少なくとも `selectedResidentId`, `reason`, `confidence`, `fallbackAction` を持つ。
 - `fallbackAction` は `dispatch | reroute | replan_required` のみを取り、Orchestrator core が最終実行を担う。
 - deterministic fallback scorer は lexical match だけでなく、`ROLE.md` の `得意な依頼` と `得意な作成物` の一致を主要判断材料として使う。

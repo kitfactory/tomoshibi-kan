@@ -160,6 +160,33 @@
     };
   }
 
+  function buildWorkerRoutingLlmInput(routingInput = {}) {
+    const base = routingInput && typeof routingInput === "object" ? routingInput : {};
+    const candidateResidents = (Array.isArray(base.candidateResidents) ? base.candidateResidents : []).map((resident) => ({
+      residentId: normalizeString(resident?.residentId),
+      status: normalizeString(resident?.status),
+      currentLoad: Number(resident?.currentLoad || 0),
+      roleContractText: normalizeString(resident?.roleContractText),
+      capabilitySummary: uniqueList(resident?.capabilitySummary),
+      fitHints: uniqueList(resident?.fitHints),
+    })).filter((resident) => resident.residentId);
+    return {
+      targetType: normalizeString(base.targetType),
+      targetId: normalizeString(base.targetId),
+      planId: normalizeString(base.planId),
+      goal: normalizeString(base.goal),
+      title: normalizeString(base.title),
+      instruction: normalizeString(base.instruction),
+      constraints: uniqueList(base.constraints),
+      expectedOutput: normalizeString(base.expectedOutput),
+      requiredSkills: uniqueList(base.requiredSkills),
+      needsEvidence: Boolean(base.needsEvidence),
+      scopeRisk: ["low", "medium", "high"].includes(normalizeString(base.scopeRisk)) ? normalizeString(base.scopeRisk) : "medium",
+      candidateResidents,
+      historySummary: uniqueList(base.historySummary),
+    };
+  }
+
   function stripCodeFence(text) {
     const source = normalizeString(text);
     if (!source) return "";
@@ -479,6 +506,7 @@
     buildResidentRoleSignals,
     buildCandidateResidentSummaries,
     buildWorkerRoutingInput,
+    buildWorkerRoutingLlmInput,
     parseRoutingDecisionResponse,
     buildRoutingDecisionResponseFormat,
     scoreWorkerCandidate,

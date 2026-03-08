@@ -12,6 +12,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-llm-routing-precision-improvement] resident routing の LLM 入力を `ROLE全文 + capability + fitHints` 中心に整理し、通常経路を LLM 側へ寄せた
 - [x] [DR-20260308-fallback-scorer-necessity-evaluation] fallback scorer は削除せず、`invalid / low-confidence / no-fit / runtime unavailable` 時だけ使う safety net として残すと判断した
 - [x] [DR-20260308-full-role-routing-real-observation] `ROLE全文 + summary` で real-model resident routing を観測し、resident trio の割当維持と explicit assignee 優先を確認した
 - [x] [DR-20260308-full-role-routing-context] resident routing の LLM 入力へ `ROLE.md` 全文を追加し、summary と併用して判断できるようにした

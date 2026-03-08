@@ -702,8 +702,8 @@ type GateRoutingInput = {
 ### Guide-driven routing boundary
 - `PlanExecutionOrchestrator` は routing の deterministic core を保持する。resident 候補抽出、status filter、load 計算、capability probe 反映、invalid decision fallback は Orchestrator 側で行う。
 - resident 候補の意味判断が必要な時だけ、Orchestrator は active Guide の model / `SOUL.md` / `ROLE.md` を `GuideReasoningContext` として借りる。
-- Guide-driven routing で LLM に渡すのは raw transcript 全文ではなく、`RoutingInput` に正規化した task 情報と `CandidateResidentSummary[]` のみとする。
-- `CandidateResidentSummary` は resident の display name を説明用に含んでよいが、判断の一次ソースは `roleContractText / roleSummary / capabilitySummary / fitHints` とする。
+- Guide-driven routing で LLM に渡すのは raw transcript 全文ではなく、`RoutingInput` に正規化した task 情報と `GuideRoutingCandidateResident[]` のみとする。
+- `GuideRoutingCandidateResident` は resident の display name を含めず、判断の一次ソースを `roleContractText / capabilitySummary / fitHints` に絞る。
 - LLM 返答は `RoutingDecision` として parse / validate し、`selectedResidentId` が候補外、`reason` が空、`fallbackAction` が不正な場合は invalid とする。
 - invalid / low-confidence / no-fit の `RoutingDecision` では dispatch せず、core は rule-based fallback または `reroute / replan_required` を起こす。
 - rule-based fallback scorer は resident routing の主役ではなく safety net であり、`invalid / low-confidence / no-fit / runtime unavailable` の時だけ resident 選定に使う。
@@ -742,6 +742,15 @@ type CandidateResidentSummary = {
   fitHints: string[];
 };
 
+type GuideRoutingCandidateResident = {
+  residentId: string;
+  status: string;
+  currentLoad: number;
+  roleContractText: string;
+  capabilitySummary: string[];
+  fitHints: string[];
+};
+
 type RoutingDecision = {
   selectedResidentId: string;
   reason: string;
@@ -751,6 +760,7 @@ type RoutingDecision = {
 ```
 
 - `AgentRouting.buildWorkerRoutingInput()` は resident summary へ `roleContractText`, `residentFocus`, `preferredOutputs` を付与する。
+- `AgentRouting.buildWorkerRoutingLlmInput()` は `CandidateResidentSummary[]` から、LLM routing 用の `GuideRoutingCandidateResident[]` を切り出す。
 - `AgentRouting.selectWorkerForTask()` は lexical match に加え、`ROLE.md` の `得意な依頼` と `得意な作成物` の一致へ強い重みを与える role-first scorer とする。
 
 ### CLI Capability Probe

@@ -5,6 +5,7 @@ const {
   inferRequiredSkills,
   buildResidentRoleSignals,
   buildWorkerRoutingInput,
+  buildWorkerRoutingLlmInput,
   parseRoutingDecisionResponse,
   selectWorkerForTask,
   selectGateForTarget,
@@ -145,6 +146,37 @@ test("buildWorkerRoutingInput produces resident summaries for llm-assisted routi
   assert.deepEqual(routingInput.candidateResidents[0].residentFocus, ["再現手順を固めたい依頼", "原因候補と証拠を集めたい依頼"]);
   assert.deepEqual(routingInput.candidateResidents[0].preferredOutputs, ["再現手順メモ", "証拠 summary"]);
   assert.equal(routingInput.candidateResidents[0].currentLoad, 1);
+});
+
+test("buildWorkerRoutingLlmInput keeps full ROLE and capability summary while dropping routing-only summary fields", () => {
+  const routingInput = buildWorkerRoutingInput({
+    targetType: "task",
+    targetId: "plan:PLAN-001:task:1",
+    planId: "PLAN-001",
+    taskDraft: {
+      title: "Trace save failure",
+      description: "設定保存後に再読込で値が消える原因を調べる",
+    },
+    workers: [
+      {
+        id: "pal-alpha",
+        displayName: "調べる人",
+        roleText: "# ROLE\n\n## 得意な依頼\n- 再現手順を固めたい依頼\n\n## 得意な作成物\n- 再現手順メモ",
+        enabledSkillIds: ["codex-file-search"],
+        skillSummaries: ["file search and repro evidence"],
+      },
+    ],
+  });
+
+  const llmInput = buildWorkerRoutingLlmInput(routingInput);
+
+  assert.equal(llmInput.candidateResidents.length, 1);
+  assert.equal(llmInput.candidateResidents[0].residentId, "pal-alpha");
+  assert.match(llmInput.candidateResidents[0].roleContractText, /得意な依頼/);
+  assert.deepEqual(llmInput.candidateResidents[0].capabilitySummary, ["file search and repro evidence"]);
+  assert.equal("roleSummary" in llmInput.candidateResidents[0], false);
+  assert.equal("residentFocus" in llmInput.candidateResidents[0], false);
+  assert.equal("preferredOutputs" in llmInput.candidateResidents[0], false);
 });
 
 test("buildResidentRoleSignals extracts resident focus and preferred outputs from ROLE", () => {
