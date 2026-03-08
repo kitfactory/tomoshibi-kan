@@ -747,7 +747,75 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#detailConversationLog")).toBeVisible();
       await expect(page.locator('#detailConversationLog [data-detail-actor="guide"]')).toContainText(/管理人|Guide/);
       await expect(page.locator('#detailConversationLog [data-detail-action="dispatch"]')).toContainText(/依頼|Dispatch/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/割り当てました|dispatched to/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/では、この件はひとまず|dispatched to/);
+    });
+
+    test("task detail conversation log applies progress voice per actor", async ({ page }) => {
+      await page.evaluate(async () => {
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-VOICE-001",
+          targetKind: "task",
+          targetId: "TASK-001",
+          actionType: "reroute",
+          status: "ok",
+          actualActor: "orchestrator",
+          displayActor: "Guide",
+          messageForUser: "作り手ではなく書く人にお願いし直しました。",
+          payload: { fromWorkerId: "pal-beta", workerId: "pal-delta" },
+        });
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-VOICE-001",
+          targetKind: "task",
+          targetId: "TASK-001",
+          actionType: "worker_runtime",
+          status: "ok",
+          actualActor: "worker",
+          displayActor: "Resident",
+          messageForUser: "要点を整理して返却文を整えました。",
+          payload: {},
+        });
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-VOICE-001",
+          targetKind: "task",
+          targetId: "TASK-001",
+          actionType: "gate_review",
+          status: "rejected",
+          actualActor: "gate",
+          displayActor: "Gate",
+          messageForUser: "説明はよいが、前提がまだ甘いです。",
+          payload: {},
+        });
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-VOICE-001",
+          targetKind: "task",
+          targetId: "TASK-001",
+          actionType: "replan_required",
+          status: "blocked",
+          actualActor: "orchestrator",
+          displayActor: "Guide",
+          messageForUser: "進め方と前提を見直します。",
+          payload: {},
+        });
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-VOICE-001",
+          targetKind: "task",
+          targetId: "TASK-001",
+          actionType: "replanned",
+          status: "ok",
+          actualActor: "orchestrator",
+          displayActor: "Guide",
+          messageForUser: "新しい段取りで再開しました。",
+          payload: {},
+        });
+      });
+
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="detail"][data-task-id="TASK-001"]');
+      await expect(page.locator("#detailConversationLog")).toContainText(/別の住人の方がよさそうなので/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/ひとまず、要点を整理して返却文を整えました。/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/このままだとまだ甘いかな。/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/いったん段取りを見直した方がよさそうです。/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/進め方を組み直しました。/);
     });
 
     test("guide progress query reports completed task without model call", async ({ page }) => {

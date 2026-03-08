@@ -2,7 +2,6 @@
 
 # current
 - [ ] [SEED-20260308-assist-off-plan-ready-stability] assist OFF の Guide が resident trio 前提でも `plan_ready` へ安定到達し、task materialization まで進みやすいようにする
-- [ ] [SEED-20260308-progress-voice-log-rendering] `Progress Voice` を task detail 右列の会話ログ本文生成へ反映し、管理人 / 住人 / 古参住人らしい言い回しを強める
 - [ ] [SEED-20260308-reroute-replan-real-observation] `reroute / replan_required` を含む Orchestrator 分岐を real-model 条件で観測し、resident routing の実運用上の詰まり方を記録する
 
 # future
@@ -14,6 +13,7 @@
 - `plan.md` archive を月次で分割し、今後も入口を薄く保つ
 
 # archive
+- [x] [DR-20260308-progress-voice-log-rendering] `Progress Voice` を task detail 右列の会話ログ本文生成へ反映し、管理人 / 住人 / 古参住人らしい言い回しを強めた
 - [x] [DR-20260308-open-delta-archive-normalization] 3件の open delta 記録を validator が読める archive 形式へ正規化した
 - [x] [DR-20260308-plan-current-open-delta-cleanup] current に残っていた archive 済み delta 3件を整理し、seed 中心の current に戻した
 - [x] [DR-20260308-orchestrator-replan-bridge] `replan_required -> replanned -> new task dispatch` の最小橋渡しを追加した

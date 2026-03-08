@@ -7689,6 +7689,42 @@ function detailStatusLabel(status) {
   return normalizeText(status) || "-";
 }
 
+function detailConversationMessage(entry) {
+  const actor = normalizeText(entry?.displayActor).toLowerCase();
+  const action = normalizeText(entry?.actionType).toLowerCase();
+  const status = normalizeText(entry?.status).toLowerCase();
+  const message = normalizeText(entry?.messageForUser);
+  if (!message) return "-";
+  if (locale !== "ja") return message;
+  if (actor === "guide") {
+    if (action === "dispatch") return `では、この件はひとまず ${message}`;
+    if (action === "reroute") return `この進め方なら別の住人の方がよさそうなので、${message}`;
+    if (action === "to_gate") return `ここまで揃ったので、そろそろ古参にも見てもらいます。${message}`;
+    if (action === "replan_required") return `このまま進めるより、いったん段取りを見直した方がよさそうです。${message}`;
+    if (action === "replanned") return `進め方を組み直しました。${message}`;
+    if (action === "resubmit") return `手直しが済んだので、もう一度見てもらいます。${message}`;
+    if (action === "plan_completed") return `ここまでで一区切りです。${message}`;
+    return `いまのところ、${message}`;
+  }
+  if (actor === "resident") {
+    if (action === "worker_runtime") {
+      if (status === "ok" || status === "done") return `ひとまず、${message}`;
+      if (status === "blocked" || status === "error") return `少し引っかかったので、${message}`;
+      return `いま見ているところでは、${message}`;
+    }
+    return message;
+  }
+  if (actor === "gate") {
+    if (action === "gate_review") {
+      if (status === "approved") return `悪くないかな。${message}`;
+      if (status === "rejected") return `このままだとまだ甘いかな。${message}`;
+      return `少し別の面から見ると、${message}`;
+    }
+    return `見立てとしては、${message}`;
+  }
+  return message;
+}
+
 function renderTaskConversationLog(entries) {
   if (!Array.isArray(entries) || entries.length === 0) {
     return `<div class="detail-log-empty text-sm text-base-content/60">${escapeHtml(locale === "ja" ? "まだ会話ログはありません。" : "No conversation log yet.")}</div>`;
@@ -7699,7 +7735,7 @@ function renderTaskConversationLog(entries) {
     const actionLabel = detailActionLabel(entry.actionType);
     const statusLabel = detailStatusLabel(entry.status);
     const createdAt = normalizeText(entry.createdAt).replace("T", " ").replace("Z", "");
-    const message = normalizeText(entry.messageForUser) || "-";
+    const message = detailConversationMessage(entry);
     return `<article class="detail-log-entry ${detailActorToneClass(entry.displayActor)} rounded-box border border-base-300 bg-base-100 p-3" data-detail-actor="${escapeHtml(normalizeText(entry.displayActor).toLowerCase() || "resident")}" data-detail-action="${escapeHtml(normalizeText(entry.actionType))}" data-detail-status="${escapeHtml(normalizeText(entry.status))}">
       <div class="detail-log-meta flex flex-wrap items-center gap-2 text-xs text-base-content/60">
         <span class="badge badge-outline badge-sm">${escapeHtml(actorLabel)}</span>
