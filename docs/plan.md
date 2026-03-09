@@ -25,6 +25,7 @@
 - 20260309: [DR-20260309-programmer-researcher-role-separation] programmer/researcher role separation を archive 済み
 - 20260309: [DR-20260309-resident-name-rendering] resident proper-name rendering を archive 済み
 - 20260310: [DR-20260310-approved-plan-dispatch-dedup] 承認済み plan の重複再生成防止を archive 済み
+- 20260310: [DR-20260310-project-validator-skill-unification] project-validator を skill 側に統一し、repo 側残骸を削除して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -41,4 +42,4 @@
 - [x] 20260309: [DR-20260309-multistep-request-observation]
 - [x] 20260309: [DR-20260309-resident-name-rendering]
 - [x] 20260309: [DR-20260309-plan-approval-and-auto-execution]
-- [x] 20260310: [DR-20260310-approved-plan-dispatch-dedup]
+- [x] 20260310: [DR-20260310-approved-plan-dispatch-dedup] [DR-20260310-project-validator-skill-unification]

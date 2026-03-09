@@ -33,4 +33,5 @@
   - plan:
 
 ## Validation Command
-- `node scripts/validate_delta_links.js --dir .`
+- `node C:\Users\kitad\.codex\skills\project-validator\scripts\validate_delta_links.js --dir .`
+- `node C:\Users\kitad\.codex\skills\project-validator\scripts\check_code_size.js --dir .`
