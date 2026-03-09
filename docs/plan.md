@@ -30,6 +30,7 @@
 - 20260310: [DR-20260310-app-js-split-guide-progress-flow] Guide の plan 承認 / progress query helper を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-chat-entry] Guide の送信入口 / project onboarding / plan approval 分岐を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-chat-runtime] Guide composer state / runtime helper / event wiring を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-guide-context-mention] Guide の project context / focus command / @mention menu helper を `app.js` から分割して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -51,3 +52,4 @@
 - [x] 20260310: [DR-20260310-app-js-split-guide-progress-flow]
 - [x] 20260310: [DR-20260310-app-js-split-guide-chat-entry]
 - [x] 20260310: [DR-20260310-app-js-split-guide-chat-runtime]
+- [x] 20260310: [DR-20260310-app-js-split-guide-context-mention]

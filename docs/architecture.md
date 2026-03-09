@@ -273,6 +273,8 @@ interface SkillCatalogPort {
   - Task detail 右列の会話ログ本文整形と actor/status/action 表示ヘルパーを担当する。
 - `guide-progress-flow.js`
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
+- `guide-context-mention.js`
+  - Guide の project context 構築、focus command、@mention menu state/helper を担当する。
 - `guide-chat-entry.js`
   - Guide の送信入口、project onboarding 判定、plan approval / progress query / model call 分岐を担当する。
 - `guide-chat-runtime.js`
