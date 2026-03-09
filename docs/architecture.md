@@ -269,6 +269,8 @@ interface SkillCatalogPort {
   - Worker/Gate selector の scoring と候補選定を担当する。
 - `plan-orchestrator.js`
   - 保存済み `Plan artifact` から task materialization / worker selection を行う renderer-side Orchestrator helper を担当する。
+- `task-detail-conversation.js`
+  - Task detail 右列の会話ログ本文整形と actor/status/action 表示ヘルパーを担当する。
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `palpal-core-registry.js`
