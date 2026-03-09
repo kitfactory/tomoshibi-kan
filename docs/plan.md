@@ -17,6 +17,7 @@
 - 20260309: guide plan project targeting を archive 済み
 - 20260309: task conversation flow hardening を archive 済み
 - 20260309: task conversation flow hardening を archive 済み
+- 20260309: [DR-20260309-resident-dummy-task-observation] resident dummy task observation を archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -29,3 +30,4 @@
 - [x] 20260308: [DR-20260308-plan-md-shrink] [DR-20260308-open-delta-archive-normalization] [DR-20260308-plan-current-open-delta-cleanup] [DR-20260308-plan-editor-section-sync] [DR-20260308-guide-short-turn-convergence-recovery] [DR-20260308-guide-resident-plan-stabilization] [DR-20260308-resident-routing-real-observation] [DR-20260308-built-in-resident-set-sync] [DR-20260308-built-in-role-sync-verify] [DR-20260308-built-in-soul-deepen] [DR-20260308-orchestrator-dispatch-extraction] [DR-20260308-orchestrator-routing-llm-design] [DR-20260308-orchestrator-routing-llm-impl] [DR-20260308-orchestrator-replan-bridge] [DR-20260308-orchestrator-reroute-bridge] [DR-20260308-plan-artifact-boundary] [DR-20260308-resident-microtests] [DR-20260308-resident-role-rollout] [DR-20260308-resident-set-remove-arranger] [DR-20260308-resident-set-v04-soul-align] [DR-20260308-role-strategy-for-task-conversation-log] [DR-20260308-routing-precision-role-first] [DR-20260308-task-detail-conversation-ui] [DR-20260308-progress-voice-log-rendering] [DR-20260308-reroute-replan-real-observation] [DR-20260308-guide-finalization-proposal] [DR-20260308-assist-off-plan-ready-stability] [DR-20260308-resident-variation-real-observation] [DR-20260308-role-first-routing-without-taskkind] [DR-20260308-full-role-routing-context] [DR-20260308-full-role-routing-real-observation] [DR-20260308-fallback-scorer-necessity-evaluation] [DR-20260308-llm-routing-precision-improvement] [DR-20260308-guide-five-turn-convergence] [DR-20260308-resident-role-alignment-and-plan-preview-design] [DR-20260308-resident-proper-name-rollout] [DR-20260308-resident-name-adjustment] [DR-20260308-guide-builtin-soul-soften] [DR-20260308-guide-no-reference-url-tone] [DR-20260308-guide-gentle-clarification-and-chat-markdown]
 - [x] 20260308: [DR-20260308-guide-cron-and-project-onboarding]
 - [x] 20260309: [DR-20260309-task-conversation-flow-hardening] [DR-20260309-guide-plan-project-targeting]
+- [x] 20260309: [DR-20260309-resident-dummy-task-observation]
