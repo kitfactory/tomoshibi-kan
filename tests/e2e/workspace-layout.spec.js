@@ -616,6 +616,89 @@ for (const viewport of VIEWPORTS) {
       await expect(latestJob).toContainText(/冬坂/);
     });
 
+    test("guide chat reuses approved plan on repeated approval intent", async ({ page }) => {
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      await page.evaluate(() => {
+        const runtime = window.TomoshibikanCoreRuntime || {};
+        window.requestGuideModelReplyWithFallback = async () => ({
+          provider: "openai",
+          modelName: "gpt-4.1",
+          text: JSON.stringify({
+            status: "plan_ready",
+            reply: "依頼案を作成しました。",
+            plan: {
+              project: {
+                id: "project-tomoshibi-kan",
+                name: "tomoshibi-kan",
+                directory: "C:/Users/kitad/palpal-hive",
+              },
+              goal: "設定画面の保存不具合を解消する",
+              completionDefinition: "保存と再読み込みが成功する",
+              constraints: ["既存設定フローは壊さない"],
+              tasks: [
+                {
+                  title: "再現確認",
+                  description: "保存不具合の再現手順を確認し、症状を整理する",
+                  requiredSkills: ["browser-chrome", "codex-file-search"],
+                },
+              ],
+            },
+          }),
+          toolCalls: [],
+        });
+        runtime.palChat = async (input) => {
+          if (input?.debugMeta?.stage === "gate_review") {
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                decision: "approved",
+                reason: "このままでよさそうです。",
+                fixes: [],
+              }),
+              toolCalls: [],
+              runId: "debug-auto-gate-run",
+            };
+          }
+          return {
+            provider: input?.provider || "openai",
+            modelName: input?.modelName || "gpt-4.1",
+            text: "worker-payload-ok",
+            toolCalls: [],
+            runId: "debug-auto-worker-run",
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
+      });
+      await page.fill("#guideInput", "設定画面の保存を改善してください");
+      await page.click("#guideSend");
+      await page.fill("#guideInput", "はい");
+      await page.click("#guideSend");
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 1);
+      await page.evaluate(() => {
+        window.requestGuideModelReplyWithFallback = async () => {
+          throw new Error("guide model should not be called for repeated approval intent");
+        };
+      });
+      await page.click('[data-tab="guide"]');
+      const beforeGuideEntryCount = await page.locator("#guideChat > li").count();
+      await page.evaluate(async () => {
+        const input = document.getElementById("guideInput");
+        if (!(input instanceof HTMLTextAreaElement) || typeof window.sendGuideMessage !== "function") {
+          throw new Error("guide send function is not available");
+        }
+        input.value = "進めて";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        await window.sendGuideMessage();
+      });
+      await expect(page.locator("#guideChat > li")).toHaveCount(beforeGuideEntryCount + 2);
+      await expect(page.locator("#guideChat")).toContainText(/既に進めています|もう進め始めています|already underway/);
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 1);
+    });
+
     test("guide prompts project setup before starting a new project request", async ({ page }) => {
       await page.click('[data-tab="guide"]');
       const beforeTaskCount = await page.locator('[data-task-row]').count();

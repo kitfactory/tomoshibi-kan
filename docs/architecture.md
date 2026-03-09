@@ -913,6 +913,7 @@ type TaskProgressLogEntry = {
 - minimal 実装では renderer に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
 - progress query path は model 呼び出し前に処理し、追加の LLM 呼び出しなしで completion / pending / rejected / replan_required / in_progress / assigned を返す。
 - `GuideConversationUseCase` は `plan_ready` を受けた時、直ちに dispatch せず `pending_approval` の `Plan artifact` を保存してよい。承認意図の短い返答を受けた時だけ `approved` に更新し、同一 `plan_id` の artifact を `PlanExecutionOrchestrator` へ渡す。
+- `GuideConversationUseCase` は最新 `approved` artifact が既に materialize 済みである場合、同種の短い承認入力で新しい plan を作らず、既存 plan の進行案内 reply を返してよい。
 - `PlanExecutionOrchestrator` の最小自動 execution loop は、その approval で生成された created task に限定して `dispatch -> worker_runtime -> to_gate -> gate_review -> done | rejected | replan_required` まで進める。
 - `PlanExecutionOrchestrator` は Gate reject が `replan_required` を示す時、active Guide の runtime / `SOUL.md` を使って replan request を生成してよい。replan 成功時は new Plan artifact 保存 -> materialize -> old target に `replanned` append の順で橋渡しする。
 - `PlanExecutionOrchestrator` は Guide-driven routing が `reroute` を返した時、baseline resident との差分を `reroute` として記録してから selected resident へ dispatch してよい。

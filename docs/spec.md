@@ -760,6 +760,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - minimal 実装では、明示 ID (`TASK-xxx`, `JOB-xxx`) がある時はその target を優先し、無ければ最新 progress entry を参照する。
 - Guide は `plan_ready` を返した時、直ちに dispatch せず `pending_approval` の `Plan artifact` を保存してよい。
 - 最新 `pending_approval` artifact が存在する時、ユーザーの短い承認入力 (`はい`, `進めて`, `お願いします` など) はその artifact の承認として扱い、同一 `plan_id` を `approved` に更新して materialize を開始してよい。
+- 最新 `approved` artifact が既に materialize 済みの時、追加の短い承認入力は新しい plan を再生成せず、既存の plan が進行中である旨を返してよい。
 - 承認後の最小自動 execution loop は、その approval で生成された created task に限定して `dispatch -> worker_runtime -> to_gate -> gate_review -> done | rejected | replan_required` まで順に進めてよい。既存 backlog 全体を自動実行してはならない。
 - Guide は定期実行やイベント起点の継続作業要求を受けた時、`plan_ready` の `plan.jobs[]` に分解してよい。
 - `plan.jobs[]` を含む approved `Plan artifact` は `PlanExecutionOrchestrator` を通じて Cron Board へ materialize されること。

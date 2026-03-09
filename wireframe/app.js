@@ -4136,11 +4136,13 @@ function enqueueAutoExecution(work) {
 }
 
 function isGuidePlanApprovalIntent(text) {
-  const normalized = normalizeText(text).toLowerCase();
+  const normalized = normalizeText(text)
+    .toLowerCase()
+    .replace(/[。.!！?？]/g, "")
+    .trim();
   if (!normalized) return false;
   return [
     "はい",
-    "はい。",
     "ok",
     "okay",
     "進めて",
@@ -4150,10 +4152,12 @@ function isGuidePlanApprovalIntent(text) {
     "その内容で",
     "その形で",
     "それで進めて",
+    "この内容で進めてください",
+    "この内容でお願いします",
     "go ahead",
     "looks good",
     "ship it",
-  ].some((phrase) => normalized === phrase || normalized.includes(phrase));
+  ].some((phrase) => normalized === phrase);
 }
 
 function buildGuidePlanApprovalReply(artifact, created) {
@@ -4174,6 +4178,49 @@ function buildGuidePlanApprovalReply(artifact, created) {
   if (taskCount > 0) parts.push(`${taskCount}件の作業を住人にお願いしました。`);
   if (jobCount > 0) parts.push(`${jobCount}件の定期実行も準備しました。`);
   if (taskCount > 0) parts.push("作業はこのまま進めます。");
+  return parts.join("");
+}
+
+function countMaterializedTargetsForPlan(planId) {
+  const normalizedPlanId = normalizeText(planId);
+  if (!normalizedPlanId) {
+    return { taskCount: 0, jobCount: 0, total: 0 };
+  }
+  const taskCount = tasks.filter((task) => resolveTargetPlanId(task) === normalizedPlanId).length;
+  const jobCount = jobs.filter((job) => resolveTargetPlanId(job) === normalizedPlanId).length;
+  return {
+    taskCount,
+    jobCount,
+    total: taskCount + jobCount,
+  };
+}
+
+function isRecentlyApprovedPlanArtifact(artifact, now = Date.now()) {
+  const approvedAtText = normalizeText(artifact?.approvedAt);
+  if (!approvedAtText) return false;
+  const approvedAt = Date.parse(approvedAtText);
+  if (!Number.isFinite(approvedAt)) return false;
+  return now - approvedAt <= 30 * 60 * 1000;
+}
+
+function buildGuidePlanAlreadyStartedReply(artifact, counts) {
+  const plan = artifact?.plan && typeof artifact.plan === "object" ? artifact.plan : {};
+  const projectName = normalizeText(plan?.project?.name || plan?.project?.directory || "");
+  const taskCount = Number(counts?.taskCount) || 0;
+  const jobCount = Number(counts?.jobCount) || 0;
+  if (locale === "en") {
+    const parts = [];
+    parts.push(projectName ? `This request is already underway in ${projectName}.` : "This request is already underway.");
+    if (taskCount > 0) parts.push(`There ${taskCount === 1 ? "is" : "are"} already ${taskCount} task${taskCount === 1 ? "" : "s"} in motion.`);
+    if (jobCount > 0) parts.push(`There ${jobCount === 1 ? "is" : "are"} also ${jobCount} recurring job${jobCount === 1 ? "" : "s"} prepared.`);
+    parts.push("I will keep things moving and report back through the task log.");
+    return parts.join(" ");
+  }
+  const parts = [];
+  parts.push(projectName ? `この依頼は、${projectName} で既に進めています。` : "この依頼は、もう進め始めています。");
+  if (taskCount > 0) parts.push(`いまは ${taskCount} 件のタスクを動かしています。`);
+  if (jobCount > 0) parts.push(`あわせて ${jobCount} 件の定期実行も準備できています。`);
+  parts.push("進み具合はタスクのログで見えるようにしておきますね。");
   return parts.join("");
 }
 
@@ -6218,6 +6265,25 @@ async function sendGuideMessage() {
     renderGuideChat();
     setMessage(created?.created > 0 ? "MSG-PPH-0001" : "MSG-PPH-0009");
     return;
+  }
+  if (isGuidePlanApprovalIntent(text)) {
+    const approvedPlanArtifact = await getLatestPlanArtifactWithFallback({ status: "approved" });
+    const materializedCounts = countMaterializedTargetsForPlan(approvedPlanArtifact?.planId);
+    if (approvedPlanArtifact && materializedCounts.total > 0 && isRecentlyApprovedPlanArtifact(approvedPlanArtifact)) {
+      guideMessages.push({
+        timestamp: formatNow().slice(11),
+        sender: "guide",
+        text: {
+          ja: buildGuidePlanAlreadyStartedReply(approvedPlanArtifact, materializedCounts),
+          en: buildGuidePlanAlreadyStartedReply(approvedPlanArtifact, materializedCounts),
+        },
+      });
+      input.value = "";
+      closeGuideMentionMenu();
+      renderGuideChat();
+      setMessage("MSG-PPH-0009");
+      return;
+    }
   }
   const progressReply = await buildGuideProgressQueryReply(text);
   if (progressReply?.handled) {
