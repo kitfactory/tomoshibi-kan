@@ -3695,6 +3695,9 @@ function createTaskRecord(input) {
   return {
     id: input.id,
     planId: normalizeText(input?.planId) || "PLAN-001",
+    projectId: normalizeText(input?.projectId),
+    projectName: normalizeText(input?.projectName),
+    projectDirectory: normalizeText(input?.projectDirectory),
     title: input.title,
     description: input.description,
     palId: input.palId,
@@ -3778,6 +3781,7 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
   const normalizedPlan = plan && typeof plan === "object" ? plan : null;
   const taskList = Array.isArray(normalizedPlan?.tasks) ? normalizedPlan.tasks : [];
   const jobList = Array.isArray(normalizedPlan?.jobs) ? normalizedPlan.jobs : [];
+  const project = normalizedPlan?.project && typeof normalizedPlan.project === "object" ? normalizedPlan.project : null;
   if (taskList.length === 0 && jobList.length === 0) return { created: 0 };
   const planId = normalizeText(options.planId) || "PLAN-001";
   const workers = await resolveWorkerAssignmentProfiles();
@@ -3838,6 +3842,9 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     const task = createTaskRecord({
       id,
       planId,
+      projectId: normalizeText(project?.id),
+      projectName: normalizeText(project?.name),
+      projectDirectory: normalizeText(project?.directory),
       title: taskDraft.title,
       description: taskDraft.description,
       palId: workerId,
@@ -3919,6 +3926,9 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     const job = createJobRecord({
       id,
       planId,
+      projectId: normalizeText(project?.id),
+      projectName: normalizeText(project?.name),
+      projectDirectory: normalizeText(project?.directory),
       title: jobDraft.title,
       description: jobDraft.description,
       instruction: jobDraft.instruction,
@@ -4266,10 +4276,12 @@ async function executeGuideDrivenReplanForTarget(targetKind, target, gateResult)
       ? window.requestGuideModelReplyWithFallback
       : requestGuideModelReplyWithFallback;
   const modelReply = await guideReplyRequester(replanUserText, guideState, contextBuild);
-  const parsedPlanResponse = parseGuidePlanResponseWithFallback(modelReply?.text || "", {
-    planningIntent: "replan_required",
-    planningReadiness: "replan_required",
-  });
+    const parsedPlanResponse = parseGuidePlanResponseWithFallback(modelReply?.text || "", {
+      planningIntent: "replan_required",
+      planningReadiness: "replan_required",
+      projectContext: contextBuild?.context,
+      locale,
+    });
   if (!parsedPlanResponse?.ok || parsedPlanResponse.status !== "plan_ready" || !parsedPlanResponse.plan) {
     const replyText = normalizeText(parsedPlanResponse?.reply || modelReply?.text);
     await appendTaskProgressLogForTarget(targetKind, normalizeText(target.id), "replan_required", {
@@ -4322,6 +4334,9 @@ function createJobRecord(input) {
   return {
     id: input.id,
     planId: normalizeText(input?.planId) || "PLAN-001",
+    projectId: normalizeText(input?.projectId),
+    projectName: normalizeText(input?.projectName),
+    projectDirectory: normalizeText(input?.projectDirectory),
     title: input.title,
     description: input.description,
     palId: input.palId,
@@ -4658,10 +4673,12 @@ function buildFallbackGuidePlanOutputInstruction() {
   return locale === "en"
     ? [
       "Return compact JSON only. Do not use markdown fences.",
-      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"project":{"id":"...","name":"...","directory":"..."},"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
       "Use status=conversation when the user is chatting, brainstorming, or not asking for task breakdown yet.",
       "Use status=needs_clarification only when a missing fact blocks task creation.",
       "If the user explicitly asks for a plan or task breakdown and gives the target, expected outcome, relevant files, or available tools, prefer status=plan_ready.",
+      "When returning plan_ready, include the target project or folder in plan.project.",
+      "If there is no clear target project or folder yet, stay in needs_clarification and guide the user to set it in the Project tab first.",
       "When minor details are missing, make reasonable assumptions and put them in constraints instead of asking another confirmation question.",
       "Do not ask the user to pick the assignee Pal when suitable Pals and tools are already available in context; choose the best fit yourself.",
       "In the debug workspace, prefer resident specialists: trace work to the Research resident, fix work to the Maker resident, and verification work to the Writer resident.",
@@ -4669,10 +4686,12 @@ function buildFallbackGuidePlanOutputInstruction() {
     ].join("\n")
     : [
       "JSONのみで返す。Markdown や code fence は使わない。",
-      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"project":{"id":"...","name":"...","directory":"..."},"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
       "ユーザーが雑談中、壁打ち中、またはまだtask分解を求めていないなら status=conversation を返す。",
       "task 作成を妨げる欠落情報がある時だけ status=needs_clarification を返す。",
       "ユーザーが plan や task 分解を明示し、対象・期待結果・関連ファイル・使える tools を示しているなら status=plan_ready を優先する。",
+      "plan_ready を返す時は、対象の project / folder を plan.project に必ず入れる。",
+      "対象の project / folder がまだ決まっていない時は、Project タブで先に設定するよう案内し、needs_clarification に留める。",
       "細部が不足しているだけなら、確認質問を増やさず assumptions を constraints に入れる。",
       "文脈に suitable Pals and tools があるなら、ユーザーに assignee Pal を選ばせず自分で選ぶ。",
       "debug workspace では住人の主担当を優先し、調査は冬坂、修正は久瀬、返却文や説明整理は白峰に割り当てる。",
@@ -6003,19 +6022,31 @@ function isNewProjectIntent(text) {
   return /新規プロジェクト|新しいプロジェクト|新しい企画|新規案件|new project|start a project|kick off a project/.test(normalized);
 }
 
-function hasGuideProjectContext(context) {
+function isGuideWorkIntent(text) {
+  const normalized = normalizeText(text).toLowerCase();
+  if (!normalized) return false;
+  return /依頼|タスク|job|cron|plan|進めたい|作って|修正|調査|確認|まとめて|schedule|recurring|event-driven|trace|fix|verify/.test(normalized);
+}
+
+function hasFocusedGuideProjectTarget(context) {
   if (!context || typeof context !== "object") return false;
   if (Array.isArray(context.references) && context.references.length > 0) return true;
   const focus = context.focus;
   if (!focus) return false;
-  return normalizeText(focus.id) !== "project-tomoshibi-kan";
+  return Boolean(normalizeText(focus.id) && normalizeText(focus.directory));
+}
+
+function shouldGuideRequestProjectSetup(text, context) {
+  if (isNewProjectIntent(text)) return true;
+  if (isGuideWorkIntent(text)) return !hasFocusedGuideProjectTarget(context);
+  return false;
 }
 
 function buildGuideProjectSetupReply() {
   if (locale === "en") {
-    return "I can help once the project is set up.\n\n- Open the **Project** tab first\n- Add the new project or target directory\n- If needed, switch focus to that project\n\nWhen that is ready, tell me what you want to do in that project and I will turn it into a request.";
+    return "I can help once the target project or folder is set up.\n\n- Open the **Project** tab first\n- Add the target project or directory\n- If needed, switch focus to that project\n\nWhen that is ready, tell me what you want to do in that project and I will turn it into a request.";
   }
-  return "その依頼は、まず **Project** タブで対象のプロジェクトを設定してから進めるのがよさそうです。\n\n- 先に **Project** タブを開く\n- 新しいプロジェクトや対象ディレクトリを追加する\n- 必要ならそのプロジェクトを focus に切り替える\n\n準備ができたら、そのプロジェクトで何をしたいかを教えてください。そこから依頼の形に整えます。";
+  return "その依頼は、まず **Project** タブで対象の project / folder を設定してから進めるのがよさそうです。\n\n- 先に **Project** タブを開く\n- 対象のプロジェクトやディレクトリを追加する\n- 必要ならそのプロジェクトを focus に切り替える\n\n準備ができたら、その project で何をしたいかを教えてください。そこから依頼の形に整えます。";
 }
 
 async function sendGuideMessage() {
@@ -6076,7 +6107,7 @@ async function sendGuideMessage() {
     setMessage("MSG-PPH-0009");
     return;
   }
-  if (isNewProjectIntent(text) && !hasGuideProjectContext(modelInput.context)) {
+  if (shouldGuideRequestProjectSetup(text, modelInput.context)) {
     guideMessages.push({
       timestamp: formatNow().slice(11),
       sender: "guide",
@@ -6110,6 +6141,8 @@ async function sendGuideMessage() {
     const parsedPlanResponse = parseGuidePlanResponseWithFallback(modelReply?.text || "", {
       planningIntent: planningIntent.cue,
       planningReadiness: planningReadiness.cue,
+      projectContext: modelInput.context,
+      locale,
     });
     const replyText = parsedPlanResponse?.ok
       ? parsedPlanResponse.reply

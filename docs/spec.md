@@ -571,6 +571,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - `PlanExecutionOrchestrator` は raw user request や Guide の自然文応答を入力として開始せず、valid かつ `approved` な `Plan` オブジェクトを受け取った時だけ開始する。
 - valid な `plan_ready` を受けた時は、まず persistent な `Plan artifact` を保存し、その保存済み artifact を起点に Task/Job の materialize と dispatch を開始する。
 - `GuideConversationUseCase` 相当の send フローは raw user request や未保存の `Plan` object から直接 dispatch してはならず、保存済み `Plan artifact` を経由しなければならない。
+- `plan_ready` の `plan` は target project を必須とし、少なくとも `project.id`, `project.name`, `project.directory` を持つこと。
+- focused project がある通常依頼は、その focus を `plan.project` の既定値として扱ってよい。
+- target project が未設定の work request は `needs_clarification` に留め、Project タブで対象 project / folder を設定するよう案内すること。
 - したがって、現行 prototype に存在する task draft 生成補助は正本の planning 主体ではなく、将来は `Plan` の parse / validate / normalize 補助へ置き換える前提とする。
 - Guide runtime は `runtimeKind=model | tool` を取りうる。first step では `tool` runtime として `Codex` を許可する。
 - `tool` runtime の Guide には skill/tool を動的注入しない。Guide/Orchestrator には事前 probe で得た capability summary を渡してよいが、CLI tool 自体の内包能力は実行時に再構成しない。
@@ -757,6 +760,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - Guide は定期実行やイベント起点の継続作業要求を受けた時、`plan_ready` の `plan.jobs[]` に分解してよい。
 - `plan.jobs[]` を含む approved `Plan artifact` は `PlanExecutionOrchestrator` を通じて Cron Board へ materialize されること。
 - `plan.jobs[]` の各要素は少なくとも `title`, `description`, `schedule`, `instruction` を持ち、必要なら `expectedOutput`, `requiredSkills`, `reviewFocus`, `assigneePalId` を持ってよい。
+- materialize された task/job record は `projectId / projectName / projectDirectory` を保持し、どの folder に対する依頼かを失わないこと。
 - 新規 project 前提の依頼で project context が未設定なら、Guide は Project タブで対象 project を設定するよう案内し、task/job の開始や materialize を行ってはならない。
 
 ## 追加仕様 (2026-03-08): Resident ROLE Strategy

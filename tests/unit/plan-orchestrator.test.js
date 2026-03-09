@@ -21,6 +21,11 @@ test("PlanOrchestrator materializes approved plan artifact into routed tasks", a
       planId: "PLAN-ART-001",
       status: "approved",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         tasks: [
           {
             title: "Trace",
@@ -51,6 +56,9 @@ test("PlanOrchestrator materializes approved plan artifact into routed tasks", a
       return {
         id: input.id,
         planId: input.planId,
+        projectId: input.projectId,
+        projectName: input.projectName,
+        projectDirectory: input.projectDirectory,
         title: input.title,
         description: input.description,
         palId: input.palId,
@@ -61,6 +69,7 @@ test("PlanOrchestrator materializes approved plan artifact into routed tasks", a
   assert.equal(result.createdTasks.length, 2);
   assert.equal(result.createdTasks[0].task.id, "TASK-004");
   assert.equal(result.createdTasks[0].task.planId, "PLAN-ART-001");
+  assert.equal(result.createdTasks[0].task.projectId, "project-tomoshibi-kan");
   assert.equal(result.createdTasks[0].workerId, "pal-alpha");
   assert.equal(result.createdTasks[1].task.id, "TASK-005");
   assert.equal(result.createdTasks[1].workerId, "pal-beta");
@@ -74,6 +83,11 @@ test("PlanOrchestrator prefers guide-driven routing when available and falls bac
       planId: "PLAN-ART-002",
       status: "approved",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         tasks: [
           {
             title: "Trace",
@@ -109,6 +123,7 @@ test("PlanOrchestrator prefers guide-driven routing when available and falls bac
       return {
         id: input.id,
         planId: input.planId,
+        projectId: input.projectId,
         title: input.title,
         description: input.description,
         palId: input.palId,
@@ -129,6 +144,11 @@ test("PlanOrchestrator materializes cron jobs from approved plan artifact", asyn
       planId: "PLAN-ART-003",
       status: "approved",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         tasks: [],
         jobs: [
           {
@@ -152,6 +172,9 @@ test("PlanOrchestrator materializes cron jobs from approved plan artifact", asyn
       return {
         id: input.id,
         planId: input.planId,
+        projectId: input.projectId,
+        projectName: input.projectName,
+        projectDirectory: input.projectDirectory,
         title: input.title,
         description: input.description,
         schedule: input.schedule,
@@ -164,6 +187,7 @@ test("PlanOrchestrator materializes cron jobs from approved plan artifact", asyn
   assert.equal(result.createdTasks.length, 0);
   assert.equal(result.createdJobs.length, 1);
   assert.equal(result.createdJobs[0].job.id, "JOB-004");
+  assert.equal(result.createdJobs[0].job.projectId, "project-tomoshibi-kan");
   assert.equal(result.createdJobs[0].workerId, "pal-alpha");
   assert.equal(result.createdJobs[0].job.schedule, "0 9 * * 1-5");
   assert.equal(result.nextJobSequence, 5);

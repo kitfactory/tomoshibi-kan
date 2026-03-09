@@ -127,6 +127,32 @@
     };
   }
 
+  function normalizeGuidePlanProject(project) {
+    if (!project || typeof project !== "object" || Array.isArray(project)) return null;
+    const id = normalizeString(project.id);
+    const name = normalizeString(project.name);
+    const directory = normalizeString(project.directory);
+    if (!id || !name || !directory) return null;
+    return {
+      id,
+      name,
+      directory,
+    };
+  }
+
+  function resolveGuidePlanProjectFromContext(options = {}) {
+    const context = options?.projectContext;
+    if (!context || typeof context !== "object") return null;
+    const focusProject = normalizeGuidePlanProject(context.focus);
+    if (focusProject) return focusProject;
+    const references = Array.isArray(context.references) ? context.references : [];
+    for (const reference of references) {
+      const project = normalizeGuidePlanProject(reference?.project);
+      if (project) return project;
+    }
+    return null;
+  }
+
   function hasExplicitDebugBreakdown(reply) {
     const text = normalizeString(reply).toLowerCase();
     if (!text) return false;
@@ -233,8 +259,10 @@
       .map((job, index) => normalizeGuidePlanJob(job, index))
       .filter(Boolean)
       .slice(0, 5);
-    if (!goal || !completionDefinition || (tasks.length === 0 && jobs.length === 0)) return null;
+    const project = normalizeGuidePlanProject(plan.project) || resolveGuidePlanProjectFromContext(options);
+    if (!goal || !completionDefinition || !project || (tasks.length === 0 && jobs.length === 0)) return null;
     return {
+      project,
       goal,
       completionDefinition,
       constraints,
@@ -317,8 +345,18 @@
                 {
                   type: "object",
                   additionalProperties: false,
-                  required: ["goal", "completionDefinition", "constraints", "tasks", "jobs"],
+                  required: ["project", "goal", "completionDefinition", "constraints", "tasks", "jobs"],
                   properties: {
+                    project: {
+                      type: "object",
+                      additionalProperties: false,
+                      required: ["id", "name", "directory"],
+                      properties: {
+                        id: { type: "string" },
+                        name: { type: "string" },
+                        directory: { type: "string" },
+                      },
+                    },
                     goal: { type: "string" },
                     completionDefinition: { type: "string" },
                     constraints: {
@@ -401,14 +439,14 @@
     if (localeValue === "en") {
       return [
         "Return compact JSON only. Do not use markdown fences.",
-        'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+        'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"project":{"id":"...","name":"...","directory":"..."},"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
         "Use only the status values defined in the schema.",
         "Return all required fields. Do not add extra keys.",
       ].join("\n");
     }
     return [
       "JSONのみを返す。Markdown や code fence は使わない。",
-      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
+      'Schema: {"status":"conversation|needs_clarification|plan_ready","reply":"...","plan":null|{"project":{"id":"...","name":"...","directory":"..."},"goal":"...","completionDefinition":"...","constraints":["..."],"tasks":[{"title":"...","description":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}],"jobs":[{"title":"...","description":"...","schedule":"...","instruction":"...","expectedOutput":"...","requiredSkills":["..."],"reviewFocus":["..."],"assigneePalId":""}]}}',
       "status は schema に定義された値だけを使う。",
       "必須フィールドをすべて返し、余分なキーを追加しない。",
     ].join("\n");
@@ -429,6 +467,11 @@
       status: "plan_ready",
       reply: "この内容で依頼としてまとめます。冬坂に原因調査、久瀬に修正、白峰に返却文の整理をお願いします。",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         goal: "Settings 保存後に reload しても model が残る状態に戻す",
         completionDefinition: "Save 後に reload しても登録した model が一覧に残り、利用者向け説明まで整っている",
         constraints: ["既存設定フローは壊さない", "最小修正で進める"],
@@ -465,6 +508,11 @@
       status: "plan_ready",
       reply: "この内容で定期確認の依頼としてまとめます。冬坂が朝の確認を受け持ちます。",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         goal: "毎営業日の朝に保存まわりの確認を定期実行する",
         completionDefinition: "毎朝の確認結果が job として残り、異常時に気づける",
         constraints: ["Project が設定済みである", "既存の Cron フローに合わせる"],
@@ -497,6 +545,11 @@
       status: "plan_ready",
       reply: "I will turn this into a request in that shape. Fuyusaka will investigate the cause, Kuze will make the fix, and Shiramine will prepare the return explanation.",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         goal: "Keep the saved model visible after reload",
         completionDefinition: "After Save and reload, the registered model still appears and the final explanation is ready to return",
         constraints: ["Do not break the existing settings flow", "Prefer the smallest viable fix"],
@@ -533,6 +586,11 @@
       status: "plan_ready",
       reply: "I will turn this into a recurring request. Fuyusaka will handle the morning check.",
       plan: {
+        project: {
+          id: "project-tomoshibi-kan",
+          name: "tomoshibi-kan",
+          directory: "C:/Users/kitad/palpal-hive",
+        },
         goal: "Run a recurring morning check for the settings save flow",
         completionDefinition: "The morning check is scheduled as a job and leaves a record when something goes wrong",
         constraints: ["The project is already configured", "Use the existing cron flow"],

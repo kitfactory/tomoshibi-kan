@@ -107,6 +107,7 @@
     }
 
     const assignmentCounts = new Map(workers.map((worker) => [worker.id, 0]));
+    const project = plan && typeof plan.project === "object" ? plan.project : null;
     let taskSequence = nextTaskSequence;
     let jobSequence = nextJobSequence;
     const createdTasks = [];
@@ -125,6 +126,9 @@
       const task = buildTaskRecord({
         id: `TASK-${String(taskSequence).padStart(3, "0")}`,
         planId: normalizePlanOrchestratorText(artifact.planId) || "PLAN-001",
+        projectId: normalizePlanOrchestratorText(project?.id),
+        projectName: normalizePlanOrchestratorText(project?.name),
+        projectDirectory: normalizePlanOrchestratorText(project?.directory),
         title: taskDraft.title,
         description: taskDraft.description,
         palId: resolved.workerId,
@@ -151,6 +155,9 @@
       const job = buildJobRecord({
         id: `JOB-${String(jobSequence).padStart(3, "0")}`,
         planId: normalizePlanOrchestratorText(artifact.planId) || "PLAN-001",
+        projectId: normalizePlanOrchestratorText(project?.id),
+        projectName: normalizePlanOrchestratorText(project?.name),
+        projectDirectory: normalizePlanOrchestratorText(project?.directory),
         title: jobDraft.title,
         description: jobDraft.description,
         instruction: jobDraft.instruction,

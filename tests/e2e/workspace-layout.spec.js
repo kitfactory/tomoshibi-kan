@@ -466,6 +466,11 @@ for (const viewport of VIEWPORTS) {
             status: "plan_ready",
             reply: "実行プランを作成しました。3つの Task に分けます。",
             plan: {
+              project: {
+                id: "project-tomoshibi-kan",
+                name: "tomoshibi-kan",
+                directory: "C:/Users/kitad/palpal-hive",
+              },
               goal: "設定画面の保存不具合を解消する",
               completionDefinition: "保存と再読み込みが成功する",
               constraints: ["既存設定フローは壊さない"],
@@ -500,6 +505,7 @@ for (const viewport of VIEWPORTS) {
       });
       expect(latestPlan).toBeTruthy();
       expect(latestPlan.plan.goal).toBe("設定画面の保存不具合を解消する");
+      expect(latestPlan.plan.project.id).toBe("project-tomoshibi-kan");
       expect(latestPlan.status).toBe("approved");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
@@ -520,6 +526,11 @@ for (const viewport of VIEWPORTS) {
             status: "plan_ready",
             reply: "定期確認の依頼としてまとめました。",
             plan: {
+              project: {
+                id: "project-tomoshibi-kan",
+                name: "tomoshibi-kan",
+                directory: "C:/Users/kitad/palpal-hive",
+              },
               goal: "毎朝の保存確認を回す",
               completionDefinition: "毎朝の確認結果が残る",
               constraints: ["Project は設定済み"],
@@ -559,6 +570,25 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator('[data-tab="project"]')).toHaveClass(/tab-active/);
       await expect(page.locator("#guideChat")).toContainText(/Project/);
       await expect(page.locator("#guideChat")).toContainText(/プロジェクト/);
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+      await page.click('[data-tab="job"]');
+      await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount);
+    });
+
+    test("guide prompts project setup before planning when no project is focused", async ({ page }) => {
+      await page.click('[data-tab="project"]');
+      while ((await page.locator("[data-project-remove-id]").count()) > 0) {
+        await page.locator("[data-project-remove-id]").first().click();
+      }
+      await expect(page.locator("#projectList")).toContainText(/プロジェクトはありません|No projects/);
+      await page.click('[data-tab="guide"]');
+      const beforeTaskCount = await page.locator('[data-task-row]').count();
+      const beforeJobCount = await page.locator('[data-job-row]').count();
+      await page.fill("#guideInput", "保存処理の不具合を調べて修正したい");
+      await page.click("#guideSend");
+      await expect(page.locator('[data-tab="project"]')).toHaveClass(/tab-active/);
+      await expect(page.locator("#guideChat")).toContainText(/対象のプロジェクト|target project/i);
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
       await page.click('[data-tab="job"]');

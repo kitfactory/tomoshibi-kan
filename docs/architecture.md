@@ -831,12 +831,15 @@ CREATE TABLE orchestration_debug_runs (
 - `GuideConversationUseCase` は初回 plan だけでなく replan の生成主体でもある。
 - `GuideConversationUseCase` が valid な `plan_ready` を受理した時は、まず `Plan artifact` を persistent に保存し、その保存済み artifact を起点に後段の materialize / dispatch を呼び出す。
 - `GuideConversationUseCase` は raw user request や未保存の plan object から直接 dispatch せず、保存済み `Plan artifact` を境界として `PlanExecutionOrchestrator` 側へ渡す。
+- `GuideConversationUseCase` は `plan_ready` を採用する時、`plan.project` を必須とする。focused project がある通常依頼では、それを `plan.project` の既定値として recovery してよい。
 - `PlanExecutionOrchestrator` が LLM に依存する意味判断を行う場合、`activeGuideProfileId` から解決した Guide の model / `SOUL.md` / `ROLE.md` を使う。これを `GuideReasoningContext` として扱う。
 - `GuideReasoningContext` を使う対象は、少なくとも `replan`, `outcome interpretation`, `user-facing progress summary` のような意味判断に限る。
 - `dispatch`, `retry count`, `timeout`, `gate submit`, `state machine` は `GuideReasoningContext` に依存せず、Orchestrator core の責務に留める。
 - `GuideConversationUseCase` は recurring / event-driven work を `plan.jobs[]` として返してよい。
 - `PlanExecutionOrchestrator` は `Plan artifact` の `tasks[]` だけでなく `jobs[]` も materialize 対象とし、Task Board と Cron Board をそれぞれ更新する。
-- Guide が新規 project 前提の依頼を受け、project context が未設定なら、model 呼び出し前に onboarding guard を評価し、Project タブへの案内 reply を返して Orchestrator を開始しない。
+- Guide が新規 project 前提の依頼を受けた時は、model 呼び出し前に onboarding guard を評価し、Project タブへの案内 reply を返して Orchestrator を開始しない。
+- focused project が存在しない work request も同様に onboarding guard を通し、task/job の materialize を開始しない。
+- `PlanExecutionOrchestrator` が materialize する task/job record は `projectId / projectName / projectDirectory` を保持する。
 
 ### Plan Artifact
 ```ts

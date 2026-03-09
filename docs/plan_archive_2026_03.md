@@ -546,6 +546,7 @@
 - [x] [DR-20260308-resident-role-rollout] built-in 5人の `ROLE.md / RUBRIC.md` を resident set v0.4 と task conversation log 方針に合わせて更新し、`Progress Voice / Progress Note Triggers` を含む作業契約へ揃えた
 - [x] [DR-20260308-built-in-role-sync-verify] Settings の `built-in 住人定義を同期` 実行時に、最新 `ROLE.md / RUBRIC.md` が workspace 側 identity へ反映されることを E2E で確認した
 - [x] [DR-20260309-task-conversation-flow-hardening] dispatch から plan completed 返却までを TaskBoard 右列で住人の会話として読めるようにした
+- [x] [DR-20260309-guide-plan-project-targeting] Guide の `plan_ready` に target project を必須化し、Plan artifact と task/job materialize に project 指定を通した
 
 
 

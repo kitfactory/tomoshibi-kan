@@ -37,6 +37,11 @@ test("parseGuidePlanResponse normalizes valid plan_ready payload", () => {
     status: "plan_ready",
     reply: "計画を作成しました。",
     plan: {
+      project: {
+        id: "project-tomoshibi-kan",
+        name: "tomoshibi-kan",
+        directory: "C:/Users/kitad/palpal-hive",
+      },
       goal: "設定画面の保存不具合を調査する",
       completionDefinition: "原因と確認方法がそろう",
       constraints: ["既存設定は壊さない"],
@@ -53,6 +58,7 @@ test("parseGuidePlanResponse normalizes valid plan_ready payload", () => {
   }));
   assert.equal(parsed.ok, true);
   assert.equal(parsed.status, "plan_ready");
+  assert.equal(parsed.plan.project.id, "project-tomoshibi-kan");
   assert.equal(parsed.plan.goal, "設定画面の保存不具合を調査する");
   assert.deepEqual(parsed.plan.tasks[0].requiredSkills, ["browser-chrome", "codex-file-search"]);
   assert.deepEqual(parsed.plan.jobs, []);
@@ -63,6 +69,11 @@ test("parseGuidePlanResponse accepts jobs-only plan_ready payload", () => {
     status: "plan_ready",
     reply: "定期確認の依頼としてまとめます。",
     plan: {
+      project: {
+        id: "project-tomoshibi-kan",
+        name: "tomoshibi-kan",
+        directory: "C:/Users/kitad/palpal-hive",
+      },
       goal: "毎朝の保存確認を定期実行する",
       completionDefinition: "確認結果が job として残る",
       constraints: ["Project は設定済み"],
@@ -93,6 +104,11 @@ test("parseGuidePlanResponse recovers empty reply for valid plan_ready payload",
     status: "plan_ready",
     reply: "",
     plan: {
+      project: {
+        id: "project-tomoshibi-kan",
+        name: "tomoshibi-kan",
+        directory: "C:/Users/kitad/palpal-hive",
+      },
       goal: "設定画面の保存不具合を調査する",
       completionDefinition: "原因と確認方法がそろう",
       constraints: ["既存設定は壊さない"],
@@ -120,8 +136,13 @@ test("parseGuidePlanResponse accepts wrapper-token plan_ready payload", () => {
 {
   "status": "plan_ready",
   "reply": "計画を作成しました。",
-  "plan": {
-    "goal": "Settings 保存不具合を調査する",
+    "plan": {
+      "project": {
+        "id": "project-tomoshibi-kan",
+        "name": "tomoshibi-kan",
+        "directory": "C:/Users/kitad/palpal-hive"
+      },
+      "goal": "Settings 保存不具合を調査する",
     "completionDefinition": "再現・原因・確認方法がそろう",
     "constraints": ["既存設定を壊さない"],
     "tasks": [
@@ -146,8 +167,13 @@ test("parseGuidePlanResponse repairs light damaged JSON in plan_ready payload", 
 {
   "status": "plan_ready",
   "reply": "計画を作成しました。",
-  "plan": {
-    "goal": "Settings 保存不具合を調査する",
+    "plan": {
+      "project": {
+        "id": "project-tomoshibi-kan",
+        "name": "tomoshibi-kan",
+        "directory": "C:/Users/kitad/palpal-hive"
+      },
+      "goal": "Settings 保存不具合を調査する",
     "completionDefinition": "再現・原因・確認方法がそろう",
     "constraints": ["既存設定を壊さない",],
     "tasks": [
@@ -166,6 +192,7 @@ test("parseGuidePlanResponse recovers trace fix verify tasks from malformed debu
     "status":"plan_ready",
     "reply":"以下のように3段階で対処します。1. trace：設定保存時のフローを追跡 2. fix：永続化ロジックを修正 3. verify：再度手順で動作確認 各タスクは別々に割り当てます。",
     "plan":{
+      "project":{"id":"project-tomoshibi-kan","name":"tomoshibi-kan","directory":"C:/Users/kitad/palpal-hive"},
       "goal":"Settings save を直す",
       "completionDefinition":"reload 後も model が残る",
       "constraints":["既存設定フローは壊さない"],
@@ -203,6 +230,7 @@ test("parseGuidePlanResponse recovers debug tasks from controller intent context
     "status":"plan_ready",
     "reply":"以下のように3つのタスクを作成します。",
     "plan":{
+      "project":{"id":"project-tomoshibi-kan","name":"tomoshibi-kan","directory":"C:/Users/kitad/palpal-hive"},
       "goal":"Settings save を直す",
       "completionDefinition":"reload 後も model が残る",
       "constraints":["既存設定画面を壊さない"],
@@ -238,6 +266,7 @@ test("parseGuidePlanResponse recovers resident trio when plan_ready returns part
     "status":"plan_ready",
     "reply":"1 を前提に進めます。冬坂に原因調査、久瀬に修正、白峰に返却文の整理をお願いします。",
     "plan":{
+      "project":{"id":"project-tomoshibi-kan","name":"tomoshibi-kan","directory":"C:/Users/kitad/palpal-hive"},
       "goal":"Settings save を直す",
       "completionDefinition":"reload 後も model が残る",
       "constraints":["既存設定画面を壊さない"],
@@ -284,6 +313,11 @@ test("parseGuidePlanResponse rejects invalid plan_ready payload", () => {
     status: "plan_ready",
     reply: "計画です。",
     plan: {
+      project: {
+        id: "project-tomoshibi-kan",
+        name: "tomoshibi-kan",
+        directory: "C:/Users/kitad/palpal-hive",
+      },
       goal: "",
       tasks: [],
     },
@@ -323,6 +357,66 @@ test("buildGuidePlanResponseFormat returns json_schema contract", () => {
   assert.equal(responseFormat.json_schema.strict, true);
   assert.match(JSON.stringify(responseFormat), /"jobs"/);
   assert.match(JSON.stringify(responseFormat), /"schedule"/);
+  assert.match(JSON.stringify(responseFormat), /"project"/);
+});
+
+test("parseGuidePlanResponse recovers project from project context when plan omits project", () => {
+  const parsed = parseGuidePlanResponse(JSON.stringify({
+    status: "plan_ready",
+    reply: "計画を作成しました。",
+    plan: {
+      goal: "設定画面の保存不具合を調査する",
+      completionDefinition: "原因と確認方法がそろう",
+      constraints: ["既存設定は壊さない"],
+      tasks: [
+        {
+          title: "再現確認",
+          description: "保存不具合の再現手順を確認し、症状を整理する",
+          expectedOutput: "調査メモ",
+          requiredSkills: ["browser-chrome"],
+          reviewFocus: ["repro"],
+          assigneePalId: "pal-alpha",
+        },
+      ],
+      jobs: [],
+    },
+  }), {
+    projectContext: {
+      focus: {
+        id: "project-alpha",
+        name: "@alpha-work",
+        directory: "C:/work/alpha",
+      },
+    },
+  });
+  assert.equal(parsed.ok, true);
+  assert.equal(parsed.plan.project.id, "project-alpha");
+  assert.equal(parsed.plan.project.directory, "C:/work/alpha");
+});
+
+test("parseGuidePlanResponse rejects plan_ready when project is missing and no context exists", () => {
+  const parsed = parseGuidePlanResponse(JSON.stringify({
+    status: "plan_ready",
+    reply: "計画を作成しました。",
+    plan: {
+      goal: "設定画面の保存不具合を調査する",
+      completionDefinition: "原因と確認方法がそろう",
+      constraints: ["既存設定は壊さない"],
+      tasks: [
+        {
+          title: "再現確認",
+          description: "保存不具合の再現手順を確認し、症状を整理する",
+          expectedOutput: "調査メモ",
+          requiredSkills: ["browser-chrome"],
+          reviewFocus: ["repro"],
+          assigneePalId: "pal-alpha",
+        },
+      ],
+      jobs: [],
+    },
+  }));
+  assert.equal(parsed.ok, false);
+  assert.equal(parsed.error, "plan_invalid");
 });
 
 test("buildGuidePlanFewShotExamples includes recommendation and short closing examples", () => {
