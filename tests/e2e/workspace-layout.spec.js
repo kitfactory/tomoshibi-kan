@@ -511,7 +511,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
       const latestTask = page.locator('[data-task-row="TASK-004"]');
       await expect(latestTask).toHaveAttribute("data-plan-id", String(latestPlan.planId));
-      await expect(latestTask).toContainText(/pal-alpha|pal-beta|pal-delta/);
+      await expect(latestTask).toContainText(/冬坂|久瀬|白峰/);
       await expect(latestTask).toContainText(/Assigned|割り当て済み/);
     });
 
@@ -558,7 +558,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount + 1);
       const latestJob = page.locator('[data-job-row]').last();
       await expect(latestJob).toContainText(/毎朝 Settings 保存まわりを確認する/);
-      await expect(latestJob).toContainText(/pal-alpha/);
+      await expect(latestJob).toContainText(/冬坂/);
     });
 
     test("guide prompts project setup before starting a new project request", async ({ page }) => {
@@ -1157,7 +1157,7 @@ for (const viewport of VIEWPORTS) {
         return rows.at(-1)?.getAttribute("data-task-row") || "";
       });
       expect(latestTaskId).toMatch(/^TASK-/);
-      await expect(page.locator(`[data-task-row="${latestTaskId}"]`)).toContainText("pal-delta");
+      await expect(page.locator(`[data-task-row="${latestTaskId}"]`)).toContainText("白峰");
 
       await expect.poll(async () => {
         return page.evaluate(async (taskId) => {
@@ -1173,8 +1173,8 @@ for (const viewport of VIEWPORTS) {
       await page.click('[data-tab="task"]');
       await page.click(`[data-action="detail"][data-task-id="${latestTaskId}"]`);
       await expect(page.locator("#detailConversationLog")).toContainText(/振り直し|Reroute/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/pal-alpha/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/pal-delta/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/冬坂/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/白峰/);
     });
 
     test("worker runtime receives structured handoff payload", async ({ page }) => {

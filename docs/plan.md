@@ -20,6 +20,7 @@
 - 20260309: [DR-20260309-resident-dummy-task-observation] resident dummy task observation を archive 済み
 - 20260309: [DR-20260309-multistep-request-observation] multi-step resident trio observation を archive 済み
 - 20260309: [DR-20260309-programmer-researcher-role-separation] programmer/researcher role separation を archive 済み
+- 20260309: [DR-20260309-resident-name-rendering] resident proper-name rendering を archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -34,3 +35,4 @@
 - [x] 20260309: [DR-20260309-task-conversation-flow-hardening] [DR-20260309-guide-plan-project-targeting]
 - [x] 20260309: [DR-20260309-resident-dummy-task-observation] [DR-20260309-programmer-researcher-role-separation]
 - [x] 20260309: [DR-20260309-multistep-request-observation]
+- [x] 20260309: [DR-20260309-resident-name-rendering]

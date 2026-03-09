@@ -3867,12 +3867,13 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     tasks.push(task);
     createdTasks.push(task);
     const routingExplanation = formatWorkerRoutingExplanation(explanation);
+    const workerDisplayName = residentDisplayName(workerId, workerId);
     const summaryJa = routingExplanation.ja
-      ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
-      : `${task.id} を ${workerId} に割り当てました。`;
+      ? `${task.id} を ${workerDisplayName} に割り当てました (${routingExplanation.ja})。`
+      : `${task.id} を ${workerDisplayName} に割り当てました。`;
     const summaryEn = routingExplanation.en
-      ? `${task.id} dispatched to ${workerId} (${routingExplanation.en}).`
-      : `${task.id} dispatched to ${workerId}.`;
+      ? `${task.id} dispatched to ${workerDisplayName} (${routingExplanation.en}).`
+      : `${task.id} dispatched to ${workerDisplayName}.`;
     appendEvent("dispatch", task.id, "ok", summaryJa, summaryEn);
     void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
       planId,
@@ -3953,12 +3954,13 @@ async function createPlannedTasksFromGuidePlan(plan, options = {}) {
     jobs.push(job);
     createdJobs.push(job);
     const routingExplanation = formatWorkerRoutingExplanation(explanation);
+    const workerDisplayName = residentDisplayName(workerId, workerId);
     const summaryJa = routingExplanation.ja
-      ? `${job.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
-      : `${job.id} を ${workerId} に割り当てました。`;
+      ? `${job.id} を ${workerDisplayName} に割り当てました (${routingExplanation.ja})。`
+      : `${job.id} を ${workerDisplayName} に割り当てました。`;
     const summaryEn = routingExplanation.en
-      ? `${job.id} dispatched to ${workerId} (${routingExplanation.en}).`
-      : `${job.id} dispatched to ${workerId}.`;
+      ? `${job.id} dispatched to ${workerDisplayName} (${routingExplanation.en}).`
+      : `${job.id} dispatched to ${workerDisplayName}.`;
     appendEvent("dispatch", job.id, "ok", summaryJa, summaryEn);
     void appendTaskProgressLogForTarget("job", job.id, "dispatch", {
       planId,
@@ -6245,7 +6247,7 @@ function renderTaskBoard() {
           <span class="badge ${statusBadgeClass(task.status)} badge-sm">${statusText}</span>
         </div>
         <div class="mt-2 grid gap-1 text-xs text-base-content/65">
-          <span>${task.id} / ${task.palId}</span>
+          <span>${task.id} / ${escapeHtml(residentDisplayName(task.palId, task.palId))}</span>
           <span>updated_at: ${task.updatedAt}</span>
           <span>${escapeHtml(gateProfileSummaryText(task))}</span>
           <span>gate: ${task.decisionSummary}</span>
@@ -6300,7 +6302,7 @@ function renderJobBoard() {
           <span class="badge ${statusBadgeClass(job.status)} badge-sm">${statusText}</span>
         </div>
         <div class="cron-meta mt-2 grid gap-1 text-xs text-base-content/65">
-          <span class="cron-id-row">${escapeHtml(job.id)} / ${escapeHtml(job.palId)}</span>
+          <span class="cron-id-row">${escapeHtml(job.id)} / ${escapeHtml(residentDisplayName(job.palId, job.palId))}</span>
           <span class="cron-schedule-row">${escapeHtml(tDyn("schedule"))}: ${escapeHtml(job.schedule)}</span>
           <span class="cron-last-run-row">${escapeHtml(tDyn("lastRun"))}: ${escapeHtml(job.lastRunAt)}</span>
           <span class="cron-gate-row">${escapeHtml(gateProfileSummaryText(job))}</span>
