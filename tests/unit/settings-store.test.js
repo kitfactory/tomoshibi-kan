@@ -291,3 +291,34 @@ test("SqliteSettingsStore appends and queries plan artifacts", async () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   }
 });
+
+test("SqliteSettingsStore updates pending plan artifacts to approved", async () => {
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "tomoshibikan-settings-"));
+  const store = await createStore(tmpDir);
+  try {
+    const saved = await store.appendPlanArtifact({
+      status: "pending_approval",
+      replyText: "confirm please",
+      plan: {
+        goal: "Persist model after reload",
+        completionDefinition: "model remains after reload",
+        constraints: [],
+        tasks: [{ title: "Trace", description: "inspect" }],
+      },
+      sourceRunId: "debug-guide-pending",
+    });
+    const updated = await store.updatePlanArtifact(saved.planId, {
+      status: "approved",
+      approvedAt: "2026-03-09T12:00:00.000Z",
+    });
+    assert.ok(updated);
+    assert.equal(updated.status, "approved");
+    assert.equal(updated.approvedAt, "2026-03-09T12:00:00.000Z");
+    const latest = await store.getLatestPlanArtifact({ status: "approved" });
+    assert.ok(latest);
+    assert.equal(latest.planId, saved.planId);
+  } finally {
+    await store.close();
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});

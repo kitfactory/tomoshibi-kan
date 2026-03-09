@@ -289,6 +289,9 @@ function bindIpc(settings, identity) {
   ipcMain.handle("plan-artifact:append", async (_event, payload) => {
     return settings.appendPlanArtifact(payload);
   });
+  ipcMain.handle("plan-artifact:update", async (_event, planId, patch) => {
+    return settings.updatePlanArtifact(planId, patch);
+  });
   ipcMain.handle("plan-artifact:list", async (_event, options) => {
     return settings.listPlanArtifacts(options);
   });

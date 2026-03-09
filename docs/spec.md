@@ -568,7 +568,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - `conversation` は雑談、壁打ち、通常相談など、ユーザーが task 化や実行計画化を明示していない状態を表す。この状態では Plan を生成せず、task/job materialize も開始しない。
 - Guide の最新出力が valid な `Plan` オブジェクトとして parse / validate できない場合、システムは `GuideConversationUseCase` に留まり、Guide との対話を継続する。
 - valid な `Plan` オブジェクトが存在しない間、Task/Job の materialize、dispatch、worker routing、gate routing を開始してはならない。
-- `PlanExecutionOrchestrator` は raw user request や Guide の自然文応答を入力として開始せず、valid かつ `approved` な `Plan` オブジェクトを受け取った時だけ開始する。
+- `PlanExecutionOrchestrator` は raw user request や Guide の自然文応答を入力として開始せず、valid かつ `approved` な `Plan` オブジェクトまたは `approved` な `Plan artifact` を受け取った時だけ開始する。
 - valid な `plan_ready` を受けた時は、まず persistent な `Plan artifact` を保存し、その保存済み artifact を起点に Task/Job の materialize と dispatch を開始する。
 - `GuideConversationUseCase` 相当の send フローは raw user request や未保存の `Plan` object から直接 dispatch してはならず、保存済み `Plan artifact` を経由しなければならない。
 - `plan_ready` の `plan` は target project を必須とし、少なくとも `project.id`, `project.name`, `project.directory` を持つこと。
@@ -723,7 +723,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - replan の要求を出す主体は `PlanExecutionOrchestrator` とし、再plan の生成主体は Guide とする。
 - `PlanExecutionOrchestrator` が LLM に依存する判断を行う場合、active Guide と同じ model と `SOUL.md` を使ってよい。ただし、state 遷移や dispatch のような deterministic な処理まで Guide へ委譲してはならない。
 - task/job の進行確認のため、`task-centric progress log` を持つ。目的は、ユーザーが途中で「依頼した task は今どうなっているか」を確認できるようにすることにある。
-- `Plan artifact` は少なくとも `plan_id`, `created_at`, `status`, `reply_text`, `plan_json`, `source_run_id`, `approved_at` を保持する。
+- `Plan artifact` は少なくとも `plan_id`, `created_at`, `status`, `reply_text`, `plan_json`, `source_run_id`, `approved_at` を保持する。`status` は最低でも `pending_approval | approved | draft` を取りうる。
 - progress log は内部監査用の `actual_actor` と、ユーザー表示用の `display_actor` を分けて保持する。
 - `actual_actor` は少なくとも `orchestrator | guide | worker | gate` を取れる。
 - `display_actor` は少なくとも `Guide | Resident | Gate` を取れる。日本語表示では `Guide | 住人 | Gate` を正とする。
@@ -758,6 +758,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - renderer は progress log を direct DB access せず、Electron bridge 経由で append/query する。
 - Guide はユーザーが task/job の進捗確認を求めた時、progress log と現行 board state だけを使ってローカル reply を返してよい。
 - minimal 実装では、明示 ID (`TASK-xxx`, `JOB-xxx`) がある時はその target を優先し、無ければ最新 progress entry を参照する。
+- Guide は `plan_ready` を返した時、直ちに dispatch せず `pending_approval` の `Plan artifact` を保存してよい。
+- 最新 `pending_approval` artifact が存在する時、ユーザーの短い承認入力 (`はい`, `進めて`, `お願いします` など) はその artifact の承認として扱い、同一 `plan_id` を `approved` に更新して materialize を開始してよい。
+- 承認後の最小自動 execution loop は、その approval で生成された created task に限定して `dispatch -> worker_runtime -> to_gate -> gate_review -> done | rejected | replan_required` まで順に進めてよい。既存 backlog 全体を自動実行してはならない。
 - Guide は定期実行やイベント起点の継続作業要求を受けた時、`plan_ready` の `plan.jobs[]` に分解してよい。
 - `plan.jobs[]` を含む approved `Plan artifact` は `PlanExecutionOrchestrator` を通じて Cron Board へ materialize されること。
 - `plan.jobs[]` の各要素は少なくとも `title`, `description`, `schedule`, `instruction` を持ち、必要なら `expectedOutput`, `requiredSkills`, `reviewFocus`, `assigneePalId` を持ってよい。

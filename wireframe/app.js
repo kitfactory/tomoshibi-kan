@@ -4123,7 +4123,58 @@ async function materializeApprovedPlanArtifact(artifact) {
   renderTaskBoard();
   renderJobBoard();
   writeBoardStateSnapshot();
-  return { created: created.length };
+  return { created: created.length, createdTasks, createdJobs };
+}
+
+let autoExecutionChain = Promise.resolve();
+
+function enqueueAutoExecution(work) {
+  autoExecutionChain = autoExecutionChain
+    .then(() => Promise.resolve().then(work))
+    .catch(() => {});
+  return autoExecutionChain;
+}
+
+function isGuidePlanApprovalIntent(text) {
+  const normalized = normalizeText(text).toLowerCase();
+  if (!normalized) return false;
+  return [
+    "はい",
+    "はい。",
+    "ok",
+    "okay",
+    "進めて",
+    "進めてください",
+    "進めましょう",
+    "お願いします",
+    "その内容で",
+    "その形で",
+    "それで進めて",
+    "go ahead",
+    "looks good",
+    "ship it",
+  ].some((phrase) => normalized === phrase || normalized.includes(phrase));
+}
+
+function buildGuidePlanApprovalReply(artifact, created) {
+  const plan = artifact?.plan && typeof artifact.plan === "object" ? artifact.plan : {};
+  const taskCount = Array.isArray(created?.createdTasks) ? created.createdTasks.length : 0;
+  const jobCount = Array.isArray(created?.createdJobs) ? created.createdJobs.length : 0;
+  const projectName = normalizeText(plan?.project?.name || plan?.project?.directory || "");
+  if (locale === "en") {
+    const parts = [];
+    parts.push(projectName ? `I will proceed in ${projectName}.` : "I will proceed with this plan.");
+    if (taskCount > 0) parts.push(`I handed off ${taskCount} task${taskCount === 1 ? "" : "s"} to the residents.`);
+    if (jobCount > 0) parts.push(`I also prepared ${jobCount} recurring job${jobCount === 1 ? "" : "s"}.`);
+    if (taskCount > 0) parts.push("The work is now running.");
+    return parts.join(" ");
+  }
+  const parts = [];
+  parts.push(projectName ? `${projectName} でこの依頼を進めます。` : "この内容で進めますね。");
+  if (taskCount > 0) parts.push(`${taskCount}件の作業を住人にお願いしました。`);
+  if (jobCount > 0) parts.push(`${jobCount}件の定期実行も準備しました。`);
+  if (taskCount > 0) parts.push("作業はこのまま進めます。");
+  return parts.join("");
 }
 
 function findResidentProfileById(profileId) {
@@ -4323,6 +4374,7 @@ async function executeGuideDrivenReplanForTarget(targetKind, target, gateResult)
     sourceRunId: normalizeText(modelReply?.runId),
   });
   const created = await materializeApprovedPlanArtifact(nextArtifact);
+  void queueAutoExecutionForCreatedTargets(created);
   await appendTaskProgressLogForTarget(targetKind, normalizeText(target.id), "replanned", {
     planId: currentPlanId,
     actualActor: "orchestrator",
@@ -5163,12 +5215,48 @@ function appendPlanArtifactLocal(payload) {
   return entry;
 }
 
+function updatePlanArtifactLocal(planId, patch = {}) {
+  const normalizedPlanId = normalizeText(planId);
+  if (!normalizedPlanId) return null;
+  const index = planArtifacts.findIndex((entry) => normalizeText(entry?.planId) === normalizedPlanId);
+  if (index < 0) return null;
+  const current = planArtifacts[index];
+  const next = {
+    ...current,
+    status: Object.prototype.hasOwnProperty.call(patch || {}, "status")
+      ? normalizeText(patch?.status) || current.status
+      : current.status,
+    replyText: Object.prototype.hasOwnProperty.call(patch || {}, "replyText")
+      ? normalizeText(patch?.replyText)
+      : current.replyText,
+    plan: Object.prototype.hasOwnProperty.call(patch || {}, "plan")
+      ? (patch?.plan && typeof patch.plan === "object" ? patch.plan : {})
+      : current.plan,
+    sourceRunId: Object.prototype.hasOwnProperty.call(patch || {}, "sourceRunId")
+      ? normalizeText(patch?.sourceRunId)
+      : current.sourceRunId,
+    approvedAt: Object.prototype.hasOwnProperty.call(patch || {}, "approvedAt")
+      ? normalizeText(patch?.approvedAt)
+      : (normalizeText(current.approvedAt) || (normalizeText(patch?.status) === "approved" ? new Date().toISOString() : "")),
+  };
+  planArtifacts[index] = next;
+  return next;
+}
+
 async function appendPlanArtifactWithFallback(payload) {
   const api = resolvePlanArtifactApi();
   if (api && typeof api.append === "function") {
     return api.append(payload);
   }
   return appendPlanArtifactLocal(payload);
+}
+
+async function updatePlanArtifactWithFallback(planId, patch = {}) {
+  const api = resolvePlanArtifactApi();
+  if (api && typeof api.update === "function") {
+    return api.update(planId, patch);
+  }
+  return updatePlanArtifactLocal(planId, patch);
 }
 
 async function listPlanArtifactsWithFallback(options = {}) {
@@ -5202,6 +5290,7 @@ async function findPlanArtifactByIdWithFallback(planId) {
 if (typeof window !== "undefined" && (!window.TomoshibikanPlanArtifacts || typeof window.TomoshibikanPlanArtifacts !== "object")) {
   const fallbackPlanArtifactApi = {
     append: (payload) => appendPlanArtifactLocal(payload),
+    update: (planId, patch = {}) => updatePlanArtifactLocal(planId, patch),
     list: (options = {}) => {
       const status = normalizeText(options.status);
       const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
@@ -6108,6 +6197,28 @@ async function sendGuideMessage() {
     sender: "you",
     text: { ja: text, en: text },
   });
+  const pendingPlanArtifact = await getLatestPlanArtifactWithFallback({ status: "pending_approval" });
+  if (pendingPlanArtifact && isGuidePlanApprovalIntent(text)) {
+    const approvedArtifact = await updatePlanArtifactWithFallback(pendingPlanArtifact.planId, {
+      status: "approved",
+      approvedAt: new Date().toISOString(),
+    });
+    const created = await materializeApprovedPlanArtifact(approvedArtifact);
+    void queueAutoExecutionForCreatedTargets(created);
+    guideMessages.push({
+      timestamp: formatNow().slice(11),
+      sender: "guide",
+      text: {
+        ja: buildGuidePlanApprovalReply(approvedArtifact, created),
+        en: buildGuidePlanApprovalReply(approvedArtifact, created),
+      },
+    });
+    input.value = "";
+    closeGuideMentionMenu();
+    renderGuideChat();
+    setMessage(created?.created > 0 ? "MSG-PPH-0001" : "MSG-PPH-0009");
+    return;
+  }
   const progressReply = await buildGuideProgressQueryReply(text);
   if (progressReply?.handled) {
     guideMessages.push({
@@ -6175,18 +6286,17 @@ async function sendGuideMessage() {
     let createdCount = 0;
     if (parsedPlanResponse?.ok && parsedPlanResponse.status === "plan_ready" && parsedPlanResponse.plan) {
       const planArtifact = await appendPlanArtifactWithFallback({
-        status: "approved",
+        status: "pending_approval",
         replyText,
         plan: parsedPlanResponse.plan,
         sourceRunId: normalizeText(modelReply?.runId),
       });
-      const created = await materializeApprovedPlanArtifact(planArtifact);
-      createdCount = Number(created?.created || 0);
+      createdCount = Number(planArtifact?.planId ? 1 : 0);
     }
     input.value = "";
     closeGuideMentionMenu();
     renderGuideChat();
-    setMessage(createdCount > 0 ? "MSG-PPH-0001" : "MSG-PPH-0009");
+    setMessage(createdCount > 0 ? "MSG-PPH-0009" : "MSG-PPH-0009");
   } finally {
     guideSendInFlight = false;
     setGuideComposerBusy(false);
@@ -8926,16 +9036,77 @@ function renderGateRuntimeSuggestion() {
   `;
 }
 
-async function executeGateRuntimeReview(target, targetKind = "task", gateProfile = null) {
-  if (!target || !gateProfile) return;
+async function requestGateRuntimeReviewSuggestion(target, targetKind = "task", gateProfile = null) {
+  if (!target || !gateProfile) return null;
   const runtimeApi = resolveTomoshibikanCoreRuntimeApi();
   const runtimeConfig = resolvePalRuntimeConfigForExecution(gateProfile);
   if (!runtimeApi || typeof runtimeApi.palChat !== "function" || !runtimeConfig || !runtimeConfig.modelName) {
-    gateRuntimeState.error = "unavailable";
-    gateRuntimeState.loading = false;
-    renderGateRuntimeSuggestion();
-    return;
+    return null;
   }
+  const [enabledSkillIds, identity] = await Promise.all([
+    resolveConfiguredSkillIdsForPal(gateProfile),
+    loadAgentIdentityForPal(gateProfile),
+  ]);
+  const basePrompt = buildOperatingRulesPrompt("gate", locale, targetKind);
+  const reviewInput = buildGateReviewInput(target, targetKind, gateProfile, identity);
+  const latestUserText = buildGateReviewUserText(reviewInput);
+  const contextBuilderApi = resolvePalContextBuilderApi();
+  const builderInput = {
+    latestUserText,
+    sessionMessages: [],
+    safetyPrompt: basePrompt,
+    role: "gate",
+    runtimeKind: "model",
+    locale,
+    skillSummaries: [],
+    soulText: identity?.soul || "",
+    roleText: "",
+    rubricText: identity?.rubric || "",
+  };
+  const builtContext = contextBuilderApi && typeof contextBuilderApi.buildPalContext === "function"
+    ? contextBuilderApi.buildPalContext(builderInput)
+    : null;
+  const promptEnvelope = builtContext && builtContext.ok
+    ? splitSystemPromptFromContextMessages(builtContext.messages, basePrompt, builderInput.latestUserText)
+    : {
+      systemPrompt: buildFallbackIdentitySystemPrompt(basePrompt, identity),
+      messages: [],
+    };
+  const response = await runtimeApi.palChat({
+    provider: runtimeConfig.provider,
+    modelName: runtimeConfig.modelName,
+    baseUrl: runtimeConfig.baseUrl,
+    apiKey: runtimeConfig.apiKey,
+    userText: latestUserText,
+    systemPrompt: promptEnvelope.systemPrompt,
+    messages: promptEnvelope.messages,
+    agentName: gateProfile.id,
+    enabledSkillIds,
+    workspaceRoot: resolveRuntimeWorkspaceRootForChat(),
+    maxTurns: 2,
+    debugMeta: {
+      stage: "gate_review",
+      agentRole: "gate",
+      agentId: normalizeText(gateProfile?.id),
+      targetKind,
+      targetId: normalizeText(target?.id),
+      identityVersions: buildDebugIdentityVersions(identity),
+      gateProfileId: normalizeText(gateProfile?.id),
+      rubricVersion: reviewInput.rubricVersion,
+    },
+  });
+  const rawText = normalizeText(response?.text);
+  const parsed = parseGateRuntimeResponse(rawText);
+  if (!parsed) return null;
+  return {
+    ...parsed,
+    rawText,
+    runId: normalizeText(response?.runId),
+  };
+}
+
+async function executeGateRuntimeReview(target, targetKind = "task", gateProfile = null) {
+  if (!target || !gateProfile) return;
   const requestSeq = gateRuntimeState.requestSeq + 1;
   gateRuntimeState.requestSeq = requestSeq;
   gateRuntimeState.loading = true;
@@ -8946,74 +9117,22 @@ async function executeGateRuntimeReview(target, targetKind = "task", gateProfile
   gateRuntimeState.rawText = "";
   renderGateRuntimeSuggestion();
   try {
-    const [enabledSkillIds, identity] = await Promise.all([
-      resolveConfiguredSkillIdsForPal(gateProfile),
-      loadAgentIdentityForPal(gateProfile),
-    ]);
-    const basePrompt = buildOperatingRulesPrompt("gate", locale, targetKind);
-    const reviewInput = buildGateReviewInput(target, targetKind, gateProfile, identity);
-    const latestUserText = buildGateReviewUserText(reviewInput);
-    const contextBuilderApi = resolvePalContextBuilderApi();
-    const builderInput = {
-      latestUserText,
-      sessionMessages: [],
-      safetyPrompt: basePrompt,
-      role: "gate",
-      runtimeKind: "model",
-      locale,
-      skillSummaries: [],
-      soulText: identity?.soul || "",
-      roleText: "",
-      rubricText: identity?.rubric || "",
-    };
-    const builtContext = contextBuilderApi && typeof contextBuilderApi.buildPalContext === "function"
-      ? contextBuilderApi.buildPalContext(builderInput)
-      : null;
-    const promptEnvelope = builtContext && builtContext.ok
-      ? splitSystemPromptFromContextMessages(builtContext.messages, basePrompt, builderInput.latestUserText)
-      : {
-        systemPrompt: buildFallbackIdentitySystemPrompt(basePrompt, identity),
-        messages: [],
-      };
-    const response = await runtimeApi.palChat({
-      provider: runtimeConfig.provider,
-      modelName: runtimeConfig.modelName,
-      baseUrl: runtimeConfig.baseUrl,
-      apiKey: runtimeConfig.apiKey,
-      userText: latestUserText,
-      systemPrompt: promptEnvelope.systemPrompt,
-      messages: promptEnvelope.messages,
-      agentName: gateProfile.id,
-      enabledSkillIds,
-      workspaceRoot: resolveRuntimeWorkspaceRootForChat(),
-      maxTurns: 2,
-      debugMeta: {
-        stage: "gate_review",
-        agentRole: "gate",
-        agentId: normalizeText(gateProfile?.id),
-        targetKind,
-        targetId: normalizeText(target?.id),
-        identityVersions: buildDebugIdentityVersions(identity),
-        gateProfileId: normalizeText(gateProfile?.id),
-        rubricVersion: reviewInput.rubricVersion,
-      },
-    });
+    const response = await requestGateRuntimeReviewSuggestion(target, targetKind, gateProfile);
     if (gateRuntimeState.requestSeq !== requestSeq || !gateTarget || gateTarget.id !== target.id) return;
     gateRuntimeState.loading = false;
-    gateRuntimeState.rawText = normalizeText(response?.text);
-    const parsed = parseGateRuntimeResponse(gateRuntimeState.rawText);
-    if (!parsed) {
+    gateRuntimeState.rawText = normalizeText(response?.rawText);
+    if (!response) {
       gateRuntimeState.error = "parse";
       renderGateRuntimeSuggestion();
       return;
     }
-    gateRuntimeState.suggestedDecision = parsed.decision;
-    gateRuntimeState.reason = parsed.reason;
-    gateRuntimeState.fixes = parsed.fixes;
-    if (parsed.decision === "rejected") {
+    gateRuntimeState.suggestedDecision = response.decision;
+    gateRuntimeState.reason = response.reason;
+    gateRuntimeState.fixes = response.fixes;
+    if (response.decision === "rejected") {
       const reasonInput = document.getElementById("gateReason");
       if (reasonInput && !normalizeText(reasonInput.value)) {
-        reasonInput.value = parsed.fixes.length > 0 ? parsed.fixes.join("\n") : parsed.reason;
+        reasonInput.value = response.fixes.length > 0 ? response.fixes.join("\n") : response.reason;
       }
     }
     renderGateRuntimeSuggestion();
@@ -9433,31 +9552,20 @@ function closeGate() {
   renderGateRuntimeSuggestion();
 }
 
-function runGate(decision) {
-  const target = findGateTarget();
-  if (!target) {
-    setMessage("MSG-PPH-1004");
-    return;
-  }
+async function applyGateDecisionToTarget(target, targetKind = "task", decision = "approve", options = {}) {
+  if (!target) return null;
   if (target.status !== "to_gate") {
     setMessage("MSG-PPH-1006");
-    return;
+    return null;
   }
-  const isJob = gateTarget?.kind === "job";
+  const isJob = targetKind === "job";
   const isRejectDecision = decision === "reject";
-  const reasonInput = document.getElementById("gateReason");
-  const typedReason = normalizeText(reasonInput?.value);
-  const suggestedReason = decision === "reject"
-    ? (gateRuntimeState.fixes.length > 0 ? gateRuntimeState.fixes.join("\n") : gateRuntimeState.reason)
-    : gateRuntimeState.reason;
-  const reason = typedReason || suggestedReason;
-  const gateResult = buildGateResultRecord(
-    isRejectDecision ? "rejected" : "approved",
-    reason
+  const gateResult = normalizeGateResultRecord(
+    options.gateResult || buildGateResultRecord(isRejectDecision ? "rejected" : "approved", options.reason || "")
   );
   const requiresReplan = isRejectDecision && shouldRequireReplanFromGateResult(gateResult);
   if (isRejectDecision) {
-    const count = reason
+    const count = normalizeText(gateResult.fixCondition)
       .split(/[\n,]/)
       .map((x) => x.trim())
       .filter(Boolean).length;
@@ -9528,7 +9636,7 @@ function runGate(decision) {
     });
   }
   setMessage("MSG-PPH-0004");
-  closeGate();
+  if (options.closePanel !== false) closeGate();
   const completedPlanId = resolveTargetPlanId(target);
   const samePlanTasks = tasks.filter((item) => resolveTargetPlanId(item) === completedPlanId);
   if (!isRejectDecision && !isJob && samePlanTasks.length > 0 && samePlanTasks.every((item) => item.status === "done")) {
@@ -9551,13 +9659,91 @@ function runGate(decision) {
   if (requiresReplan) {
     rerenderAll();
     void executeGuideDrivenReplanForTarget(isJob ? "job" : "task", target, gateResult);
-    return;
+    return { outcome: "replan_required", gateResult };
   }
   if (isRejectDecision) {
-    navigateToResubmitTarget(target.id, isJob ? "job" : "task");
-    return;
+    if (options.navigateOnReject !== false) {
+      navigateToResubmitTarget(target.id, isJob ? "job" : "task");
+    }
+    return { outcome: "rejected", gateResult };
   }
   rerenderAll();
+  return { outcome: "approved", gateResult };
+}
+
+async function runGate(decision) {
+  const target = findGateTarget();
+  if (!target) {
+    setMessage("MSG-PPH-1004");
+    return;
+  }
+  const reasonInput = document.getElementById("gateReason");
+  const typedReason = normalizeText(reasonInput?.value);
+  const suggestedReason = decision === "reject"
+    ? (gateRuntimeState.fixes.length > 0 ? gateRuntimeState.fixes.join("\n") : gateRuntimeState.reason)
+    : gateRuntimeState.reason;
+  const reason = typedReason || suggestedReason;
+  return applyGateDecisionToTarget(target, gateTarget?.kind === "job" ? "job" : "task", decision, {
+    reason,
+    closePanel: true,
+    navigateOnReject: true,
+  });
+}
+
+async function autoExecuteTarget(targetKind, targetId) {
+  const collection = targetKind === "job" ? jobs : tasks;
+  const target = collection.find((item) => item.id === targetId);
+  if (!target || targetKind !== "task") return null;
+  if (target.status !== "assigned") return null;
+  touchTask(target, "in_progress", "working");
+  appendEvent("task", target.id, "in_progress", `${target.id} を実行中へ更新`, `${target.id} moved to in_progress`);
+  rerenderAll();
+  await executePalRuntimeForTarget(target.id, "task");
+  const latest = tasks.find((item) => item.id === target.id);
+  if (!latest || latest.status !== "in_progress") return null;
+  const gateSelection = await assignGateProfileToTargetWithRouting(latest);
+  touchTask(latest, "to_gate", "pending");
+  const gateExplanation = formatGateRoutingExplanation(gateSelection?.explanation);
+  const gateConversation = buildGateHandOffConversationMessage(latest, latest.gateProfileId, gateExplanation);
+  appendEvent("task", latest.id, "to_gate", gateConversation.messageJa, gateConversation.messageEn);
+  await appendTaskProgressLogForTarget("task", latest.id, "to_gate", {
+    planId: resolveTargetPlanId(latest),
+    actualActor: "orchestrator",
+    displayActor: "Guide",
+    status: "pending",
+    messageJa: gateConversation.messageJa,
+    messageEn: gateConversation.messageEn,
+    payload: {
+      gateProfileId: normalizeText(latest.gateProfileId),
+      gateDisplayName: residentDisplayName(latest.gateProfileId, latest.gateProfileId),
+      taskTitle: latest.title,
+      taskDescription: latest.description,
+      routingExplanation: gateExplanation,
+    },
+  });
+  rerenderAll();
+  const gateProfile = gateSelection?.gate || findResidentProfileById(latest.gateProfileId);
+  const gateReview = await requestGateRuntimeReviewSuggestion(latest, "task", gateProfile);
+  if (!gateReview) return null;
+  return applyGateDecisionToTarget(latest, "task", gateReview.decision === "approved" ? "approve" : "reject", {
+    gateResult: {
+      decision: gateReview.decision,
+      reason: gateReview.reason,
+      fixes: gateReview.fixes,
+    },
+    closePanel: false,
+    navigateOnReject: false,
+  });
+}
+
+function queueAutoExecutionForCreatedTargets(created = {}) {
+  const createdTasks = Array.isArray(created?.createdTasks) ? created.createdTasks : [];
+  if (createdTasks.length === 0) return Promise.resolve();
+  return enqueueAutoExecution(async () => {
+    for (const task of createdTasks) {
+      await autoExecuteTarget("task", normalizeText(task?.id));
+    }
+  });
 }
 
 function rerenderAll() {

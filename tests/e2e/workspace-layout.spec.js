@@ -459,6 +459,7 @@ for (const viewport of VIEWPORTS) {
         if (typeof window.requestGuideModelReplyWithFallback !== "function") {
           throw new Error("guide reply request function is unavailable");
         }
+        const runtime = window.TomoshibikanCoreRuntime || {};
         window.requestGuideModelReplyWithFallback = async () => ({
           provider: "openai",
           modelName: "gpt-4.1",
@@ -495,8 +496,45 @@ for (const viewport of VIEWPORTS) {
           }),
           toolCalls: [],
         });
+        runtime.palChat = async (input) => {
+          if (input?.debugMeta?.stage === "gate_review") {
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                decision: "approved",
+                reason: "確認できたので、このままでよさそうです。",
+                fixes: [],
+              }),
+              toolCalls: [],
+              runId: "debug-auto-gate-run",
+            };
+          }
+          return {
+            provider: input?.provider || "openai",
+            modelName: input?.modelName || "gpt-4.1",
+            text: "worker-payload-ok",
+            toolCalls: [],
+            runId: "debug-auto-worker-run",
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
       });
       await page.fill("#guideInput", "設定画面の保存を改善して、モデル登録と検証を進めてください");
+      await page.click("#guideSend");
+      const pendingPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "pending_approval" });
+      });
+      expect(pendingPlan).toBeTruthy();
+      expect(pendingPlan.plan.goal).toBe("設定画面の保存不具合を解消する");
+      expect(pendingPlan.plan.project.id).toBe("project-tomoshibi-kan");
+      expect(pendingPlan.status).toBe("pending_approval");
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "はい");
       await page.click("#guideSend");
       const latestPlan = await page.evaluate(async () => {
         const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
@@ -504,15 +542,14 @@ for (const viewport of VIEWPORTS) {
         return api.latest({ status: "approved" });
       });
       expect(latestPlan).toBeTruthy();
-      expect(latestPlan.plan.goal).toBe("設定画面の保存不具合を解消する");
-      expect(latestPlan.plan.project.id).toBe("project-tomoshibi-kan");
+      expect(latestPlan.planId).toBe(pendingPlan.planId);
       expect(latestPlan.status).toBe("approved");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
       const latestTask = page.locator('[data-task-row="TASK-004"]');
       await expect(latestTask).toHaveAttribute("data-plan-id", String(latestPlan.planId));
       await expect(latestTask).toContainText(/冬坂|久瀬|白峰/);
-      await expect(latestTask).toContainText(/Assigned|割り当て済み/);
+      await expect(page.locator("#guideChat")).toContainText(/進めます|実行を始めます/);
     });
 
     test("guide chat can materialize cron jobs from approved plan", async ({ page }) => {
@@ -554,6 +591,24 @@ for (const viewport of VIEWPORTS) {
       });
       await page.fill("#guideInput", "毎営業日の朝に保存確認を回したい");
       await page.click("#guideSend");
+      const pendingPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "pending_approval" });
+      });
+      expect(pendingPlan).toBeTruthy();
+      await page.click('[data-tab="job"]');
+      await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount);
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "進めて");
+      await page.click("#guideSend");
+      const approvedPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "approved" });
+      });
+      expect(approvedPlan).toBeTruthy();
+      expect(approvedPlan.planId).toBe(pendingPlan.planId);
       await page.click('[data-tab="job"]');
       await expect(page.locator('[data-job-row]')).toHaveCount(beforeJobCount + 1);
       const latestJob = page.locator('[data-job-row]').last();
@@ -746,6 +801,7 @@ for (const viewport of VIEWPORTS) {
         if (typeof window.requestGuideModelReplyWithFallback !== "function") {
           throw new Error("guide reply request function is unavailable");
         }
+        const runtime = window.TomoshibikanCoreRuntime || {};
         window.requestGuideModelReplyWithFallback = async () => ({
           provider: "openai",
           modelName: "gpt-4.1",
@@ -777,8 +833,42 @@ for (const viewport of VIEWPORTS) {
           }),
           toolCalls: [],
         });
+        runtime.palChat = async (input) => {
+          if (input?.debugMeta?.stage === "gate_review") {
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                decision: "approved",
+                reason: "確認できたので、このままで問題ありません。",
+                fixes: [],
+              }),
+              toolCalls: [],
+              runId: "debug-gate-progress-log",
+            };
+          }
+          return {
+            provider: input?.provider || "openai",
+            modelName: input?.modelName || "gpt-4.1",
+            text: "worker-ok",
+            toolCalls: [],
+            runId: "debug-worker-progress-log",
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
       });
       await page.fill("#guideInput", "設定保存の不具合を trace / fix / verify に分けて進めたい");
+      await page.click("#guideSend");
+      const pendingPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "pending_approval" });
+      });
+      expect(pendingPlan).toBeTruthy();
+      await page.click('[data-tab="task"]');
+      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount);
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "進めて");
       await page.click("#guideSend");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 3);
@@ -827,6 +917,7 @@ for (const viewport of VIEWPORTS) {
       await page.click('[data-tab="guide"]');
       const beforeTaskCount = await page.locator('[data-task-row]').count();
       await page.evaluate(() => {
+        const runtime = window.TomoshibikanCoreRuntime || {};
         window.requestGuideModelReplyWithFallback = async () => ({
           provider: "openai",
           modelName: "gpt-4.1",
@@ -848,8 +939,40 @@ for (const viewport of VIEWPORTS) {
           }),
           toolCalls: [],
         });
+        runtime.palChat = async (input) => {
+          if (input?.debugMeta?.stage === "gate_review") {
+            return {
+              provider: "openai",
+              modelName: "gpt-4.1",
+              text: JSON.stringify({
+                decision: "approved",
+                reason: "十分形になっているかな。",
+                fixes: [],
+              }),
+              toolCalls: [],
+              runId: "debug-gate-detail-log",
+            };
+          }
+          return {
+            provider: input?.provider || "openai",
+            modelName: input?.modelName || "gpt-4.1",
+            text: "worker-ok",
+            toolCalls: [],
+            runId: "debug-worker-detail-log",
+          };
+        };
+        window.TomoshibikanCoreRuntime = runtime;
       });
       await page.fill("#guideInput", "設定保存の不具合を調べたい");
+      await page.click("#guideSend");
+      const pendingPlan = await page.evaluate(async () => {
+        const api = window.TomoshibikanPlanArtifacts || window.PalpalPlanArtifacts;
+        if (!api || typeof api.latest !== "function") return null;
+        return api.latest({ status: "pending_approval" });
+      });
+      expect(pendingPlan).toBeTruthy();
+      await page.click('[data-tab="guide"]');
+      await page.fill("#guideInput", "はい");
       await page.click("#guideSend");
       await page.click('[data-tab="task"]');
       await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 1);

@@ -86,6 +86,7 @@ const progressLogBridge = {
 
 const planArtifactBridge = {
   append: (payload) => ipcRenderer.invoke("plan-artifact:append", payload),
+  update: (planId, patch) => ipcRenderer.invoke("plan-artifact:update", planId, patch),
   list: (options) => ipcRenderer.invoke("plan-artifact:list", options),
   latest: (options) => ipcRenderer.invoke("plan-artifact:latest", options),
 };

@@ -740,6 +740,54 @@ class SqliteSettingsStore {
     });
   }
 
+  async updatePlanArtifact(planId, patch = {}) {
+    return this.withLock(async () => {
+      const normalizedPlanId = normalizeString(planId);
+      if (!normalizedPlanId) return null;
+      const rows = queryRows(
+        this.db,
+        `SELECT plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
+           FROM plan_artifacts
+          WHERE plan_id = ?
+          LIMIT 1`,
+        [normalizedPlanId]
+      );
+      const current = rows[0];
+      if (!current) return null;
+      const nextStatus = normalizeString(patch?.status) || normalizeString(current.status);
+      const nextReplyText = Object.prototype.hasOwnProperty.call(patch || {}, "replyText")
+        ? normalizeString(patch?.replyText)
+        : normalizeString(current.reply_text);
+      const nextPlanJson = Object.prototype.hasOwnProperty.call(patch || {}, "plan")
+        ? safeJsonStringify(patch?.plan ?? {}, "{}")
+        : String(current.plan_json || "{}");
+      const nextSourceRunId = Object.prototype.hasOwnProperty.call(patch || {}, "sourceRunId")
+        ? normalizeString(patch?.sourceRunId)
+        : normalizeString(current.source_run_id);
+      const nextApprovedAt = Object.prototype.hasOwnProperty.call(patch || {}, "approvedAt")
+        ? normalizeString(patch?.approvedAt)
+        : (nextStatus === "approved"
+          ? (normalizeString(current.approved_at) || new Date().toISOString())
+          : normalizeString(current.approved_at));
+      this.db.run(
+        `UPDATE plan_artifacts
+            SET status = ?, reply_text = ?, plan_json = ?, source_run_id = ?, approved_at = ?
+          WHERE plan_id = ?`,
+        [nextStatus, nextReplyText, nextPlanJson, nextSourceRunId, nextApprovedAt, normalizedPlanId]
+      );
+      this.persistDb();
+      return {
+        planId: normalizedPlanId,
+        createdAt: normalizeString(current.created_at),
+        status: nextStatus,
+        replyText: nextReplyText,
+        plan: safeJsonParse(nextPlanJson, {}),
+        sourceRunId: nextSourceRunId,
+        approvedAt: nextApprovedAt,
+      };
+    });
+  }
+
   async listPlanArtifacts(options = {}) {
     return this.withLock(async () => {
       const limit = clampLimit(options.limit, 50);

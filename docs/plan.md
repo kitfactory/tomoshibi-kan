@@ -14,6 +14,9 @@
 
 # archive summary
 - 詳細な archive は monthly file に退避し、このファイルは current / future の入口として保つ
+- 20260309: [DR-20260309-resident-name-rendering] resident proper-name rendering を archive 済み
+- 20260309: [DR-20260309-plan-approval-and-auto-execution] plan approval と auto execution loop を archive 済み
+- 20260309: [DR-20260309-multistep-request-observation] multi-step resident trio observation を archive 済み
 - 20260309: guide plan project targeting を archive 済み
 - 20260309: task conversation flow hardening を archive 済み
 - 20260309: task conversation flow hardening を archive 済み
@@ -36,3 +39,4 @@
 - [x] 20260309: [DR-20260309-resident-dummy-task-observation] [DR-20260309-programmer-researcher-role-separation]
 - [x] 20260309: [DR-20260309-multistep-request-observation]
 - [x] 20260309: [DR-20260309-resident-name-rendering]
+- [x] 20260309: [DR-20260309-plan-approval-and-auto-execution]
