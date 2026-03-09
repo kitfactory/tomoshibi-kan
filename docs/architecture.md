@@ -275,6 +275,8 @@ interface SkillCatalogPort {
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `guide-chat-entry.js`
   - Guide の送信入口、project onboarding 判定、plan approval / progress query / model call 分岐を担当する。
+- `guide-chat-runtime.js`
+  - Guide composer の busy/focus 状態、model user text 組み立て、live reply 整形、runtime request helper、composer event wiring を担当する。
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `palpal-core-registry.js`

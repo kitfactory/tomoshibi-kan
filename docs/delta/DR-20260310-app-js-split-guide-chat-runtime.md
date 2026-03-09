@@ -1,0 +1,108 @@
+# DR-20260310-app-js-split-guide-chat-runtime
+
+## Step 1: delta-request
+- Delta Type: FEATURE
+- In Scope:
+  - `Guide` composer の状態管理、model user text 組み立て、live reply 整形、runtime request helper、composer event wiring を `wireframe/app.js` から新規 module へ切り出す
+  - `wireframe/guide-chat-entry.js` の Guide busy state 参照を新 helper API に寄せる
+  - `wireframe/index.html` の script 読み込み順を更新する
+  - `docs/architecture.md` と `docs/plan.md` を最小同期する
+- Out of Scope:
+  - Guide planning / parser / few-shot のロジック変更
+  - project onboarding / plan approval / progress query のロジック変更
+  - resident routing / orchestrator の変更
+- Acceptance Criteria:
+  - `app.js` から Guide composer state / runtime helper / event binding が除去され、新規 module へ移る
+  - `guide-chat-entry.js` は raw state 変数ではなく helper API を使う
+  - Guide send / focus / mention / markdown 表示の既存挙動が変わらない
+  - targeted static / E2E / validator が PASS する
+
+## Step 2: delta-apply
+- Delta Type: FEATURE
+- 実行ステータス: APPLIED
+- 変更ファイル:
+  - `wireframe/guide-chat-runtime.js`
+  - `wireframe/guide-chat-entry.js`
+  - `wireframe/app.js`
+  - `wireframe/index.html`
+  - `docs/architecture.md`
+  - `docs/plan.md`
+- 適用内容:
+  - AC-01:
+    - 変更: Guide composer の busy/focus 状態、model user text 組み立て、live reply 整形、runtime request helper、composer event binding を `guide-chat-runtime.js` へ切り出した
+    - 根拠: `app.js` から当該 helper と state 変数を除去し、新規 module へ移した
+  - AC-02:
+    - 変更: `guide-chat-entry.js` が raw state 変数ではなく `isGuideComposerBusy()` / `setGuideComposerBusy()` を使うようにした
+    - 根拠: send 入口の busy guard と finally 処理を helper API へ置換した
+  - AC-03:
+    - 変更: `index.html` に `guide-chat-runtime.js` を追加し、既存 UI wiring を維持した
+    - 根拠: Guide send / focus / mention / markdown 表示の既存フローに必要な helper を runtime module から供給する
+- 非対象維持の確認:
+  - Out of Scope への変更なし: Yes
+- コード分割健全性:
+  - 500行超のファイルあり: Yes
+  - 800行超のファイルあり: Yes
+  - 1000行超のファイルあり: Yes
+  - 長大な関数なし: Yes
+  - 責務過多のモジュールなし: No
+- verify 依頼メモ:
+  - Guide send / focus / mention / progress query を重点確認
+  - review evidence: `guide-chat-runtime.js` への責務分離
+
+## Step 3: delta-verify
+- Delta ID: `DR-20260310-app-js-split-guide-chat-runtime`
+- Verify Profile:
+  - static check: `node --check wireframe/guide-chat-runtime.js wireframe/guide-chat-entry.js wireframe/app.js`
+  - targeted unit: なし
+  - targeted integration / E2E: `npx playwright test tests/e2e/workspace-layout.spec.js -g "guide chat resumes after registering model in settings|guide chat keeps dialog open when plan is not ready|guide progress query reports completed task without model call|guide controller assist is off by default and can be enabled in settings|guide chat supports @ completion with focus and project:file"`
+  - project-validator: `node C:\\Users\\kitad\\.codex\\skills\\project-validator\\scripts\\validate_delta_links.js --dir .`
+- 検証結果:
+  - AC-01: PASS
+    - 根拠: `guide-chat-runtime.js` に helper/state を集約し、`app.js` から除去済み
+  - AC-02: PASS
+    - 根拠: `guide-chat-entry.js` は helper API で busy guard を処理し、raw state 参照を持たない
+  - AC-03: PASS
+    - 根拠: targeted Playwright 15 件 PASS
+- スコープ逸脱チェック:
+  - Out of Scope 変更の有無: No
+- 不整合/回帰リスク:
+  - `app.js` は依然 9000 行超で、引き続き分割対象
+- Review Gate:
+  - required: No
+  - checklist: `docs/delta/REVIEW_CHECKLIST.md`
+  - layer integrity: PASS
+  - docs sync: PASS
+  - data size: NOT CHECKED
+  - code split health: FAIL
+  - file-size threshold: FAIL
+- 判定:
+  - Overall: PASS
+
+## Step 4: delta-archive
+- クローズ判定:
+  - verify結果: PASS
+  - review gate: NOT REQUIRED
+  - archive可否: 可
+- 確定内容:
+  - 目的: Guide composer state / runtime helper / event wiring を `app.js` から分割する
+  - 変更対象:
+    - `wireframe/guide-chat-runtime.js`
+    - `wireframe/guide-chat-entry.js`
+    - `wireframe/app.js`
+    - `wireframe/index.html`
+    - `docs/architecture.md`
+    - `docs/plan.md`
+  - 非対象:
+    - Guide planning / parser / few-shot
+    - project onboarding / plan approval / progress query ロジック変更
+    - resident routing / orchestrator 変更
+- 実装記録:
+  - 変更ファイル: 上記の通り
+  - AC達成状況: すべて達成
+- 検証記録:
+  - verify要約: static PASS / targeted Playwright PASS / delta validator PASS
+  - 主要な根拠: Guide send / focus / mention / progress query の既存挙動維持を確認
+- 未解決事項:
+  - `wireframe/app.js` は依然 9174 行で、継続分割が必要
+- 次のdeltaへの引き継ぎ:
+  - Seed-01: Guide plan approval / progress query 以外の残る `app.js` 責務を順次切り出す

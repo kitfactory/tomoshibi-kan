@@ -33,7 +33,7 @@
   }
 
   async function sendGuideMessage() {
-    if (guideSendInFlight) return;
+    if (isGuideComposerBusy()) return;
     const input = document.getElementById("guideInput");
     if (!input) return;
     const text = input.value.trim();
@@ -147,7 +147,6 @@
       setMessage("MSG-PPH-0009");
       return;
     }
-    guideSendInFlight = true;
     setGuideComposerBusy(true);
     try {
       const contextBuild = await buildGuideContextWithFallback(modelInput.modelUserText);
@@ -194,7 +193,6 @@
       renderGuideChat();
       setMessage(createdCount > 0 ? "MSG-PPH-0009" : "MSG-PPH-0009");
     } finally {
-      guideSendInFlight = false;
       setGuideComposerBusy(false);
     }
   }
