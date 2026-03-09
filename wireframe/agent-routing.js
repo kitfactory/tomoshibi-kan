@@ -7,6 +7,11 @@
     return normalizeString(value).toLowerCase();
   }
 
+  function normalizeResidentId(value) {
+    return normalizeString(value)
+      .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uff0d]/g, "-");
+  }
+
   function uniqueList(values) {
     const seen = new Set();
     const result = [];
@@ -168,7 +173,6 @@
       currentLoad: Number(resident?.currentLoad || 0),
       roleContractText: normalizeString(resident?.roleContractText),
       capabilitySummary: uniqueList(resident?.capabilitySummary),
-      fitHints: uniqueList(resident?.fitHints),
     })).filter((resident) => resident.residentId);
     return {
       targetType: normalizeString(base.targetType),
@@ -246,18 +250,28 @@
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return { ok: false, error: "routing_decision_invalid" };
     }
-    const selectedResidentId = normalizeString(parsed.selectedResidentId);
+    const selectedResidentId = normalizeResidentId(parsed.selectedResidentId);
     const reason = normalizeString(parsed.reason);
     const confidence = normalizeString(parsed.confidence).toLowerCase();
-    const fallbackAction = normalizeString(parsed.fallbackAction).toLowerCase();
-    const allowedIds = new Set((Array.isArray(options?.allowedResidentIds) ? options.allowedResidentIds : []).map((item) => normalizeString(item)).filter(Boolean));
+    let fallbackAction = normalizeString(parsed.fallbackAction).toLowerCase();
+    const allowedIds = new Set((Array.isArray(options?.allowedResidentIds) ? options.allowedResidentIds : []).map((item) => normalizeResidentId(item)).filter(Boolean));
     if (!selectedResidentId) {
       return { ok: false, error: "selected_resident_required" };
     }
     if (allowedIds.size > 0 && !allowedIds.has(selectedResidentId)) {
       return { ok: false, error: "selected_resident_out_of_candidates" };
     }
+    if (!fallbackAction) {
+      fallbackAction = "dispatch";
+    }
+    if (fallbackAction === "replan_required" && selectedResidentId) {
+      fallbackAction = "dispatch";
+    }
     if (!reason) {
+      parsed.reason = "selected resident recovered from routing output";
+    }
+    const normalizedReason = normalizeString(parsed.reason);
+    if (!normalizedReason) {
       return { ok: false, error: "reason_required" };
     }
     if (!["low", "medium", "high"].includes(confidence)) {
@@ -270,17 +284,49 @@
       ok: true,
       decision: {
         selectedResidentId,
-        reason,
+        reason: normalizedReason,
         confidence,
         fallbackAction,
       },
     };
   }
 
+  function extractRoutingDecisionFields(text, options = {}) {
+    const source = stripWrapperTokens(stripCodeFence(text));
+    if (!source) return { ok: false, error: "routing_decision_not_found" };
+    const normalizedSource = source.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uff0d]/g, "-");
+    const allowedIds = uniqueList(Array.isArray(options?.allowedResidentIds) ? options.allowedResidentIds.map((item) => normalizeResidentId(item)).filter(Boolean) : []);
+    let selectedResidentId = "";
+    allowedIds.forEach((residentId) => {
+      if (!selectedResidentId && normalizedSource.includes(`"${residentId}"`)) {
+        selectedResidentId = residentId;
+      }
+    });
+    if (!selectedResidentId) {
+      const residentMatch = normalizedSource.match(/"selectedResidentId"\s*:\s*"([^"\r\n]+)"/i);
+      selectedResidentId = normalizeResidentId(residentMatch?.[1] || "");
+    }
+    const reasonMatch = normalizedSource.match(/"reason"\s*:\s*"([^"]*)"/i);
+    const confidenceMatch = normalizedSource.match(/"confidence"\s*:\s*"(low|medium|high)"/i);
+    const fallbackActionMatch = normalizedSource.match(/"fallbackAction"\s*:\s*"(dispatch|reroute|replan_required)"/i);
+    if (!selectedResidentId) {
+      return { ok: false, error: "selected_resident_required" };
+    }
+    return normalizeRoutingDecision({
+      selectedResidentId,
+      reason: normalizeString(reasonMatch?.[1]) || "selected resident recovered from malformed routing output",
+      confidence: normalizeString(confidenceMatch?.[1]) || "high",
+      fallbackAction: normalizeString(fallbackActionMatch?.[1]) || "dispatch",
+    }, options);
+  }
+
   function parseRoutingDecisionResponse(text, options = {}) {
     const jsonResult = parseJsonWithRepairs(text);
-    if (!jsonResult.ok) return jsonResult;
-    return normalizeRoutingDecision(jsonResult.parsed, options);
+    if (jsonResult.ok) {
+      const normalized = normalizeRoutingDecision(jsonResult.parsed, options);
+      if (normalized.ok) return normalized;
+    }
+    return extractRoutingDecisionFields(text, options);
   }
 
   function buildRoutingDecisionResponseFormat() {

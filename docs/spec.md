@@ -732,6 +732,7 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
   - `冬坂` -> `リサーチャー`
   - `久瀬` -> `プログラマ`
   - `白峰` -> `ライター`
+- resident routing では、`冬坂` は市場・競合・事例・利用者像・外部サービス比較などの外部調査を担当し、`久瀬` は software/codebase に関する調査・再現・原因分析・修正・guard 追加・再発防止を担当する。外部サービス調査は software 製品が対象でも `冬坂` を優先し、内部 codebase の不具合分析は `久瀬` を優先する。
 - Settings には built-in 住人定義を current workspace に同期する導線を持ち、built-in identity (`SOUL.md / ROLE.md / RUBRIC.md`) と resident-facing metadata を current seed/template 内容で上書きできるようにする。
 - `PlanExecutionOrchestrator` が内部で dispatch / retry / reroute / replan_required を起こした場合でも、表示上は Guide の進行コメントとして見せてよい。
 - progress log は少なくとも `task_id/job_id`, `plan_id`, `action_type`, `status`, `message_for_user`, `payload_json`, `source_run_id`, `created_at` を持つ。

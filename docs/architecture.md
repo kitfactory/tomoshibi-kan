@@ -922,6 +922,7 @@ type TaskProgressLogEntry = {
 - `TaskDetailPresenter` は target の progress log に加えて同じ `plan_id` の `plan_completed` entry もマージし、右列の最後に管理人からの返却として読めるようにしてよい。
 - `TaskDetailPresenter` の会話文生成は event code そのものを露出せず、`Progress Voice` と payload (`workerDisplayName`, `gateDisplayName`, `taskTitle`, `taskTitles`) から resident-facing な文へ整形する。
 - resident trio の表示は `冬坂 / 久瀬 / 白峰` に固定する。役割の意味は表示レイヤーで増やさず、`ROLE.md` に `リサーチャー / プログラマ / ライター` として明記して判断材料に使う。
+- resident routing の判断境界として、`冬坂` は外部調査・市場/競合/事例比較・利用者像整理を担い、`久瀬` は software/codebase の調査・再現・原因分析・修正・guard 追加・再発防止を担う。software 製品を題材にした外部サービス比較は `冬坂` の候補に残し、内部 codebase の不具合分析は `久瀬` を優先する。
 
 ### ROLE contract guidance
 - built-in resident rollout では、`ROLE.md` を personality file として使わず、作業契約として扱う。
