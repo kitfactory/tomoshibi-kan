@@ -28,6 +28,7 @@
 - 20260310: [DR-20260310-project-validator-skill-unification] project-validator を skill 側に統一し、repo 側残骸を削除して archive 済み
 - 20260310: [DR-20260310-app-js-split-task-detail-conversation] task detail conversation を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-progress-flow] Guide の plan 承認 / progress query helper を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-guide-chat-entry] Guide の送信入口 / project onboarding / plan approval 分岐を `app.js` から分割して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -47,3 +48,4 @@
 - [x] 20260310: [DR-20260310-approved-plan-dispatch-dedup] [DR-20260310-project-validator-skill-unification]
 - [x] 20260310: [DR-20260310-app-js-split-task-detail-conversation]
 - [x] 20260310: [DR-20260310-app-js-split-guide-progress-flow]
+- [x] 20260310: [DR-20260310-app-js-split-guide-chat-entry]
