@@ -3741,12 +3741,9 @@ async function createPlannedTasksFromGuideRequest(userText) {
     tasks.push(task);
     created.push(task);
     const routingExplanation = formatWorkerRoutingExplanation(assignment?.explanation);
-    const summaryJa = routingExplanation.ja
-      ? `${task.id} を ${palId} に割り当てました (${routingExplanation.ja})。`
-      : `${task.id} を ${palId} に割り当てました。`;
-    const summaryEn = routingExplanation.en
-      ? `${task.id} dispatched to ${palId} (${routingExplanation.en}).`
-      : `${task.id} dispatched to ${palId}.`;
+    const conversation = buildDispatchConversationMessage(task, palId, routingExplanation);
+    const summaryJa = conversation.messageJa;
+    const summaryEn = conversation.messageEn;
     appendEvent(
       "dispatch",
       task.id,
@@ -3762,6 +3759,9 @@ async function createPlannedTasksFromGuideRequest(userText) {
       messageEn: summaryEn,
       payload: {
         workerId: palId,
+        workerDisplayName: residentDisplayName(palId, palId),
+        taskTitle: task.title,
+        taskDescription: task.description,
         routingExplanation,
       },
     });
@@ -3996,8 +3996,9 @@ async function materializeApprovedPlanArtifact(artifact) {
     const rerouteFromWorkerId = normalizeText(entry?.explanation?.rerouteFromWorkerId);
     const shouldLogReroute = normalizeText(entry?.explanation?.fallbackAction) === "reroute" && rerouteFromWorkerId && rerouteFromWorkerId !== workerId;
     if (shouldLogReroute) {
-      const rerouteMessageJa = `${task.id} は ${rerouteFromWorkerId} ではなく ${workerId} に振り直しました。`;
-      const rerouteMessageEn = `${task.id} was rerouted from ${rerouteFromWorkerId} to ${workerId}.`;
+      const rerouteConversation = buildRerouteConversationMessage(task, rerouteFromWorkerId, workerId);
+      const rerouteMessageJa = rerouteConversation.messageJa;
+      const rerouteMessageEn = rerouteConversation.messageEn;
       appendEvent("dispatch", task.id, "reroute", rerouteMessageJa, rerouteMessageEn);
       void appendTaskProgressLogForTarget("task", task.id, "reroute", {
         planId: normalizedPlanId,
@@ -4008,17 +4009,18 @@ async function materializeApprovedPlanArtifact(artifact) {
         messageEn: rerouteMessageEn,
         payload: {
           fromWorkerId: rerouteFromWorkerId,
+          fromWorkerDisplayName: residentDisplayName(rerouteFromWorkerId, rerouteFromWorkerId),
           workerId,
+          workerDisplayName: residentDisplayName(workerId, workerId),
+          taskTitle: task.title,
+          taskDescription: task.description,
           routingExplanation,
         },
       });
     }
-    const summaryJa = routingExplanation.ja
-      ? `${task.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
-      : `${task.id} を ${workerId} に割り当てました。`;
-    const summaryEn = routingExplanation.en
-      ? `${task.id} dispatched to ${workerId} (${routingExplanation.en}).`
-      : `${task.id} dispatched to ${workerId}.`;
+    const conversation = buildDispatchConversationMessage(task, workerId, routingExplanation);
+    const summaryJa = conversation.messageJa;
+    const summaryEn = conversation.messageEn;
     appendEvent("dispatch", task.id, "ok", summaryJa, summaryEn);
     void appendTaskProgressLogForTarget("task", task.id, "dispatch", {
       planId: normalizedPlanId,
@@ -4029,6 +4031,9 @@ async function materializeApprovedPlanArtifact(artifact) {
       messageEn: summaryEn,
       payload: {
         workerId,
+        workerDisplayName: residentDisplayName(workerId, workerId),
+        taskTitle: task.title,
+        taskDescription: task.description,
         routingExplanation,
       },
     });
@@ -4043,8 +4048,9 @@ async function materializeApprovedPlanArtifact(artifact) {
     const rerouteFromWorkerId = normalizeText(entry?.explanation?.rerouteFromWorkerId);
     const shouldLogReroute = normalizeText(entry?.explanation?.fallbackAction) === "reroute" && rerouteFromWorkerId && rerouteFromWorkerId !== workerId;
     if (shouldLogReroute) {
-      const rerouteMessageJa = `${job.id} は ${rerouteFromWorkerId} ではなく ${workerId} に振り直しました。`;
-      const rerouteMessageEn = `${job.id} was rerouted from ${rerouteFromWorkerId} to ${workerId}.`;
+      const rerouteConversation = buildRerouteConversationMessage(job, rerouteFromWorkerId, workerId);
+      const rerouteMessageJa = rerouteConversation.messageJa;
+      const rerouteMessageEn = rerouteConversation.messageEn;
       appendEvent("dispatch", job.id, "reroute", rerouteMessageJa, rerouteMessageEn);
       void appendTaskProgressLogForTarget("job", job.id, "reroute", {
         planId: normalizedPlanId,
@@ -4055,17 +4061,18 @@ async function materializeApprovedPlanArtifact(artifact) {
         messageEn: rerouteMessageEn,
         payload: {
           fromWorkerId: rerouteFromWorkerId,
+          fromWorkerDisplayName: residentDisplayName(rerouteFromWorkerId, rerouteFromWorkerId),
           workerId,
+          workerDisplayName: residentDisplayName(workerId, workerId),
+          taskTitle: job.title,
+          taskDescription: job.description,
           routingExplanation,
         },
       });
     }
-    const summaryJa = routingExplanation.ja
-      ? `${job.id} を ${workerId} に割り当てました (${routingExplanation.ja})。`
-      : `${job.id} を ${workerId} に割り当てました。`;
-    const summaryEn = routingExplanation.en
-      ? `${job.id} dispatched to ${workerId} (${routingExplanation.en}).`
-      : `${job.id} dispatched to ${workerId}.`;
+    const conversation = buildDispatchConversationMessage(job, workerId, routingExplanation);
+    const summaryJa = conversation.messageJa;
+    const summaryEn = conversation.messageEn;
     appendEvent("dispatch", job.id, "ok", summaryJa, summaryEn);
     void appendTaskProgressLogForTarget("job", job.id, "dispatch", {
       planId: normalizedPlanId,
@@ -4076,6 +4083,9 @@ async function materializeApprovedPlanArtifact(artifact) {
       messageEn: summaryEn,
       payload: {
         workerId,
+        workerDisplayName: residentDisplayName(workerId, workerId),
+        taskTitle: job.title,
+        taskDescription: job.description,
         routingExplanation,
       },
     });
@@ -4087,6 +4097,136 @@ async function materializeApprovedPlanArtifact(artifact) {
   renderJobBoard();
   writeBoardStateSnapshot();
   return { created: created.length };
+}
+
+function findResidentProfileById(profileId) {
+  const normalizedProfileId = normalizeText(profileId);
+  if (!normalizedProfileId) return null;
+  return palProfiles.find((profile) => profile.id === normalizedProfileId) || null;
+}
+
+function residentDisplayName(profileId, fallback = "") {
+  const profile = findResidentProfileById(profileId);
+  return normalizeText(profile?.displayName || fallback || profileId);
+}
+
+function residentAddressName(profileId, fallback = "") {
+  const display = residentDisplayName(profileId, fallback);
+  if (!display) return "";
+  return /さん$/.test(display) ? display : `${display}さん`;
+}
+
+function summarizeConversationIntent(text, fallback = "") {
+  const normalized = normalizeText(text || fallback);
+  if (!normalized) return "";
+  const compact = normalized.replace(/\s+/g, " ");
+  if (compact.length <= 72) return compact;
+  return `${compact.slice(0, 69)}...`;
+}
+
+function firstMeaningfulLine(text) {
+  const normalized = normalizeText(text);
+  if (!normalized) return "";
+  const line = normalized.split(/\r?\n/).map((item) => normalizeText(item)).find(Boolean) || "";
+  if (!line) return "";
+  return line.length <= 88 ? line : `${line.slice(0, 85)}...`;
+}
+
+function buildDispatchConversationMessage(target, workerId, routingExplanation) {
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const workerAddress = residentAddressName(workerId, workerId);
+  const workerDisplay = residentDisplayName(workerId, workerId);
+  const routingNote = normalizeText(routingExplanation?.ja);
+  const messageJa = routingNote
+    ? `${workerAddress}、${requestLine}をお願いします。${routingNote}。`
+    : `${workerAddress}、${requestLine}をお願いします。`;
+  const messageEn = routingNote
+    ? `${workerDisplay}, please handle "${requestLine}". ${routingNote}.`
+    : `${workerDisplay}, please handle "${requestLine}".`;
+  return { messageJa, messageEn };
+}
+
+function buildRerouteConversationMessage(target, fromWorkerId, toWorkerId) {
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const fromDisplay = residentDisplayName(fromWorkerId, fromWorkerId);
+  const toAddress = residentAddressName(toWorkerId, toWorkerId);
+  const toDisplay = residentDisplayName(toWorkerId, toWorkerId);
+  return {
+    messageJa: `${fromDisplay}よりも${toAddress}の方が合いそうです。${requestLine}をお願いし直します。`,
+    messageEn: `${toDisplay} is a better fit than ${fromDisplay}. Reassigning "${requestLine}".`,
+  };
+}
+
+function buildGateHandOffConversationMessage(target, gateProfileId, gateExplanation) {
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const gateDisplay = residentDisplayName(gateProfileId, gateProfileId) || (locale === "ja" ? "古参住人" : "Gate");
+  const routingNote = normalizeText(gateExplanation?.ja);
+  return {
+    messageJa: routingNote
+      ? `${gateDisplay}にも見てもらいます。${requestLine}について、ここまでの結果を渡します。${routingNote}。`
+      : `${gateDisplay}にも見てもらいます。${requestLine}について、ここまでの結果を渡します。`,
+    messageEn: routingNote
+      ? `Handing "${requestLine}" to ${gateDisplay} for review. ${routingNote}.`
+      : `Handing "${requestLine}" to ${gateDisplay} for review.`,
+  };
+}
+
+function buildResubmitConversationMessage(target, gateProfileId) {
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const gateDisplay = residentDisplayName(gateProfileId, gateProfileId) || (locale === "ja" ? "古参住人" : "Gate");
+  return {
+    messageJa: `${gateDisplay}からの指摘を踏まえて手直ししました。${requestLine}をもう一度見てもらいます。`,
+    messageEn: `The requested fixes are in. Sending "${requestLine}" back to ${gateDisplay}.`,
+  };
+}
+
+function buildWorkerProgressConversationMessage(target, workerId, status, evidenceText) {
+  const workerDisplay = residentDisplayName(workerId, workerId);
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const evidenceLine = firstMeaningfulLine(evidenceText);
+  if (status === "error" || status === "blocked") {
+    return {
+      messageJa: `${workerDisplay}です。${requestLine}を進めていて少し詰まりました。${evidenceLine || "いったん状況を共有します。"}`,
+      messageEn: `${workerDisplay}: I hit a blocker while working on "${requestLine}". ${evidenceLine || "Sharing the current status."}`,
+    };
+  }
+  return {
+    messageJa: `${workerDisplay}です。${requestLine}ができました。${evidenceLine || "ひとまず結果をまとめました。"}`,
+    messageEn: `${workerDisplay}: I finished "${requestLine}". ${evidenceLine || "I summarized the result."}`,
+  };
+}
+
+function buildGateReviewConversationMessage(target, gateProfileId, gateResult, status) {
+  const gateDisplay = residentDisplayName(gateProfileId, gateProfileId) || (locale === "ja" ? "真壁" : "Gate");
+  const requestLine = summarizeConversationIntent(target?.title, target?.description || target?.instruction || target?.title);
+  const reason = firstMeaningfulLine(gateResult?.reason);
+  const firstFix = Array.isArray(gateResult?.fixes) ? firstMeaningfulLine(gateResult.fixes[0]) : "";
+  if (status === "rejected") {
+    return {
+      messageJa: `${gateDisplay}です。${requestLine}は、このままだとまだ甘いかな。${reason || firstFix || "もう少し整えてから見せてほしいですね。"}`,
+      messageEn: `${gateDisplay}: "${requestLine}" is not ready yet. ${reason || firstFix || "Please tighten it up and show it again."}`,
+    };
+  }
+  return {
+    messageJa: `${gateDisplay}です。${requestLine}なら、いいじゃないか。${reason || "この形で進めてよさそうです。"}`,
+    messageEn: `${gateDisplay}: "${requestLine}" looks good. ${reason || "This is ready to move forward."}`,
+  };
+}
+
+function buildPlanCompletedConversationMessage(planId) {
+  const samePlanTasks = tasks.filter((item) => resolveTargetPlanId(item) === normalizeText(planId));
+  const writerTask = samePlanTasks.find((item) => normalizeText(item.palId) === "pal-delta") || samePlanTasks[samePlanTasks.length - 1] || null;
+  const writerSummary = firstMeaningfulLine(writerTask?.evidence);
+  const titles = samePlanTasks.map((item) => summarizeConversationIntent(item.title)).filter(Boolean);
+  const joinedTitles = titles.slice(0, 3).join("、");
+  return {
+    messageJa: writerSummary
+      ? `${joinedTitles || "依頼"}まで形になりました。${writerSummary}`
+      : `${joinedTitles || "依頼"}まで進みました。ひとまず、今の形でお返しできます。`,
+    messageEn: writerSummary
+      ? `${joinedTitles || "The request"} is now in shape. ${writerSummary}`
+      : `${joinedTitles || "The request"} is ready to return in its current form.`,
+  };
 }
 
 function buildGuideReplanUserText(targetKind, target, planArtifact, gateResult) {
@@ -4159,12 +4299,14 @@ async function executeGuideDrivenReplanForTarget(targetKind, target, gateResult)
     actualActor: "orchestrator",
     displayActor: "Guide",
     status: "ok",
-    messageJa: `${target.id} を再計画し、新しいtaskへ引き継ぎました。`,
-    messageEn: `${target.id} was replanned and handed off as new tasks.`,
+    messageJa: `${summarizeConversationIntent(target?.title, target?.description || target?.instruction)}を組み直しました。新しい段取りで住人に引き継ぎます。`,
+    messageEn: `${summarizeConversationIntent(target?.title, target?.description || target?.instruction)} was replanned and handed off with a revised path.`,
     payload: {
       previousPlanId: currentPlanId,
       nextPlanId: normalizeText(nextArtifact?.planId),
       createdCount: Number(created?.created || 0),
+      taskTitle: normalizeText(target?.title),
+      taskDescription: normalizeText(target?.description || target?.instruction),
       gateResult,
     },
     sourceRunId: normalizeText(modelReply?.runId),
@@ -7978,30 +8120,45 @@ function detailConversationMessage(entry) {
   const action = normalizeText(entry?.actionType).toLowerCase();
   const status = normalizeText(entry?.status).toLowerCase();
   const message = normalizeText(entry?.messageForUser);
+  const payload = entry?.payload && typeof entry.payload === "object" ? entry.payload : {};
+  const taskTitle = normalizeText(payload.taskTitle || payload.title);
+  const workerDisplayName = normalizeText(payload.workerDisplayName || payload.assigneeDisplayName || payload.workerId);
+  const fromWorkerDisplayName = normalizeText(payload.fromWorkerDisplayName || payload.fromWorkerId);
+  const gateDisplayName = normalizeText(payload.gateDisplayName || payload.gateProfileId);
+  const gateResult = payload.gateResult && typeof payload.gateResult === "object" ? payload.gateResult : {};
+  const gateReason = firstMeaningfulLine(gateResult.reason);
+  const gateFix = Array.isArray(gateResult.fixes) ? firstMeaningfulLine(gateResult.fixes[0]) : "";
+  const createdTaskTitles = Array.isArray(payload.taskTitles)
+    ? payload.taskTitles.map((item) => summarizeConversationIntent(item)).filter(Boolean)
+    : [];
   if (!message) return "-";
   if (locale !== "ja") return message;
   if (actor === "guide") {
-    if (action === "dispatch") return `では、この件はひとまず ${message}`;
-    if (action === "reroute") return `この進め方なら別の住人の方がよさそうなので、${message}`;
-    if (action === "to_gate") return `ここまで揃ったので、そろそろ古参にも見てもらいます。${message}`;
-    if (action === "replan_required") return `このまま進めるより、いったん段取りを見直した方がよさそうです。${message}`;
+    if (action === "dispatch" && workerDisplayName && taskTitle) return `${workerDisplayName}さん、${taskTitle}をお願いします。`;
+    if (action === "reroute" && workerDisplayName && taskTitle) {
+      if (fromWorkerDisplayName) return `${fromWorkerDisplayName}よりも${workerDisplayName}さんの方が合いそうです。${taskTitle}をお願いし直します。`;
+      return `${workerDisplayName}さんに、${taskTitle}をお願いし直します。`;
+    }
+    if (action === "to_gate" && taskTitle) return `${gateDisplayName || "真壁"}にも見てもらいます。${taskTitle}について、ここまでの結果を渡します。`;
+    if (action === "replan_required" && taskTitle) return `${taskTitle}は、このまま進めるより段取りを見直した方がよさそうです。いったん燈子さんが整え直します。`;
+    if (action === "replanned" && createdTaskTitles.length > 0) return `進め方を組み直しました。次は ${createdTaskTitles.join("、")} の順で進めます。`;
     if (action === "replanned") return `進め方を組み直しました。${message}`;
-    if (action === "resubmit") return `手直しが済んだので、もう一度見てもらいます。${message}`;
-    if (action === "plan_completed") return `ここまでで一区切りです。${message}`;
+    if (action === "resubmit" && taskTitle) return `${taskTitle}は手直しが済みました。もう一度見てもらいます。`;
+    if (action === "plan_completed") return `ひとまず形になりました。${message}`;
     return `いまのところ、${message}`;
   }
   if (actor === "resident") {
     if (action === "worker_runtime") {
-      if (status === "ok" || status === "done") return `ひとまず、${message}`;
-      if (status === "blocked" || status === "error") return `少し引っかかったので、${message}`;
+      if (status === "ok" || status === "done") return message;
+      if (status === "blocked" || status === "error") return message;
       return `いま見ているところでは、${message}`;
     }
     return message;
   }
   if (actor === "gate") {
     if (action === "gate_review") {
-      if (status === "approved") return `悪くないかな。${message}`;
-      if (status === "rejected") return `このままだとまだ甘いかな。${message}`;
+      if (status === "approved") return gateReason ? `いいじゃないか。${gateReason}` : `いいじゃないか。${message}`;
+      if (status === "rejected") return gateReason || gateFix ? `このままだとまだ甘いかな。${gateReason || gateFix}` : `このままだとまだ甘いかな。${message}`;
       return `少し別の面から見ると、${message}`;
     }
     return `見立てとしては、${message}`;
@@ -8103,13 +8260,21 @@ async function renderDetail() {
   </div>`;
   const logEl = document.getElementById("detailConversationLog");
   if (logEl) {
-    const entries = await listTaskProgressLogEntriesWithFallback({
+    const targetEntries = await listTaskProgressLogEntriesWithFallback({
       targetKind: "task",
       targetId: task.id,
       limit: 30,
     });
+    const planEntries = await listTaskProgressLogEntriesWithFallback({
+      targetKind: "plan",
+      targetId: resolveTargetPlanId(task),
+      limit: 10,
+    });
     if (renderToken !== detailRenderToken || selectedTaskId !== task.id || workspaceTab !== "task") return;
-    logEl.innerHTML = renderTaskConversationLog(entries);
+    const combinedEntries = [...targetEntries, ...planEntries]
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
+      .slice(0, 40);
+    logEl.innerHTML = renderTaskConversationLog(combinedEntries);
   }
   bindDetailButtons(task);
 }
@@ -8930,15 +9095,19 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
       `${latest.id} の実行結果を更新しました`,
       `${latest.id} runtime result updated`
     );
+    const workerProgressConversation = buildWorkerProgressConversationMessage(latest, latest.palId, "ok", latest.evidence);
     void appendTaskProgressLogForTarget(targetKind, latest.id, "worker_runtime", {
       planId: resolveTargetPlanId(latest),
       actualActor: "worker",
       displayActor: "Resident",
       status: "ok",
-      messageJa: `${latest.id} の実行結果を更新しました`,
-      messageEn: `${latest.id} runtime result updated`,
+      messageJa: workerProgressConversation.messageJa,
+      messageEn: workerProgressConversation.messageEn,
       payload: {
         assigneePalId: normalizeText(latest.palId),
+        assigneeDisplayName: residentDisplayName(latest.palId, latest.palId),
+        taskTitle: latest.title,
+        taskDescription: latest.description || latest.instruction,
         evidence: normalizeText(latest.evidence),
         replay: normalizeText(latest.replay),
       },
@@ -8952,14 +9121,20 @@ async function executePalRuntimeForTarget(targetId, targetKind = "task") {
       `${targetId} の実行でエラーが発生しました`,
       `${targetId} runtime execution failed`
     );
+    const targetRecord = collection.find((item) => item.id === targetId) || null;
+    const workerProgressConversation = buildWorkerProgressConversationMessage(targetRecord, targetRecord?.palId, "error", normalizeText(error?.message || error));
     void appendTaskProgressLogForTarget(targetKind, targetId, "worker_runtime", {
       planId: resolveTargetPlanId(collection.find((item) => item.id === targetId)),
       actualActor: "worker",
       displayActor: "Resident",
       status: "error",
-      messageJa: `${targetId} の実行でエラーが発生しました`,
-      messageEn: `${targetId} runtime execution failed`,
+      messageJa: workerProgressConversation.messageJa,
+      messageEn: workerProgressConversation.messageEn,
       payload: {
+        assigneePalId: normalizeText(targetRecord?.palId),
+        assigneeDisplayName: residentDisplayName(targetRecord?.palId, targetRecord?.palId),
+        taskTitle: normalizeText(targetRecord?.title),
+        taskDescription: normalizeText(targetRecord?.description || targetRecord?.instruction),
         errorText: normalizeText(error?.message || error),
       },
     });
@@ -8996,30 +9171,26 @@ async function runTaskAction(action, taskId) {
     const gateSelection = await assignGateProfileToTargetWithRouting(task);
     touchTask(task, "to_gate", "pending");
     const gateExplanation = formatGateRoutingExplanation(gateSelection?.explanation);
+    const gateConversation = buildGateHandOffConversationMessage(task, task.gateProfileId, gateExplanation);
     appendEvent(
       "task",
       task.id,
       "to_gate",
-      gateExplanation.ja
-        ? `${task.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
-        : `${task.id} を Gate 提出待ちに更新`,
-      gateExplanation.en
-        ? `${task.id} moved to to_gate (${gateExplanation.en})`
-        : `${task.id} moved to to_gate`
+      gateConversation.messageJa,
+      gateConversation.messageEn
     );
     void appendTaskProgressLogForTarget("task", task.id, "to_gate", {
       planId: resolveTargetPlanId(task),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "pending",
-      messageJa: gateExplanation.ja
-        ? `${task.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
-        : `${task.id} を Gate 提出待ちに更新`,
-      messageEn: gateExplanation.en
-        ? `${task.id} moved to to_gate (${gateExplanation.en})`
-        : `${task.id} moved to to_gate`,
+      messageJa: gateConversation.messageJa,
+      messageEn: gateConversation.messageEn,
       payload: {
         gateProfileId: normalizeText(task.gateProfileId),
+        gateDisplayName: residentDisplayName(task.gateProfileId, task.gateProfileId),
+        taskTitle: task.title,
+        taskDescription: task.description,
         routingExplanation: gateExplanation,
       },
     });
@@ -9038,16 +9209,20 @@ async function runTaskAction(action, taskId) {
       reason: "-",
       fixes: [],
     });
-    appendEvent("resubmit", task.id, "ok", `${task.id} を再提出`, `${task.id} resubmitted`);
+    const resubmitConversation = buildResubmitConversationMessage(task, task.gateProfileId);
+    appendEvent("resubmit", task.id, "ok", resubmitConversation.messageJa, resubmitConversation.messageEn);
     void appendTaskProgressLogForTarget("task", task.id, "resubmit", {
       planId: resolveTargetPlanId(task),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "ok",
-      messageJa: `${task.id} を再提出`,
-      messageEn: `${task.id} resubmitted`,
+      messageJa: resubmitConversation.messageJa,
+      messageEn: resubmitConversation.messageEn,
       payload: {
         gateProfileId: normalizeText(task.gateProfileId),
+        gateDisplayName: residentDisplayName(task.gateProfileId, task.gateProfileId),
+        taskTitle: task.title,
+        taskDescription: task.description,
       },
     });
     setMessage("MSG-PPH-0005");
@@ -9078,30 +9253,26 @@ async function runJobAction(action, jobId) {
     const gateSelection = await assignGateProfileToTargetWithRouting(job);
     touchJob(job, "to_gate", "pending");
     const gateExplanation = formatGateRoutingExplanation(gateSelection?.explanation);
+    const gateConversation = buildGateHandOffConversationMessage(job, job.gateProfileId, gateExplanation);
     appendEvent(
       "job",
       job.id,
       "to_gate",
-      gateExplanation.ja
-        ? `${job.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
-        : `${job.id} を Gate 提出待ちに更新`,
-      gateExplanation.en
-        ? `${job.id} moved to to_gate (${gateExplanation.en})`
-        : `${job.id} moved to to_gate`
+      gateConversation.messageJa,
+      gateConversation.messageEn
     );
     void appendTaskProgressLogForTarget("job", job.id, "to_gate", {
       planId: resolveTargetPlanId(job),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "pending",
-      messageJa: gateExplanation.ja
-        ? `${job.id} を Gate 提出待ちに更新 (${gateExplanation.ja})`
-        : `${job.id} を Gate 提出待ちに更新`,
-      messageEn: gateExplanation.en
-        ? `${job.id} moved to to_gate (${gateExplanation.en})`
-        : `${job.id} moved to to_gate`,
+      messageJa: gateConversation.messageJa,
+      messageEn: gateConversation.messageEn,
       payload: {
         gateProfileId: normalizeText(job.gateProfileId),
+        gateDisplayName: residentDisplayName(job.gateProfileId, job.gateProfileId),
+        taskTitle: job.title,
+        taskDescription: job.description,
         routingExplanation: gateExplanation,
       },
     });
@@ -9120,16 +9291,20 @@ async function runJobAction(action, jobId) {
       reason: "-",
       fixes: [],
     });
-    appendEvent("resubmit", job.id, "ok", `${job.id} を再提出`, `${job.id} resubmitted`);
+    const resubmitConversation = buildResubmitConversationMessage(job, job.gateProfileId);
+    appendEvent("resubmit", job.id, "ok", resubmitConversation.messageJa, resubmitConversation.messageEn);
     void appendTaskProgressLogForTarget("job", job.id, "resubmit", {
       planId: resolveTargetPlanId(job),
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "ok",
-      messageJa: `${job.id} を再提出`,
-      messageEn: `${job.id} resubmitted`,
+      messageJa: resubmitConversation.messageJa,
+      messageEn: resubmitConversation.messageEn,
       payload: {
         gateProfileId: normalizeText(job.gateProfileId),
+        gateDisplayName: residentDisplayName(job.gateProfileId, job.gateProfileId),
+        taskTitle: job.title,
+        taskDescription: job.description,
       },
     });
     setMessage("MSG-PPH-0005");
@@ -9246,14 +9421,18 @@ function runGate(decision) {
       touchTask(target, "rejected", "rejected", gateResult.fixCondition || "修正条件を追加", gateResult);
     }
     appendEvent("gate", target.id, "rejected", `${target.id} を差し戻しました`, `${target.id} rejected`);
+    const gateReviewConversation = buildGateReviewConversationMessage(target, target.gateProfileId, gateResult, "rejected");
     void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
       planId: resolveTargetPlanId(target),
       actualActor: "gate",
       displayActor: "Gate",
       status: "rejected",
-      messageJa: `${target.id} を差し戻しました`,
-      messageEn: `${target.id} rejected`,
+      messageJa: gateReviewConversation.messageJa,
+      messageEn: gateReviewConversation.messageEn,
       payload: {
+        gateDisplayName: residentDisplayName(target.gateProfileId, target.gateProfileId),
+        taskTitle: target.title,
+        taskDescription: target.description || target.instruction,
         decision: "rejected",
         gateResult,
       },
@@ -9264,9 +9443,11 @@ function runGate(decision) {
         actualActor: "orchestrator",
         displayActor: "Guide",
         status: "blocked",
-        messageJa: `${target.id} は再計画が必要です。Guide が進め方を見直します`,
-        messageEn: `${target.id} requires replanning. Guide will revisit the approach`,
+        messageJa: `${summarizeConversationIntent(target.title, target.description || target.instruction)}は、このまま進めるより段取りを見直した方がよさそうです。燈子さんが進め方を考え直します。`,
+        messageEn: `${summarizeConversationIntent(target.title, target.description || target.instruction)} needs a revised approach. Toko will revisit the plan.`,
         payload: {
+          taskTitle: target.title,
+          taskDescription: target.description || target.instruction,
           decision: "rejected",
           gateResult,
         },
@@ -9279,14 +9460,18 @@ function runGate(decision) {
       touchTask(target, "done", "approved", "-", gateResult);
     }
     appendEvent("gate", target.id, "approved", `${target.id} を承認しました`, `${target.id} approved`);
+    const gateReviewConversation = buildGateReviewConversationMessage(target, target.gateProfileId, gateResult, "approved");
     void appendTaskProgressLogForTarget(isJob ? "job" : "task", target.id, "gate_review", {
       planId: resolveTargetPlanId(target),
       actualActor: "gate",
       displayActor: "Gate",
       status: "approved",
-      messageJa: `${target.id} を承認しました`,
-      messageEn: `${target.id} approved`,
+      messageJa: gateReviewConversation.messageJa,
+      messageEn: gateReviewConversation.messageEn,
       payload: {
+        gateDisplayName: residentDisplayName(target.gateProfileId, target.gateProfileId),
+        taskTitle: target.title,
+        taskDescription: target.description || target.instruction,
         decision: "approved",
         gateResult,
       },
@@ -9297,14 +9482,19 @@ function runGate(decision) {
   const completedPlanId = resolveTargetPlanId(target);
   const samePlanTasks = tasks.filter((item) => resolveTargetPlanId(item) === completedPlanId);
   if (!isRejectDecision && !isJob && samePlanTasks.length > 0 && samePlanTasks.every((item) => item.status === "done")) {
-    appendEvent("plan", completedPlanId, "completed", "Plan完了を通知", "Plan completion announced");
+    const completionConversation = buildPlanCompletedConversationMessage(completedPlanId);
+    appendEvent("plan", completedPlanId, "completed", completionConversation.messageJa, completionConversation.messageEn);
     void appendTaskProgressLogForTarget("plan", completedPlanId, "plan_completed", {
       planId: completedPlanId,
       actualActor: "orchestrator",
       displayActor: "Guide",
       status: "completed",
-      messageJa: "Plan完了を通知",
-      messageEn: "Plan completion announced",
+      messageJa: completionConversation.messageJa,
+      messageEn: completionConversation.messageEn,
+      payload: {
+        taskIds: samePlanTasks.map((item) => item.id),
+        taskTitles: samePlanTasks.map((item) => item.title),
+      },
     });
     setMessage("MSG-PPH-0008");
   }

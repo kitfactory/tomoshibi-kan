@@ -828,7 +828,7 @@ for (const viewport of VIEWPORTS) {
       await expect(page.locator("#detailConversationLog")).toBeVisible();
       await expect(page.locator('#detailConversationLog [data-detail-actor="guide"]')).toContainText(/管理人|Guide/);
       await expect(page.locator('#detailConversationLog [data-detail-action="dispatch"]')).toContainText(/依頼|Dispatch/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/では、この件はひとまず|dispatched to/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/再現確認をお願いします|please handle "再現確認"/);
     });
 
     test("task detail conversation log applies progress voice per actor", async ({ page }) => {
@@ -842,7 +842,7 @@ for (const viewport of VIEWPORTS) {
           actualActor: "orchestrator",
           displayActor: "Guide",
           messageForUser: "久瀬ではなく白峰にお願いし直しました。",
-          payload: { fromWorkerId: "pal-beta", workerId: "pal-delta" },
+          payload: { fromWorkerId: "pal-beta", fromWorkerDisplayName: "久瀬", workerId: "pal-delta", workerDisplayName: "白峰", taskTitle: "返却文を整える" },
         });
         await window.appendTaskProgressLogEntryWithFallback({
           planId: "PLAN-VOICE-001",
@@ -853,7 +853,7 @@ for (const viewport of VIEWPORTS) {
           actualActor: "worker",
           displayActor: "Resident",
           messageForUser: "要点を整理して返却文を整えました。",
-          payload: {},
+          payload: { assigneePalId: "pal-delta", assigneeDisplayName: "白峰", taskTitle: "返却文を整える" },
         });
         await window.appendTaskProgressLogEntryWithFallback({
           planId: "PLAN-VOICE-001",
@@ -864,7 +864,7 @@ for (const viewport of VIEWPORTS) {
           actualActor: "gate",
           displayActor: "Gate",
           messageForUser: "説明はよいが、前提がまだ甘いです。",
-          payload: {},
+          payload: { gateDisplayName: "真壁", taskTitle: "返却文を整える", gateResult: { reason: "説明はよいが、前提がまだ甘いです。", fixes: [] } },
         });
         await window.appendTaskProgressLogEntryWithFallback({
           planId: "PLAN-VOICE-001",
@@ -875,7 +875,7 @@ for (const viewport of VIEWPORTS) {
           actualActor: "orchestrator",
           displayActor: "Guide",
           messageForUser: "進め方と前提を見直します。",
-          payload: {},
+          payload: { taskTitle: "返却文を整える" },
         });
         await window.appendTaskProgressLogEntryWithFallback({
           planId: "PLAN-VOICE-001",
@@ -886,17 +886,40 @@ for (const viewport of VIEWPORTS) {
           actualActor: "orchestrator",
           displayActor: "Guide",
           messageForUser: "新しい段取りで再開しました。",
-          payload: {},
+          payload: { taskTitle: "返却文を整える", taskTitles: ["調査メモをまとめる", "返却文を整える"] },
         });
       });
 
       await page.click('[data-tab="task"]');
       await page.click('[data-action="detail"][data-task-id="TASK-001"]');
-      await expect(page.locator("#detailConversationLog")).toContainText(/別の住人の方がよさそうなので/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/ひとまず、要点を整理して返却文を整えました。/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/白峰さんの方が合いそうです/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/要点を整理して返却文を整えました/);
       await expect(page.locator("#detailConversationLog")).toContainText(/このままだとまだ甘いかな。/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/いったん段取りを見直した方がよさそうです。/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/段取りを見直した方がよさそうです。/);
       await expect(page.locator("#detailConversationLog")).toContainText(/進め方を組み直しました。/);
+    });
+
+    test("task detail conversation log shows guide return after plan completion", async ({ page }) => {
+      await page.evaluate(async () => {
+        await window.appendTaskProgressLogEntryWithFallback({
+          planId: "PLAN-001",
+          targetKind: "plan",
+          targetId: "PLAN-001",
+          actionType: "plan_completed",
+          status: "completed",
+          actualActor: "orchestrator",
+          displayActor: "Guide",
+          messageForUser: "再現確認、修正実装、検証まで進みました。ひとまず、今の形でお返しできます。",
+          payload: {
+            taskIds: ["TASK-001", "TASK-002", "TASK-003"],
+            taskTitles: ["再現確認", "修正実装", "検証"],
+          },
+        });
+      });
+
+      await page.click('[data-tab="task"]');
+      await page.click('[data-action="detail"][data-task-id="TASK-001"]');
+      await expect(page.locator("#detailConversationLog")).toContainText(/ひとまず形になりました。/);
     });
 
     test("guide progress query reports completed task without model call", async ({ page }) => {

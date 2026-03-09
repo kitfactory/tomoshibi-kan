@@ -735,6 +735,9 @@ Done: 保存結果が各 profile 設定へ反映される。Guide/Gate/Pal profi
 - progress log は task/job 単位で最新状態と直近イベント列を引けること。Guide はこのログを使って途中経過を自然文で説明してよい。
 - `message_for_user` は世界観に沿った自然文を許容するが、内部の `actual_actor` と `action_type` を欠落させてはならない。
 - task 一覧から task detail を開いた時、右列は `Guide / 住人 / 古参住人` の会話として progress log を時系列表示できること。内部 actor は保持したまま、通常表示では conversation-like timeline を優先する。
+- task detail の dispatch 表示は resident の固有名と依頼内容を含み、少なくとも「誰に」「何をお願いしたか」が一読で分かること。
+- task detail は target 自身の progress log に加えて、同じ `plan_id` に紐づく `plan_completed` 返却も合わせて読めること。
+- `worker_runtime`, `gate_review`, `replan_required`, `replanned`, `resubmit` の各表示は、`Progress Voice` に沿った自然文で連続して読めること。
 - Guide は dispatch 前に `plan preview` を出せること。preview は少なくとも次を含む:
   - task title: 何をするか
   - assignee label: 誰に頼むか（resident 名）

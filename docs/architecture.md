@@ -915,6 +915,9 @@ type TaskProgressLogEntry = {
 - `Event Log` や将来の debug view では `actualActor` と `displayActor` の両方を出し分けられるようにする。
 - `PlanExecutionOrchestrator` が内部で付与した progress comment も、通常 UX では Guide の進行メモとして見せてよい。
 - `TaskDetailPresenter` は task detail 右列に `Guide / 住人 / 古参住人` の conversation-like timeline を描画してよい。内部的には progress log entry の列だが、通常 UX では住人同士のやり取りとして読めることを優先する。
+- `TaskDetailPresenter` は `dispatch` を render する時、resident の固有名と task title/intent を使って「誰に」「何をお願いしたか」を明示する。
+- `TaskDetailPresenter` は target の progress log に加えて同じ `plan_id` の `plan_completed` entry もマージし、右列の最後に管理人からの返却として読めるようにしてよい。
+- `TaskDetailPresenter` の会話文生成は event code そのものを露出せず、`Progress Voice` と payload (`workerDisplayName`, `gateDisplayName`, `taskTitle`, `taskTitles`) から resident-facing な文へ整形する。
 - resident trio の表示は `冬坂 / 久瀬 / 白峰` に固定する。役割の意味は表示レイヤーで増やさず、`ROLE.md` に `リサーチャー / プログラマ / ライター` として明記して判断材料に使う。
 
 ### ROLE contract guidance
