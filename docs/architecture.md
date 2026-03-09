@@ -271,6 +271,8 @@ interface SkillCatalogPort {
   - 保存済み `Plan artifact` から task materialization / worker selection を行う renderer-side Orchestrator helper を担当する。
 - `task-detail-conversation.js`
   - Task detail 右列の会話ログ本文整形と actor/status/action 表示ヘルパーを担当する。
+- `guide-progress-flow.js`
+  - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `palpal-core-registry.js`
@@ -912,7 +914,7 @@ type TaskProgressLogEntry = {
 - `WorkspaceQueryUseCase` は task/job 単位の `latest progress summary` と `recent progress entries` を返せるようにする。
 - `GuideConversationUseCase` は、ユーザーが途中経過を尋ねた時に progress log を読んで自然文へ整形してよい。
 - progress query は `task_id/job_id` が明示される場合だけでなく、「さっきお願いした件」のような最新依頼照会にも対応できるよう、`plan_id -> latest task/job` の補助解決を持ってよい。
-- minimal 実装では renderer に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
+- minimal 実装では renderer helper `guide-progress-flow.js` に `buildGuideProgressQueryReply()` を置き、progress query 判定・target 解決・簡易自然文生成を行う。
 - progress query path は model 呼び出し前に処理し、追加の LLM 呼び出しなしで completion / pending / rejected / replan_required / in_progress / assigned を返す。
 - `GuideConversationUseCase` は `plan_ready` を受けた時、直ちに dispatch せず `pending_approval` の `Plan artifact` を保存してよい。承認意図の短い返答を受けた時だけ `approved` に更新し、同一 `plan_id` の artifact を `PlanExecutionOrchestrator` へ渡す。
 - `GuideConversationUseCase` は最新 `approved` artifact が既に materialize 済みである場合、同種の短い承認入力で新しい plan を作らず、既存 plan の進行案内 reply を返してよい。
