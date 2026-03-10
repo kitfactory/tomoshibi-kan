@@ -4458,466 +4458,84 @@ async function resolveConfiguredSkillIdsForPal(pal) {
   }
 }
 
+function runtimePayloadUiApi() {
+  return window.RuntimePayloadUi || {};
+}
+
+function buildRuntimePayloadContext() {
+  return {
+    locale,
+    settingsState,
+    guideMessages,
+    normalizeText,
+    normalizeContextHandoffPolicy,
+    focusedProject,
+    resolveGateProfileForTarget,
+    palProfiles,
+    normalizeGateDecision,
+    parseGateFixes,
+  };
+}
+
 function resolveContextHandoffPolicy() {
-  return normalizeContextHandoffPolicy(settingsState.contextHandoffPolicy);
+  return runtimePayloadUiApi().resolveContextHandoffPolicy(buildRuntimePayloadContext());
 }
 
 function buildCompressedHistorySummary(target, targetKind = "task") {
-  const summaries = [];
-  const latestGuideMessages = Array.isArray(guideMessages) ? guideMessages.slice(-3) : [];
-  latestGuideMessages.forEach((message) => {
-    const sender = normalizeText(message?.sender || message?.role || "system");
-    const content = normalizeText(
-      typeof message?.content === "string"
-        ? message.content
-        : (typeof message?.text === "string"
-          ? message.text
-          : (message?.text?.[locale] || message?.text?.ja || message?.text?.en || ""))
-    );
-    if (!content) return;
-    const preview = content.length > 96 ? `${content.slice(0, 93)}...` : content;
-    summaries.push(`guide-${sender}: ${preview}`);
-  });
-  const targetSummary = normalizeText(target?.description || target?.instruction);
-  if (targetSummary) {
-    summaries.push(`${targetKind}-card: ${targetSummary.length > 96 ? `${targetSummary.slice(0, 93)}...` : targetSummary}`);
-  }
-  const gateReason = normalizeText(target?.gateResult?.reason);
-  if (gateReason && gateReason !== "-") {
-    summaries.push(`reject-history: ${gateReason.length > 96 ? `${gateReason.slice(0, 93)}...` : gateReason}`);
-  }
-  return summaries.slice(0, 4);
+  return runtimePayloadUiApi().buildCompressedHistorySummary(buildRuntimePayloadContext(), target, targetKind);
 }
 
 function buildWorkerExecutionConstraints(target) {
-  const constraints = [];
-  const checkResult = normalizeText(target?.constraintsCheckResult);
-  if (checkResult && checkResult !== "-") {
-    constraints.push(`constraints_check_result: ${checkResult}`);
-  }
-  const gateFixes = Array.isArray(target?.gateResult?.fixes)
-    ? target.gateResult.fixes.map((item) => normalizeText(item)).filter(Boolean)
-    : [];
-  if (gateFixes.length > 0) {
-    gateFixes.forEach((item) => constraints.push(`fix: ${item}`));
-  } else {
-    const fixCondition = normalizeText(target?.fixCondition);
-    if (fixCondition && fixCondition !== "-") {
-      constraints.push(`fix_condition: ${fixCondition}`);
-    }
-  }
-  return constraints;
+  return runtimePayloadUiApi().buildWorkerExecutionConstraints(buildRuntimePayloadContext(), target);
 }
 
 function buildWorkerExpectedOutput(targetKind = "task") {
-  if (locale === "en") {
-    return targetKind === "job"
-      ? "Complete the scheduled job, summarize the result, and provide evidence for gate review."
-      : "Complete the task and provide evidence for gate review.";
-  }
-  return targetKind === "job"
-    ? "Cron を実行し、結果要約と Gate 審査用の evidence を返す。"
-    : "Task を完了し、Gate 審査用の evidence を返す。";
+  return runtimePayloadUiApi().buildWorkerExpectedOutput(buildRuntimePayloadContext(), targetKind);
 }
 
 function buildWorkerProjectContext() {
-  const focus = focusedProject();
-  if (!focus) return "";
-  return `focus_project: ${focus.name}\nfocus_directory: ${focus.directory}`;
+  return runtimePayloadUiApi().buildWorkerProjectContext(buildRuntimePayloadContext());
 }
 
 function buildWorkerHandoffSummary(target, targetKind = "task", pal = null, gateProfile = null) {
-  const sourceRefs = [targetKind === "job" ? "job-card" : "task-card"];
-  const gateFixes = Array.isArray(target?.gateResult?.fixes)
-    ? target.gateResult.fixes.map((item) => normalizeText(item)).filter(Boolean)
-    : [];
-  if (gateFixes.length > 0 || (normalizeText(target?.fixCondition) && normalizeText(target?.fixCondition) !== "-")) {
-    sourceRefs.push("reject-history");
-  }
-  const title = normalizeText(target?.title || target?.id || "");
-  const description = normalizeText(target?.description || target?.instruction || "");
-  const gateName = normalizeText(gateProfile?.displayName || gateProfile?.id);
-  const palName = normalizeText(pal?.displayName || pal?.id || target?.palId);
-  const goal = description || title || normalizeText(target?.id);
-  const decisionContext = locale === "en"
-    ? `Assigned to ${palName || "worker"} and reviewed by ${gateName || "default gate"}.`
-    : `${palName || "担当Pal"} が実行し、${gateName || "既定Gate"} が審査する。`;
-  const risks = [];
-  if (gateFixes.length > 0) {
-    risks.push(...gateFixes);
-  } else {
-    const fixCondition = normalizeText(target?.fixCondition);
-    if (fixCondition && fixCondition !== "-") risks.push(fixCondition);
-  }
-  if (normalizeText(target?.constraintsCheckResult) && normalizeText(target?.constraintsCheckResult) !== "pass") {
-    risks.push(normalizeText(target?.constraintsCheckResult));
-  }
-  const openQuestions = [];
-  if (!description) {
-    openQuestions.push(locale === "en" ? "Instruction detail is minimal." : "指示詳細が少ない。");
-  }
-  return {
-    goal,
-    decisionContext,
-    risks,
-    openQuestions,
-    sourceRefs,
-  };
+  return runtimePayloadUiApi().buildWorkerHandoffSummary(buildRuntimePayloadContext(), target, targetKind, pal, gateProfile);
 }
 
 function buildWorkerExecutionInput(target, targetKind = "task") {
-  const gateProfile = resolveGateProfileForTarget(target);
-  const pal = palProfiles.find((entry) => entry.id === normalizeText(target?.palId)) || null;
-  const instruction = normalizeText(
-    targetKind === "job"
-      ? (target?.instruction || target?.description || target?.title || target?.id)
-      : (target?.description || target?.title || target?.id)
-  );
-  const policy = resolveContextHandoffPolicy();
-  const input = {
-    targetType: targetKind,
-    targetId: normalizeText(target?.id),
-    title: normalizeText(target?.title || target?.id || ""),
-    instruction,
-    constraints: buildWorkerExecutionConstraints(target),
-    expectedOutput: buildWorkerExpectedOutput(targetKind),
-    assigneePalId: normalizeText(target?.palId),
-    gateProfileId: normalizeText(gateProfile?.id),
-    projectContext: buildWorkerProjectContext(),
-  };
-  if (policy !== "minimal") {
-    input.handoffSummary = buildWorkerHandoffSummary(target, targetKind, pal, gateProfile);
-  }
-  if (policy === "verbose") {
-    input.compressedHistorySummary = buildCompressedHistorySummary(target, targetKind);
-  }
-  return input;
+  return runtimePayloadUiApi().buildWorkerExecutionInput(buildRuntimePayloadContext(), target, targetKind);
 }
 
 function buildWorkerExecutionUserText(executionInput) {
-  const labels = locale === "en"
-    ? {
-      header: "[WorkerExecutionInput]",
-      targetType: "target_type",
-      targetId: "target_id",
-      title: "title",
-      instruction: "instruction",
-      constraints: "constraints",
-      expectedOutput: "expected_output",
-      assigneePalId: "assignee_pal_id",
-      gateProfileId: "gate_profile_id",
-      projectContext: "project_context",
-      handoffSummary: "[HandoffSummary]",
-      compressedHistorySummary: "[CompressedHistorySummary]",
-      goal: "goal",
-      decisionContext: "decision_context",
-      risks: "risks",
-      openQuestions: "open_questions",
-      sourceRefs: "source_refs",
-      none: "- none",
-    }
-    : {
-      header: "[WorkerExecutionInput]",
-      targetType: "target_type",
-      targetId: "target_id",
-      title: "title",
-      instruction: "instruction",
-      constraints: "constraints",
-      expectedOutput: "expected_output",
-      assigneePalId: "assignee_pal_id",
-      gateProfileId: "gate_profile_id",
-      projectContext: "project_context",
-      handoffSummary: "[HandoffSummary]",
-      compressedHistorySummary: "[CompressedHistorySummary]",
-      goal: "goal",
-      decisionContext: "decision_context",
-      risks: "risks",
-      openQuestions: "open_questions",
-      sourceRefs: "source_refs",
-      none: "- なし",
-    };
-  const lines = [
-    labels.header,
-    `${labels.targetType}: ${executionInput.targetType}`,
-    `${labels.targetId}: ${executionInput.targetId}`,
-    `${labels.title}: ${executionInput.title}`,
-    `${labels.instruction}:`,
-    executionInput.instruction || "-",
-    `${labels.constraints}:`,
-  ];
-  if (Array.isArray(executionInput.constraints) && executionInput.constraints.length > 0) {
-    executionInput.constraints.forEach((item) => lines.push(`- ${item}`));
-  } else {
-    lines.push(labels.none);
-  }
-  lines.push(`${labels.expectedOutput}:`);
-  lines.push(executionInput.expectedOutput || "-");
-  lines.push(`${labels.assigneePalId}: ${executionInput.assigneePalId || "-"}`);
-  lines.push(`${labels.gateProfileId}: ${executionInput.gateProfileId || "-"}`);
-  if (normalizeText(executionInput.projectContext)) {
-    lines.push(`${labels.projectContext}:`);
-    lines.push(executionInput.projectContext);
-  }
-  const summary = executionInput.handoffSummary;
-  if (summary && typeof summary === "object") {
-    lines.push("");
-    lines.push(labels.handoffSummary);
-    lines.push(`${labels.goal}: ${normalizeText(summary.goal) || "-"}`);
-    lines.push(`${labels.decisionContext}: ${normalizeText(summary.decisionContext) || "-"}`);
-    lines.push(`${labels.risks}:`);
-    if (Array.isArray(summary.risks) && summary.risks.length > 0) {
-      summary.risks.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-    lines.push(`${labels.openQuestions}:`);
-    if (Array.isArray(summary.openQuestions) && summary.openQuestions.length > 0) {
-      summary.openQuestions.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-    lines.push(`${labels.sourceRefs}:`);
-    if (Array.isArray(summary.sourceRefs) && summary.sourceRefs.length > 0) {
-      summary.sourceRefs.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-  }
-  if (Array.isArray(executionInput.compressedHistorySummary) && executionInput.compressedHistorySummary.length > 0) {
-    lines.push("");
-    lines.push(labels.compressedHistorySummary);
-    executionInput.compressedHistorySummary.forEach((item) => lines.push(`- ${item}`));
-  }
-  return lines.join("\n");
+  return runtimePayloadUiApi().buildWorkerExecutionUserText(buildRuntimePayloadContext(), executionInput);
 }
 
 function buildPalRuntimeUserText(target, targetKind = "task") {
-  return buildWorkerExecutionUserText(buildWorkerExecutionInput(target, targetKind));
+  return runtimePayloadUiApi().buildPalRuntimeUserText(buildRuntimePayloadContext(), target, targetKind);
 }
 
 function hashTextForVersion(value, prefix = "content") {
-  const source = normalizeText(value);
-  if (!source) return "none";
-  let hash = 0;
-  for (let index = 0; index < source.length; index += 1) {
-    hash = ((hash * 31) + source.charCodeAt(index)) >>> 0;
-  }
-  return `${prefix}-${hash.toString(16)}`;
+  return runtimePayloadUiApi().hashTextForVersion(buildRuntimePayloadContext(), value, prefix);
 }
 
 function buildDebugIdentityVersions(identity) {
-  return {
-    soulVersion: hashTextForVersion(identity?.soul || "", "soul"),
-    roleVersion: hashTextForVersion(identity?.role || "", "role"),
-    rubricVersion: hashTextForVersion(identity?.rubric || "", "rubric"),
-  };
+  return runtimePayloadUiApi().buildDebugIdentityVersions(buildRuntimePayloadContext(), identity);
 }
 
 function buildGateRejectHistorySummary(target) {
-  const items = [];
-  const reason = normalizeText(target?.gateResult?.reason);
-  if (reason && reason !== "-") items.push(reason);
-  const fixes = Array.isArray(target?.gateResult?.fixes)
-    ? target.gateResult.fixes.map((item) => normalizeText(item)).filter(Boolean)
-    : [];
-  fixes.forEach((item) => items.push(`fix: ${item}`));
-  const fixCondition = normalizeText(target?.fixCondition);
-  if (items.length === 0 && fixCondition && fixCondition !== "-") {
-    items.push(fixCondition);
-  }
-  return items.slice(0, 4);
+  return runtimePayloadUiApi().buildGateRejectHistorySummary(buildRuntimePayloadContext(), target);
 }
 
 function buildGateReviewInput(target, targetKind = "task", gateProfile = null, identity = null) {
-  const policy = resolveContextHandoffPolicy();
-  const reviewInput = {
-    targetType: targetKind,
-    targetId: normalizeText(target?.id),
-    title: normalizeText(target?.title || target?.id || ""),
-    instruction: normalizeText(
-      targetKind === "job"
-        ? (target?.instruction || target?.description || target?.title || target?.id)
-        : (target?.description || target?.title || target?.id)
-    ),
-    constraints: buildWorkerExecutionConstraints(target),
-    expectedOutput: buildWorkerExpectedOutput(targetKind),
-    submission: normalizeText(target?.evidence || ""),
-    ritual: {
-      evidence: normalizeText(target?.evidence || ""),
-      replay: normalizeText(target?.replay || ""),
-    },
-    gateProfileId: normalizeText(gateProfile?.id),
-    rubricVersion: hashTextForVersion(identity?.rubric || "", "rubric"),
-  };
-  if (policy !== "minimal") {
-    const pal = palProfiles.find((entry) => entry.id === normalizeText(target?.palId)) || null;
-    reviewInput.handoffSummary = buildWorkerHandoffSummary(target, targetKind, pal, gateProfile);
-  }
-  const rejectHistorySummary = buildGateRejectHistorySummary(target);
-  if (rejectHistorySummary.length > 0) {
-    reviewInput.rejectHistorySummary = rejectHistorySummary;
-  }
-  if (policy === "verbose") {
-    reviewInput.compressedHistorySummary = buildCompressedHistorySummary(target, targetKind);
-  }
-  return reviewInput;
+  return runtimePayloadUiApi().buildGateReviewInput(buildRuntimePayloadContext(), target, targetKind, gateProfile, identity);
 }
 
 function buildGateReviewUserText(reviewInput) {
-  const labels = locale === "en"
-    ? {
-      header: "[GateReviewInput]",
-      targetType: "target_type",
-      targetId: "target_id",
-      title: "title",
-      instruction: "instruction",
-      constraints: "constraints",
-      expectedOutput: "expected_output",
-      submission: "submission",
-      ritual: "[CompletionRitual]",
-      evidence: "evidence",
-      replay: "replay",
-      gateProfileId: "gate_profile_id",
-      rubricVersion: "rubric_version",
-      handoffSummary: "[HandoffSummary]",
-      compressedHistorySummary: "[CompressedHistorySummary]",
-      rejectHistorySummary: "[RejectHistorySummary]",
-      goal: "goal",
-      decisionContext: "decision_context",
-      risks: "risks",
-      openQuestions: "open_questions",
-      sourceRefs: "source_refs",
-      outputFormat: "[OutputFormat]",
-      none: "- none",
-      outputRule: 'Return compact JSON only: {"decision":"approved|rejected","reason":"...","fixes":["..."]}',
-    }
-    : {
-      header: "[GateReviewInput]",
-      targetType: "target_type",
-      targetId: "target_id",
-      title: "title",
-      instruction: "instruction",
-      constraints: "constraints",
-      expectedOutput: "expected_output",
-      submission: "submission",
-      ritual: "[CompletionRitual]",
-      evidence: "evidence",
-      replay: "replay",
-      gateProfileId: "gate_profile_id",
-      rubricVersion: "rubric_version",
-      handoffSummary: "[HandoffSummary]",
-      compressedHistorySummary: "[CompressedHistorySummary]",
-      rejectHistorySummary: "[RejectHistorySummary]",
-      goal: "goal",
-      decisionContext: "decision_context",
-      risks: "risks",
-      openQuestions: "open_questions",
-      sourceRefs: "source_refs",
-      outputFormat: "[OutputFormat]",
-      none: "- なし",
-      outputRule: 'JSONのみで返す: {"decision":"approved|rejected","reason":"...","fixes":["..."]}',
-    };
-  const lines = [
-    labels.header,
-    `${labels.targetType}: ${reviewInput.targetType}`,
-    `${labels.targetId}: ${reviewInput.targetId}`,
-    `${labels.title}: ${reviewInput.title}`,
-    `${labels.instruction}:`,
-    reviewInput.instruction || "-",
-    `${labels.constraints}:`,
-  ];
-  if (Array.isArray(reviewInput.constraints) && reviewInput.constraints.length > 0) {
-    reviewInput.constraints.forEach((item) => lines.push(`- ${item}`));
-  } else {
-    lines.push(labels.none);
-  }
-  lines.push(`${labels.expectedOutput}:`);
-  lines.push(reviewInput.expectedOutput || "-");
-  lines.push(`${labels.submission}:`);
-  lines.push(reviewInput.submission || labels.none);
-  lines.push("");
-  lines.push(labels.ritual);
-  lines.push(`${labels.evidence}:`);
-  lines.push(reviewInput.ritual?.evidence || labels.none);
-  lines.push(`${labels.replay}:`);
-  lines.push(reviewInput.ritual?.replay || labels.none);
-  lines.push(`${labels.gateProfileId}: ${reviewInput.gateProfileId || "-"}`);
-  lines.push(`${labels.rubricVersion}: ${reviewInput.rubricVersion || "-"}`);
-  if (reviewInput.handoffSummary && typeof reviewInput.handoffSummary === "object") {
-    const summary = reviewInput.handoffSummary;
-    lines.push("");
-    lines.push(labels.handoffSummary);
-    lines.push(`${labels.goal}: ${normalizeText(summary.goal) || "-"}`);
-    lines.push(`${labels.decisionContext}: ${normalizeText(summary.decisionContext) || "-"}`);
-    lines.push(`${labels.risks}:`);
-    if (Array.isArray(summary.risks) && summary.risks.length > 0) {
-      summary.risks.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-    lines.push(`${labels.openQuestions}:`);
-    if (Array.isArray(summary.openQuestions) && summary.openQuestions.length > 0) {
-      summary.openQuestions.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-    lines.push(`${labels.sourceRefs}:`);
-    if (Array.isArray(summary.sourceRefs) && summary.sourceRefs.length > 0) {
-      summary.sourceRefs.forEach((item) => lines.push(`- ${item}`));
-    } else {
-      lines.push(labels.none);
-    }
-  }
-  if (Array.isArray(reviewInput.rejectHistorySummary) && reviewInput.rejectHistorySummary.length > 0) {
-    lines.push("");
-    lines.push(labels.rejectHistorySummary);
-    reviewInput.rejectHistorySummary.forEach((item) => lines.push(`- ${item}`));
-  }
-  if (Array.isArray(reviewInput.compressedHistorySummary) && reviewInput.compressedHistorySummary.length > 0) {
-    lines.push("");
-    lines.push(labels.compressedHistorySummary);
-    reviewInput.compressedHistorySummary.forEach((item) => lines.push(`- ${item}`));
-  }
-  lines.push("");
-  lines.push(labels.outputFormat);
-  lines.push(labels.outputRule);
-  return lines.join("\n");
+  return runtimePayloadUiApi().buildGateReviewUserText(buildRuntimePayloadContext(), reviewInput);
 }
 
 function parseGateRuntimeResponse(text) {
-  const normalized = normalizeText(text);
-  if (!normalized) return null;
-  const fencedMatch = normalized.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fencedMatch ? fencedMatch[1].trim() : normalized;
-  const jsonMatch = candidate.match(/\{[\s\S]*\}/);
-  const jsonText = jsonMatch ? jsonMatch[0] : candidate;
-  try {
-    const parsed = JSON.parse(jsonText);
-    const decision = normalizeGateDecision(parsed?.decision || parsed?.result);
-    const reason = normalizeText(parsed?.reason || parsed?.summary || parsed?.comment);
-    const fixes = Array.isArray(parsed?.fixes)
-      ? parsed.fixes.map((item) => normalizeText(item)).filter(Boolean)
-      : parseGateFixes(parsed?.fixes || "");
-    if (decision === "none") return null;
-    return {
-      decision,
-      reason: reason || "-",
-      fixes,
-    };
-  } catch (error) {
-    const decision = normalizeGateDecision(
-      /rejected|reject/i.test(normalized) ? "rejected"
-        : (/approved|approve/i.test(normalized) ? "approved" : "")
-    );
-    if (decision === "none") return null;
-    return {
-      decision,
-      reason: normalized,
-      fixes: decision === "rejected" ? parseGateFixes(normalized) : [],
-    };
-  }
+  return runtimePayloadUiApi().parseGateRuntimeResponse(buildRuntimePayloadContext(), text);
 }
-
 function resetGateRuntimeState() {
   gateRuntimeState.loading = false;
   gateRuntimeState.requestSeq = 0;

@@ -275,6 +275,8 @@ interface SkillCatalogPort {
   - Task detail 右列の会話ログ本文整形と actor/status/action 表示ヘルパーを担当する。
 - `task-detail-panel.js`
   - Task detail panel の対象選択、右列描画、detail action button wiring、task/job 状態更新 helper を担当する。
+- `runtime-payloads.js`
+  - Guide/Worker/Gate の runtime payload 組み立て、handoff summary、gate response parse helper を担当する。
 - `guide-progress-flow.js`
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `guide-context-mention.js`
