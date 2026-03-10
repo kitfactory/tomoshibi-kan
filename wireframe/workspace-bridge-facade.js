@@ -1,0 +1,86 @@
+function workspaceAgentStateUiApi() {
+  if (typeof window !== "undefined" && window && window.WorkspaceAgentStateUi) {
+    return window.WorkspaceAgentStateUi;
+  }
+  return {};
+}
+
+function clonePalProfileRecord(...args) { return workspaceAgentStateUiApi().clonePalProfileRecord(...args); }
+function normalizePalProfileIdWithFallback(...args) { return workspaceAgentStateUiApi().normalizePalProfileIdWithFallback(...args); }
+function defaultPalDisplayNameForRole(...args) { return workspaceAgentStateUiApi().defaultPalDisplayNameForRole(...args); }
+function defaultPalPersonaForRole(...args) { return workspaceAgentStateUiApi().defaultPalPersonaForRole(...args); }
+function normalizePalProfileRecord(...args) { return workspaceAgentStateUiApi().normalizePalProfileRecord(...args); }
+function resolveAgentSelectionSnapshotWithFallback(...args) { return workspaceAgentStateUiApi().resolveAgentSelectionSnapshotWithFallback(...args); }
+function syncWorkspaceAgentSelection(...args) { return workspaceAgentStateUiApi().syncWorkspaceAgentSelection(...args); }
+function buildPalProfilesSnapshot(...args) { return workspaceAgentStateUiApi().buildPalProfilesSnapshot(...args); }
+function normalizePalProfilesSnapshot(...args) { return workspaceAgentStateUiApi().normalizePalProfilesSnapshot(...args); }
+function readPalProfilesSnapshotWithFallback(...args) { return workspaceAgentStateUiApi().readPalProfilesSnapshotWithFallback(...args); }
+function writePalProfilesSnapshotWithFallback(...args) { return workspaceAgentStateUiApi().writePalProfilesSnapshotWithFallback(...args); }
+function applyPalProfilesSnapshot(...args) { return workspaceAgentStateUiApi().applyPalProfilesSnapshot(...args); }
+function isBuiltInProfileId(...args) { return workspaceAgentStateUiApi().isBuiltInProfileId(...args); }
+function resolveBuiltInProfileDefinition(...args) { return workspaceAgentStateUiApi().resolveBuiltInProfileDefinition(...args); }
+function syncBuiltInProfileMetadata(...args) { return workspaceAgentStateUiApi().syncBuiltInProfileMetadata(...args); }
+function normalizeGateDecision(...args) { return workspaceAgentStateUiApi().normalizeGateDecision(...args); }
+function parseGateFixes(...args) { return workspaceAgentStateUiApi().parseGateFixes(...args); }
+function normalizeGateResultRecord(...args) { return workspaceAgentStateUiApi().normalizeGateResultRecord(...args); }
+function buildGateResultRecord(...args) { return workspaceAgentStateUiApi().buildGateResultRecord(...args); }
+function normalizeTaskRecord(...args) { return workspaceAgentStateUiApi().normalizeTaskRecord(...args); }
+function normalizeJobRecord(...args) { return workspaceAgentStateUiApi().normalizeJobRecord(...args); }
+function buildBoardStateSnapshot(...args) { return workspaceAgentStateUiApi().buildBoardStateSnapshot(...args); }
+function normalizeBoardStateSnapshot(...args) { return workspaceAgentStateUiApi().normalizeBoardStateSnapshot(...args); }
+function readBoardStateSnapshot(...args) { return workspaceAgentStateUiApi().readBoardStateSnapshot(...args); }
+function writeBoardStateSnapshot(...args) { return workspaceAgentStateUiApi().writeBoardStateSnapshot(...args); }
+function applyBoardStateSnapshot(...args) { return workspaceAgentStateUiApi().applyBoardStateSnapshot(...args); }
+function providerLabel(...args) { return workspaceAgentStateUiApi().providerLabel(...args); }
+function providerIdFromInput(...args) { return workspaceAgentStateUiApi().providerIdFromInput(...args); }
+function isApiKeyRequiredForProvider(...args) { return workspaceAgentStateUiApi().isApiKeyRequiredForProvider(...args); }
+function resolveProviderForModelName(...args) { return workspaceAgentStateUiApi().resolveProviderForModelName(...args); }
+function normalizeRegisteredModel(...args) { return workspaceAgentStateUiApi().normalizeRegisteredModel(...args); }
+function normalizeToolName(...args) { return workspaceAgentStateUiApi().normalizeToolName(...args); }
+function allowedSkillIdsForRole(...args) { return workspaceAgentStateUiApi().allowedSkillIdsForRole(...args); }
+function normalizePalRole(...args) { return workspaceAgentStateUiApi().normalizePalRole(...args); }
+function normalizePalRuntimeKind(...args) { return workspaceAgentStateUiApi().normalizePalRuntimeKind(...args); }
+function validatePalRuntimeSelectionWithFallback(...args) { return workspaceAgentStateUiApi().validatePalRuntimeSelectionWithFallback(...args); }
+function resolvePalProfileModelApi(...args) { return workspaceAgentStateUiApi().resolvePalProfileModelApi(...args); }
+function createPalProfileWithFallback(...args) { return workspaceAgentStateUiApi().createPalProfileWithFallback(...args); }
+function canDeletePalProfileWithFallback(...args) { return workspaceAgentStateUiApi().canDeletePalProfileWithFallback(...args); }
+function applyPalRuntimeSelectionWithFallback(...args) { return workspaceAgentStateUiApi().applyPalRuntimeSelectionWithFallback(...args); }
+function resolveGuideChatModelApi(...args) { return workspaceAgentStateUiApi().resolveGuideChatModelApi(...args); }
+function resolveGuideModelStateWithFallback(...args) { return workspaceAgentStateUiApi().resolveGuideModelStateWithFallback(...args); }
+function bindGuideToFirstRegisteredModelWithFallback(...args) { return workspaceAgentStateUiApi().bindGuideToFirstRegisteredModelWithFallback(...args); }
+function buildGuideReplyWithFallback(...args) { return workspaceAgentStateUiApi().buildGuideReplyWithFallback(...args); }
+function buildGuideModelRequiredPromptWithFallback(...args) { return workspaceAgentStateUiApi().buildGuideModelRequiredPromptWithFallback(...args); }
+function resolveGuideRegisteredModel(...args) { return workspaceAgentStateUiApi().resolveGuideRegisteredModel(...args); }
+function resolveGuideApiRuntimeConfig(...args) { return workspaceAgentStateUiApi().resolveGuideApiRuntimeConfig(...args); }
+function requestGuideModelReplyWithFallback(...args) { return workspaceAgentStateUiApi().requestGuideModelReplyWithFallback(...args); }
+function buildFallbackGuidePlanOutputInstruction(...args) { return workspaceAgentStateUiApi().buildFallbackGuidePlanOutputInstruction(...args); }
+function parseGuidePlanResponseWithFallback(...args) { return workspaceAgentStateUiApi().parseGuidePlanResponseWithFallback(...args); }
+function palRoleLabel(...args) { return workspaceAgentStateUiApi().palRoleLabel(...args); }
+function coreModelOptionsByProvider(...args) { return workspaceAgentStateUiApi().coreModelOptionsByProvider(...args); }
+function resolvePalContextBuilderApi(...args) { return workspaceAgentStateUiApi().resolvePalContextBuilderApi(...args); }
+function resolveAgentIdentityApi(...args) { return workspaceAgentStateUiApi().resolveAgentIdentityApi(...args); }
+function initializePalIdentityTemplates(...args) { return workspaceAgentStateUiApi().initializePalIdentityTemplates(...args); }
+function ensureBuiltInDebugPurposeIdentities(...args) { return workspaceAgentStateUiApi().ensureBuiltInDebugPurposeIdentities(...args); }
+function syncBuiltInResidentIdentitiesToWorkspace(...args) { return workspaceAgentStateUiApi().syncBuiltInResidentIdentitiesToWorkspace(...args); }
+function resolveAgentSkillResolverApi(...args) { return workspaceAgentStateUiApi().resolveAgentSkillResolverApi(...args); }
+function resolveGuideTaskPlannerApi(...args) { return workspaceAgentStateUiApi().resolveGuideTaskPlannerApi(...args); }
+function resolveGuidePlanApi(...args) { return workspaceAgentStateUiApi().resolveGuidePlanApi(...args); }
+function resolveGuidePlanningIntentApi(...args) { return workspaceAgentStateUiApi().resolveGuidePlanningIntentApi(...args); }
+function resolveAgentRoutingApi(...args) { return workspaceAgentStateUiApi().resolveAgentRoutingApi(...args); }
+function resolveDebugIdentitySeedsApi(...args) { return workspaceAgentStateUiApi().resolveDebugIdentitySeedsApi(...args); }
+function resolvePlanOrchestratorApi(...args) { return workspaceAgentStateUiApi().resolvePlanOrchestratorApi(...args); }
+function resolveDebugRunsApi(...args) { return workspaceAgentStateUiApi().resolveDebugRunsApi(...args); }
+function guideMessageToContextMessage(...args) { return workspaceAgentStateUiApi().guideMessageToContextMessage(...args); }
+function normalizeGuideContextMessages(...args) { return workspaceAgentStateUiApi().normalizeGuideContextMessages(...args); }
+function splitSystemPromptFromContextMessages(...args) { return workspaceAgentStateUiApi().splitSystemPromptFromContextMessages(...args); }
+function buildFallbackLanguagePrompt(...args) { return workspaceAgentStateUiApi().buildFallbackLanguagePrompt(...args); }
+function buildFallbackIdentitySystemPrompt(...args) { return workspaceAgentStateUiApi().buildFallbackIdentitySystemPrompt(...args); }
+function normalizeToolCapabilitySnapshots(...args) { return workspaceAgentStateUiApi().normalizeToolCapabilitySnapshots(...args); }
+function resolveRegisteredToolCapabilitySnapshots(...args) { return workspaceAgentStateUiApi().resolveRegisteredToolCapabilitySnapshots(...args); }
+function loadAgentIdentityForPal(...args) { return workspaceAgentStateUiApi().loadAgentIdentityForPal(...args); }
+function fallbackResolveSkillSummaries(...args) { return workspaceAgentStateUiApi().fallbackResolveSkillSummaries(...args); }
+function resolveGuideConfiguredSkillIds(...args) { return workspaceAgentStateUiApi().resolveGuideConfiguredSkillIds(...args); }
+function buildGuideContextWithFallback(...args) { return workspaceAgentStateUiApi().buildGuideContextWithFallback(...args); }
+function nextTaskSequenceNumber(...args) { return workspaceAgentStateUiApi().nextTaskSequenceNumber(...args); }
+function nextJobSequenceNumber(...args) { return workspaceAgentStateUiApi().nextJobSequenceNumber(...args); }
+function resolveWorkerAssignmentProfiles(...args) { return workspaceAgentStateUiApi().resolveWorkerAssignmentProfiles(...args); }

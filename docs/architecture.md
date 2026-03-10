@@ -277,8 +277,20 @@ interface SkillCatalogPort {
   - Task detail panel の対象選択、右列描画、detail action button wiring、task/job 状態更新 helper を担当する。
 - `runtime-payloads.js`
   - Guide/Worker/Gate の runtime payload 組み立て、handoff summary、gate response parse helper を担当する。
+- `ui-text.js`
+  - UI 文言辞書、message text、Guide UI prompt の固定定数を担当する。
+- `ui-core.js`
+  - i18n text、markdown render、low-level UI utility を担当する。
+- `workspace-bridge-facade.js`
+  - `WorkspaceAgentStateUi` と関連 browser bridge への thin facade wrapper を担当する。
+- `execution-runtime-routing.js`
+  - Guide-driven resident routing / replan request の runtime helper を担当する。
+- `execution-runtime-plan.js`
+  - Plan artifact からの task/job materialization と dispatch progress helper を担当する。
+- `execution-runtime-review.js`
+  - worker runtime / gate runtime / review bridge と runtime replay helper を担当する。
 - `execution-runtime.js`
-  - worker runtime / gate runtime / replan 実行と progress narration helper を担当する。
+  - execution runtime façade と共通 conversation helper を担当し、routing / plan / review module を束ねる。
 - `settings-state.js`
   - Settings の persistence bridge / local snapshot / skill market state / runtime bridge helper を担当する。
 - `workspace-profile-state.js`

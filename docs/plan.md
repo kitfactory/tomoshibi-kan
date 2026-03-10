@@ -42,6 +42,8 @@
 - 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
 - 20260311: [DR-20260311-settings-tab-support-split] `settings-tab.js` の描画本体を `settings-tab-render.js` へ分離して archive 済み
 - 20260311: [DR-20260311-workspace-agent-state-split] `workspace-agent-state.js` を profile/state・board/state・runtime-config へ分離して archive 済み
+- 20260311: [DR-20260311-execution-runtime-split] `execution-runtime.js` を routing / plan / review façade へ分離して archive 済み
+- 20260311: [DR-20260311-app-js-split-ui-core-and-bridge-facade] `app.js` から UI 共通基盤と workspace bridge facade を分離して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -71,3 +73,5 @@
 - [x] 20260310: [DR-20260310-app-js-split-execution-runtime] [DR-20260310-workspace-agent-state-namespace-repair]
 - [x] 20260311: [DR-20260311-settings-tab-support-split]
 - [x] 20260311: [DR-20260311-workspace-agent-state-split]
+- [x] 20260311: [DR-20260311-execution-runtime-split]
+- [x] 20260311: [DR-20260311-app-js-split-ui-core-and-bridge-facade]
