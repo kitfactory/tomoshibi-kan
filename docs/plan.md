@@ -11,6 +11,7 @@
 - resident ごとの `Progress Voice` を progress log の実メッセージ生成へさらに反映する
 - OpenCode / Codex を含む tool runtime の capability snapshot を resident routing と handoff にさらに活かす
 - `plan.md` archive を月次で分割し、入口を薄く保つ
+- `app.js` の残り責務を継続分割し、2000 行未満を維持したままさらに縮小する
 
 # archive summary
 - 詳細な archive は monthly file に退避し、このファイルは current / future の入口として保つ
@@ -31,9 +32,11 @@
 - 20260310: [DR-20260310-app-js-split-guide-chat-entry] Guide の送信入口 / project onboarding / plan approval 分岐を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-chat-runtime] Guide composer state / runtime helper / event wiring を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-context-mention] Guide の project context / focus command / @mention menu helper を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-execution-runtime] execution runtime / settings-state / workspace-agent-state を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-settings-tab] Settings タブ描画を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-runtime-payloads] Guide/Worker/Gate の runtime payload helper 群を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-workspace-agent-state-namespace-repair] `WorkspaceAgentStateUi` の namespaced export で `app.js` wrapper 再帰を修復して archive 済み
 - 20260310: [DR-20260310-app-js-split-board-execution] Task/Job action / Gate panel / auto execution を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-task-detail-panel] task detail panel 描画と状態更新 helper を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
@@ -63,3 +66,4 @@
 - [x] 20260310: [DR-20260310-app-js-split-runtime-payloads]
 - [x] 20260310: [DR-20260310-app-js-split-board-execution]
 - [x] 20260310: [DR-20260310-app-js-split-task-detail-panel]
+- [x] 20260310: [DR-20260310-app-js-split-execution-runtime] [DR-20260310-workspace-agent-state-namespace-repair]

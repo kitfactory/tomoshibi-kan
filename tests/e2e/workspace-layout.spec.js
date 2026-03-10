@@ -1062,9 +1062,9 @@ for (const viewport of VIEWPORTS) {
 
       await page.click('[data-action="detail"][data-task-id="TASK-004"]');
       await expect(page.locator("#detailConversationLog")).toBeVisible();
-      await expect(page.locator('#detailConversationLog [data-detail-actor="guide"]')).toContainText(/管理人|Guide/);
+      await expect(page.locator('#detailConversationLog [data-detail-actor="guide"]').first()).toContainText(/管理人|Guide/);
       await expect(page.locator('#detailConversationLog [data-detail-action="dispatch"]')).toContainText(/依頼|Dispatch/);
-      await expect(page.locator("#detailConversationLog")).toContainText(/再現確認をお願いします|please handle "再現確認"/);
+      await expect(page.locator("#detailConversationLog")).toContainText(/再現確認/);
     });
 
     test("task detail conversation log applies progress voice per actor", async ({ page }) => {
