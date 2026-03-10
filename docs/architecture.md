@@ -281,8 +281,14 @@ interface SkillCatalogPort {
   - worker runtime / gate runtime / replan 実行と progress narration helper を担当する。
 - `settings-state.js`
   - Settings の persistence bridge / local snapshot / skill market state / runtime bridge helper を担当する。
+- `workspace-profile-state.js`
+  - resident profile snapshot / built-in metadata / Guide-Gate selection helper を担当する。
+- `workspace-board-state.js`
+  - Task/Job/Gate result normalization と board snapshot helper を担当する。
+- `workspace-runtime-config.js`
+  - resident runtime/provider/tool normalization と runtime selection helper を担当する。
 - `workspace-agent-state.js`
-  - resident profile / board snapshot / guide runtime/profile resolution / worker assignment state helper を担当する。
+  - workspace profile/board/runtime-config helper を束ねる facade と Guide runtime/profile resolution helper を担当する。
 - `guide-progress-flow.js`
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `guide-context-mention.js`

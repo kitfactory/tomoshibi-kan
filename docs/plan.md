@@ -41,6 +41,7 @@
 - 20260310: [DR-20260310-app-js-split-task-detail-panel] task detail panel 描画と状態更新 helper を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
 - 20260311: [DR-20260311-settings-tab-support-split] `settings-tab.js` の描画本体を `settings-tab-render.js` へ分離して archive 済み
+- 20260311: [DR-20260311-workspace-agent-state-split] `workspace-agent-state.js` を profile/state・board/state・runtime-config へ分離して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -69,3 +70,4 @@
 - [x] 20260310: [DR-20260310-app-js-split-task-detail-panel]
 - [x] 20260310: [DR-20260310-app-js-split-execution-runtime] [DR-20260310-workspace-agent-state-namespace-repair]
 - [x] 20260311: [DR-20260311-settings-tab-support-split]
+- [x] 20260311: [DR-20260311-workspace-agent-state-split]
