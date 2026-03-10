@@ -31,6 +31,11 @@
 - 20260310: [DR-20260310-app-js-split-guide-chat-entry] Guide の送信入口 / project onboarding / plan approval 分岐を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-chat-runtime] Guide composer state / runtime helper / event wiring を `app.js` から分割して archive 済み
 - 20260310: [DR-20260310-app-js-split-guide-context-mention] Guide の project context / focus command / @mention menu helper を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-settings-tab] Settings タブ描画を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-board-execution] Task/Job action / Gate panel / auto execution を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-task-detail-panel] task detail panel 描画と状態更新 helper を `app.js` から分割して archive 済み
+- 20260310: [DR-20260310-app-js-split-project-and-shell-panels] resident / workspace shell / project tab を `app.js` から分割して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -53,3 +58,6 @@
 - [x] 20260310: [DR-20260310-app-js-split-guide-chat-entry]
 - [x] 20260310: [DR-20260310-app-js-split-guide-chat-runtime]
 - [x] 20260310: [DR-20260310-app-js-split-guide-context-mention]
+- [x] 20260310: [DR-20260310-app-js-split-settings-tab] [DR-20260310-app-js-split-project-and-shell-panels]
+- [x] 20260310: [DR-20260310-app-js-split-board-execution]
+- [x] 20260310: [DR-20260310-app-js-split-task-detail-panel]

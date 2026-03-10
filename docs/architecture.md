@@ -269,8 +269,12 @@ interface SkillCatalogPort {
   - Worker/Gate selector の scoring と候補選定を担当する。
 - `plan-orchestrator.js`
   - 保存済み `Plan artifact` から task materialization / worker selection を行う renderer-side Orchestrator helper を担当する。
+- `board-execution.js`
+  - Task/Job action 実行、Gate panel 開閉、Gate decision 適用、auto execution queue を担当する。
 - `task-detail-conversation.js`
   - Task detail 右列の会話ログ本文整形と actor/status/action 表示ヘルパーを担当する。
+- `task-detail-panel.js`
+  - Task detail panel の対象選択、右列描画、detail action button wiring、task/job 状態更新 helper を担当する。
 - `guide-progress-flow.js`
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `guide-context-mention.js`
@@ -281,6 +285,14 @@ interface SkillCatalogPort {
   - Guide composer の busy/focus 状態、model user text 組み立て、live reply 整形、runtime request helper、composer event wiring を担当する。
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
+- `settings-tab.js`
+  - Settings タブ描画、item-draft helper、skill market modal、resident sync UI を担当する。
+- `resident-panel.js`
+  - 住人一覧、住人設定 modal、identity editor modal の描画と resident-facing UI helper を担当する。
+- `workspace-shell.js`
+  - Guide / Task / Job / Event / Gate など workspace shell 全体のタブ描画と i18n 再描画 wiring を担当する。
+- `project-tab.js`
+  - Project タブ描画、project state snapshot、directory picker helper、focused project 表示 helper を担当する。
 - `palpal-core-registry.js`
   - `PALPAL_CORE_PROVIDERS` / `PALPAL_CORE_MODELS` を公開し、Settings の候補ソースを提供する。
 - 位置づけ:
