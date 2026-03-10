@@ -294,7 +294,9 @@ interface SkillCatalogPort {
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `settings-tab.js`
-  - Settings タブ描画、item-draft helper、skill market modal、resident sync UI を担当する。
+  - Settings タブの support/helper API、item-draft helper、skill market modal helper、resident sync helper を担当する。
+- `settings-tab-render.js`
+  - Settings タブの描画本体と event wiring を担当する。
 - `resident-panel.js`
   - 住人一覧、住人設定 modal、identity editor modal の描画と resident-facing UI helper を担当する。
 - `workspace-shell.js`
