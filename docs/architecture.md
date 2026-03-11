@@ -291,6 +291,10 @@ interface SkillCatalogPort {
   - worker runtime / gate runtime / review bridge と runtime replay helper を担当する。
 - `execution-runtime.js`
   - execution runtime façade と共通 conversation helper を担当し、routing / plan / review module を束ねる。
+- `runtime/palpal-core-provider.js`
+  - provider catalog、環境変数 patch、Guide structured output helper を担当する。
+- `runtime/palpal-core-runtime.js`
+  - tool runtime loop、workspace file/web helper、provider/CLI runtime の façade を担当する。
 - `settings-state.js`
   - Settings の persistence bridge / local snapshot / skill market state / runtime bridge helper を担当する。
 - `workspace-profile-state.js`
@@ -321,6 +325,18 @@ interface SkillCatalogPort {
   - Guide / Task / Job / Event / Gate など workspace shell 全体のタブ描画と i18n 再描画 wiring を担当する。
 - `project-tab.js`
   - Project タブ描画、project state snapshot、directory picker helper、focused project 表示 helper を担当する。
+- `tests/e2e/workspace-layout.shared.js`
+  - workspace layout E2E の共通 fixture / mock / viewport 定義を担当する。
+- `tests/e2e/workspace-layout.guide.js`
+  - Guide / progress query / plan generation 系の E2E を担当する。
+- `tests/e2e/workspace-layout.board.js`
+  - Task / Job / Gate / detail conversation 系の E2E を担当する。
+- `tests/e2e/workspace-layout.settings.js`
+  - Settings tab 系の E2E を担当する。
+- `tests/e2e/workspace-layout.profiles.js`
+  - 住人一覧 / identity editor / profile sync 系の E2E を担当する。
+- `tests/e2e/workspace-layout.spec.js`
+  - workspace layout E2E の thin entrypoint と viewport loop を担当する。
 - `palpal-core-registry.js`
   - `PALPAL_CORE_PROVIDERS` / `PALPAL_CORE_MODELS` を公開し、Settings の候補ソースを提供する。
 - 位置づけ:
