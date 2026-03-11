@@ -3,6 +3,37 @@ function workspaceShellUi() {
   return global.WorkspaceShellUi || {};
 }
 
+function ensureGlobalArrayState(key) {
+  if (!Array.isArray(global[key])) {
+    global[key] = [];
+  }
+  return global[key];
+}
+
+function getPalProfilesState() {
+  return ensureGlobalArrayState("palProfiles");
+}
+
+function getTasksState() {
+  return ensureGlobalArrayState("tasks");
+}
+
+function getJobsState() {
+  return ensureGlobalArrayState("jobs");
+}
+
+function getEventsState() {
+  return ensureGlobalArrayState("events");
+}
+
+function getProgressLogEntriesState() {
+  return ensureGlobalArrayState("progressLogEntries");
+}
+
+function getPlanArtifactsState() {
+  return ensureGlobalArrayState("planArtifacts");
+}
+
 function selectableModelOptions(providerId = settingsState.itemDraft.provider) {
   const normalizedProviderId = providerIdFromInput(providerId);
   const registered = settingsState.registeredModels
@@ -66,6 +97,7 @@ function syncPalProfilesRegistryRefs() {
   const availableSkills = [...settingsState.registeredSkills];
   const fallbackModel = availableModels[0] || "";
   const fallbackTool = availableTools[0] || "";
+  const palProfiles = getPalProfilesState();
 
   palProfiles.forEach((pal, index) => {
     pal.role = normalizePalRole(pal.role);
@@ -117,6 +149,7 @@ function syncPalProfilesRegistryRefs() {
 }
 
 function createWorkerPalId() {
+  const palProfiles = getPalProfilesState();
   let index = 1;
   while (true) {
     const candidate = `pal-worker-${String(index).padStart(3, "0")}`;
@@ -126,6 +159,7 @@ function createWorkerPalId() {
 }
 
 function createGuidePalId() {
+  const palProfiles = getPalProfilesState();
   let index = 1;
   while (true) {
     const candidate = `guide-${String(index).padStart(3, "0")}`;
@@ -135,6 +169,7 @@ function createGuidePalId() {
 }
 
 function createGatePalId() {
+  const palProfiles = getPalProfilesState();
   let index = 1;
   while (true) {
     const candidate = `gate-${String(index).padStart(3, "0")}`;
@@ -151,10 +186,12 @@ function createPalIdForRole(role) {
 }
 
 function getActiveGuideProfile() {
+  const palProfiles = getPalProfilesState();
   return palProfiles.find((pal) => pal.id === workspaceAgentSelection.activeGuideId) || null;
 }
 
 function getDefaultGateProfile() {
+  const palProfiles = getPalProfilesState();
   return palProfiles.find((pal) => pal.id === workspaceAgentSelection.defaultGateId) || null;
 }
 
@@ -184,6 +221,7 @@ function resolveIdentityEditorAgentInput(pal) {
 }
 
 function getGateProfileById(gateProfileId) {
+  const palProfiles = getPalProfilesState();
   const normalizedId = normalizeText(gateProfileId);
   if (!normalizedId) return null;
   const gate = palProfiles.find((pal) => (
@@ -199,6 +237,7 @@ function resolveGateProfileForTarget(target) {
 }
 
 async function resolveGateRoutingProfiles() {
+  const palProfiles = getPalProfilesState();
   const gates = palProfiles.filter((pal) => normalizePalRole(pal.role) === "gate");
   if (gates.length === 0) return [];
   const profiles = await Promise.all(gates.map(async (pal) => {
@@ -318,6 +357,7 @@ function resolvePlanArtifactApi() {
 }
 
 function appendTaskProgressLogEntryLocal(payload) {
+  let progressLogEntries = getProgressLogEntriesState();
   const entry = {
     entryId: normalizeText(payload?.entryId) || `progress-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
     createdAt: normalizeText(payload?.createdAt) || new Date().toISOString(),
@@ -334,6 +374,7 @@ function appendTaskProgressLogEntryLocal(payload) {
   };
   progressLogEntries.unshift(entry);
   progressLogEntries = progressLogEntries.slice(0, 200);
+  global.progressLogEntries = progressLogEntries;
   return entry;
 }
 
@@ -354,6 +395,7 @@ async function listTaskProgressLogEntriesWithFallback(options = {}) {
   const targetId = normalizeText(options.targetId);
   const planId = normalizeText(options.planId);
   const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+  const progressLogEntries = getProgressLogEntriesState();
   return progressLogEntries
     .filter((entry) => (!targetKind || entry.targetKind === targetKind))
     .filter((entry) => (!targetId || entry.targetId === targetId))
@@ -371,6 +413,7 @@ async function getLatestTaskProgressLogEntryWithFallback(options = {}) {
 }
 
 function appendPlanArtifactLocal(payload) {
+  let planArtifacts = getPlanArtifactsState();
   const entry = {
     planId: normalizeText(payload?.planId) || `PLAN-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`.toUpperCase(),
     createdAt: normalizeText(payload?.createdAt) || new Date().toISOString(),
@@ -382,10 +425,12 @@ function appendPlanArtifactLocal(payload) {
   };
   planArtifacts.unshift(entry);
   planArtifacts = planArtifacts.slice(0, 50);
+  global.planArtifacts = planArtifacts;
   return entry;
 }
 
 function updatePlanArtifactLocal(planId, patch = {}) {
+  const planArtifacts = getPlanArtifactsState();
   const normalizedPlanId = normalizeText(planId);
   if (!normalizedPlanId) return null;
   const index = planArtifacts.findIndex((entry) => normalizeText(entry?.planId) === normalizedPlanId);
@@ -436,6 +481,7 @@ async function listPlanArtifactsWithFallback(options = {}) {
   }
   const status = normalizeText(options.status);
   const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+  const planArtifacts = getPlanArtifactsState();
   return planArtifacts
     .filter((entry) => (!status || entry.status === status))
     .slice(0, limit);
@@ -464,6 +510,7 @@ if (typeof window !== "undefined" && (!window.TomoshibikanPlanArtifacts || typeo
     list: (options = {}) => {
       const status = normalizeText(options.status);
       const limit = Number(options.limit) > 0 ? Number(options.limit) : 50;
+      const planArtifacts = getPlanArtifactsState();
       return planArtifacts
         .filter((entry) => (!status || entry.status === status))
         .slice(0, limit);
@@ -480,10 +527,12 @@ if (typeof window !== "undefined" && (!window.TomoshibikanPlanArtifacts || typeo
 }
 
 function appendEvent(type, targetId, result, summaryJa, summaryEn) {
+  let events = getEventsState();
   events.unshift(
     makeEvent(type, targetId, result, { ja: summaryJa, en: summaryEn }, formatNow().slice(11))
   );
   events = events.slice(0, 50);
+  global.events = events;
   eventPage = 1;
 }
 
@@ -616,6 +665,8 @@ function setMessage(id) {
 }
 
 function resolveBoardTargetRecord(targetKind, targetId) {
+  const jobs = getJobsState();
+  const tasks = getTasksState();
   if (targetKind === "job") {
     return jobs.find((job) => job.id === targetId) || null;
   }

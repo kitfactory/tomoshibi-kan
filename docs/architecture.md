@@ -289,8 +289,14 @@ interface SkillCatalogPort {
   - `tUi / tDyn` による UI 文言 lookup helper を担当する。
 - `ui-event-log.js`
   - prototype event helper `makeEvent()` を担当する。
+- `ui-settings-state.js`
+  - Settings / modal / gate review の mutable state を担当する。
+- `ui-workspace-data-state.js`
+  - project / task / job / resident / progress log / plan artifact の bootstrap state を担当する。
+- `ui-session-state.js`
+  - locale / selected task / workspace tab / event paging など session UI state を担当する。
 - `ui-core.js`
-  - prototype workspace の mutable state と bootstrap 初期化を担当する。
+  - UI state module の facade と読み込み入口を担当する。
 - `ui-markdown.js`
   - markdown / HTML rendering helper を担当する。
 - `ui-link-utils.js`
