@@ -293,8 +293,14 @@ interface SkillCatalogPort {
   - execution runtime façade と共通 conversation helper を担当し、routing / plan / review module を束ねる。
 - `runtime/palpal-core-provider.js`
   - provider catalog、環境変数 patch、Guide structured output helper を担当する。
+- `runtime/palpal-core-workspace-tools.js`
+  - workspace file/web helper と skill-backed tool 定義を担当する。
+- `runtime/palpal-core-tool-loop.js`
+  - model tool-loop 実行、tool call fallback、loop trace helper を担当する。
+- `runtime/palpal-core-tool-runtime.js`
+  - workspace tool helper と tool-loop helper の façade を担当する。
 - `runtime/palpal-core-runtime.js`
-  - tool runtime loop、workspace file/web helper、provider/CLI runtime の façade を担当する。
+  - provider/CLI runtime の façade と Guide/Pal chat public API を担当する。
 - `settings-state.js`
   - Settings の persistence bridge / local snapshot / skill market state / runtime bridge helper を担当する。
 - `workspace-profile-state.js`
