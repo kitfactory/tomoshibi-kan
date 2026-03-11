@@ -47,3 +47,4 @@
 - [x] archived delta ids 031: DR-20260311-palpal-core-runtime-provider-split DR-20260311-palpal-core-runtime-tool-loop-split DR-20260311-settings-state-skill-market-split DR-20260311-settings-store-repository-split DR-20260311-settings-tab-skill-modal-split DR-20260311-settings-tab-support-split DR-20260311-ui-core-foundation-registry-split DR-20260311-ui-core-markdown-split
 - [x] archived delta ids 032: DR-20260311-ui-core-seed-copy-event-split DR-20260311-ui-core-state-split DR-20260311-workspace-agent-state-guide-runtime-split DR-20260311-workspace-agent-state-split DR-20260311-workspace-layout-board-split DR-20260311-workspace-layout-spec-split
 - [x] archived delta ids 033: DR-20260312-settings-tab-render-controls-split
+- [x] archived delta ids 034: DR-20260312-agents-review-guidance
