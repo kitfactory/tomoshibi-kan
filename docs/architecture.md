@@ -872,7 +872,7 @@ CREATE TABLE orchestration_debug_runs (
 ```
 
 ### 責務
-- `SqliteSettingsStore` が `orchestration_debug_runs` の append/list を担う。
+- `SqliteSettingsStore` は app settings facade として振る舞い、`orchestration_debug_runs` / `task_progress_logs` / `plan_artifacts` の repository 実装は `settings-store-repositories.js` に分離する。
 - Electron main の `guide:chat` / `pal:chat` IPC handler が runtime 呼び出しの前後で sanitized record を保存する。
 - Renderer は debug DB へ直接書かず、`debugMeta` を payload に添えるだけに留める。
 

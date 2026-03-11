@@ -1,206 +1,29 @@
 const fs = require("fs");
-const path = require("path");
 const initSqlJs = require("sql.js");
-
-function normalizeString(value) {
-  return String(value || "").trim();
-}
-
-function normalizeLocale(value) {
-  return normalizeString(value) === "en" ? "en" : "ja";
-}
-
-function dedupeStrings(values) {
-  if (!Array.isArray(values)) return [];
-  const seen = new Set();
-  const result = [];
-  values.forEach((value) => {
-    const normalized = normalizeString(value);
-    if (!normalized || seen.has(normalized)) return;
-    seen.add(normalized);
-    result.push(normalized);
-  });
-  return result;
-}
-
-function normalizeModelInput(model) {
-  const name = normalizeString(model?.name);
-  if (!name) return null;
-  return {
-    name,
-    provider: normalizeString(model?.provider) || "openai",
-    baseUrl: normalizeString(model?.baseUrl),
-    endpoint: normalizeString(model?.endpoint),
-    apiKeyInput: normalizeString(model?.apiKeyInput || model?.apiKey),
-  };
-}
-
-function normalizeSettingsPayload(payload) {
-  const models = Array.isArray(payload?.registeredModels) ? payload.registeredModels : [];
-  const modelMap = new Map();
-  models.forEach((model) => {
-    const normalized = normalizeModelInput(model);
-    if (!normalized) return;
-    const dedupeKey = normalized.name.toLowerCase();
-    if (!modelMap.has(dedupeKey)) modelMap.set(dedupeKey, normalized);
-  });
-  const toolCapabilities = Array.isArray(payload?.registeredToolCapabilities)
-    ? payload.registeredToolCapabilities
-      .map((entry) => {
-        const toolName = normalizeString(entry?.toolName);
-        if (!toolName) return null;
-        const capabilities = Array.isArray(entry?.capabilities)
-          ? entry.capabilities
-            .map((item) => {
-              const id = normalizeString(item?.id);
-              const name = normalizeString(item?.name);
-              const kind = normalizeString(item?.kind);
-              const description = normalizeString(item?.description);
-              const stage = normalizeString(item?.stage);
-              const enabled = item?.enabled === true;
-              if (!id || !name || !kind) return null;
-              return { id, name, kind, description, stage, enabled };
-            })
-            .filter(Boolean)
-          : [];
-        return {
-          toolName,
-          status: normalizeString(entry?.status) || "unavailable",
-          fetchedAt: normalizeString(entry?.fetchedAt),
-          commandName: normalizeString(entry?.commandName),
-          versionText: normalizeString(entry?.versionText),
-          capabilities,
-          capabilitySummaries: dedupeStrings(entry?.capabilitySummaries),
-          errorText: normalizeString(entry?.errorText),
-        };
-      })
-      .filter(Boolean)
-    : [];
-  const toolCapabilityMap = new Map(toolCapabilities.map((entry) => [entry.toolName.toLowerCase(), entry]));
-  return {
-    locale: normalizeLocale(payload?.locale),
-    registeredModels: [...modelMap.values()],
-    registeredTools: dedupeStrings(payload?.registeredTools),
-    registeredToolCapabilities: [...toolCapabilityMap.values()],
-    registeredSkills: dedupeStrings(payload?.registeredSkills),
-  };
-}
-
-function ensureDirForFile(filePath) {
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-}
-
-function queryRows(db, sql, params = []) {
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) {
-    rows.push(stmt.getAsObject());
-  }
-  stmt.free();
-  return rows;
-}
-
-function safeJsonStringify(value, fallback = "{}") {
-  try {
-    return JSON.stringify(value);
-  } catch (error) {
-    return fallback;
-  }
-}
-
-function safeJsonParse(value, fallback) {
-  try {
-    const parsed = JSON.parse(String(value || ""));
-    return parsed && typeof parsed === "object" ? parsed : fallback;
-  } catch (error) {
-    return fallback;
-  }
-}
-
-function createDebugRunId() {
-  const now = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `debug-${now}-${rand}`;
-}
-
-function createProgressLogId() {
-  const now = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `progress-${now}-${rand}`;
-}
-
-function createPlanArtifactId() {
-  const now = Date.now().toString(36);
-  const rand = Math.random().toString(36).slice(2, 10);
-  return `PLAN-${now}-${rand}`.toUpperCase();
-}
-
-function clampLimit(value, fallback = 50) {
-  const numeric = Number(value);
-  if (!Number.isFinite(numeric)) return fallback;
-  return Math.max(1, Math.min(200, Math.floor(numeric)));
-}
-
-function normalizeDebugRunPayload(payload) {
-  const createdAt = normalizeString(payload?.createdAt) || new Date().toISOString();
-  return {
-    runId: normalizeString(payload?.runId) || createDebugRunId(),
-    createdAt,
-    stage: normalizeString(payload?.stage),
-    agentRole: normalizeString(payload?.agentRole),
-    agentId: normalizeString(payload?.agentId),
-    targetKind: normalizeString(payload?.targetKind),
-    targetId: normalizeString(payload?.targetId),
-    status: normalizeString(payload?.status) || "ok",
-    provider: normalizeString(payload?.provider),
-    modelName: normalizeString(payload?.modelName),
-    inputJson: safeJsonStringify(payload?.input ?? {}, "{}"),
-    outputJson: safeJsonStringify(payload?.output ?? {}, "{}"),
-    errorText: normalizeString(payload?.errorText),
-    metaJson: safeJsonStringify(payload?.meta ?? {}, "{}"),
-  };
-}
-
-function normalizeProgressActor(value, fallback) {
-  const normalized = normalizeString(value);
-  return normalized || fallback;
-}
-
-function normalizeTaskProgressLogPayload(payload) {
-  const createdAt = normalizeString(payload?.createdAt) || new Date().toISOString();
-  return {
-    entryId: normalizeString(payload?.entryId) || createProgressLogId(),
-    createdAt,
-    planId: normalizeString(payload?.planId),
-    targetKind: normalizeString(payload?.targetKind),
-    targetId: normalizeString(payload?.targetId),
-    actionType: normalizeString(payload?.actionType),
-    status: normalizeString(payload?.status) || "ok",
-    actualActor: normalizeProgressActor(payload?.actualActor, "orchestrator"),
-    displayActor: normalizeProgressActor(payload?.displayActor, "Guide"),
-    messageForUser: normalizeString(payload?.messageForUser),
-    payloadJson: safeJsonStringify(payload?.payload ?? {}, "{}"),
-    sourceRunId: normalizeString(payload?.sourceRunId),
-  };
-}
-
-function normalizePlanArtifactPayload(payload) {
-  const createdAt = normalizeString(payload?.createdAt) || new Date().toISOString();
-  const status = normalizeString(payload?.status) || "approved";
-  const approvedAt = status === "approved"
-    ? (normalizeString(payload?.approvedAt) || createdAt)
-    : normalizeString(payload?.approvedAt);
-  return {
-    planId: normalizeString(payload?.planId) || createPlanArtifactId(),
-    createdAt,
-    status,
-    replyText: normalizeString(payload?.replyText),
-    planJson: safeJsonStringify(payload?.plan ?? {}, "{}"),
-    sourceRunId: normalizeString(payload?.sourceRunId),
-    approvedAt,
-  };
-}
+const {
+  ensureDirForFile,
+  normalizeLocale,
+  normalizeSettingsPayload,
+  normalizeString,
+  queryRows,
+  safeJsonParse,
+  safeJsonStringify,
+} = require("./settings-store-shared.js");
+const {
+  appendOrchestrationDebugRun,
+  appendPlanArtifact,
+  appendTaskProgressLogEntry,
+  getLatestPlanArtifact,
+  getLatestTaskProgressLogEntry,
+  initializeRepositoryTables,
+  listOrchestrationDebugRuns,
+  listPlanArtifacts,
+  listTaskProgressLogEntries,
+  normalizeDebugRunPayload,
+  normalizePlanArtifactPayload,
+  normalizeTaskProgressLogPayload,
+  updatePlanArtifact,
+} = require("./settings-store-repositories.js");
 
 class FileSecretStore {
   constructor(options) {
@@ -332,63 +155,7 @@ class SqliteSettingsStore {
         skill_id TEXT PRIMARY KEY
       );
     `);
-    db.run(`
-      CREATE TABLE IF NOT EXISTS orchestration_debug_runs (
-        run_id TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL,
-        stage TEXT NOT NULL,
-        agent_role TEXT NOT NULL,
-        agent_id TEXT NOT NULL,
-        target_kind TEXT NOT NULL DEFAULT '',
-        target_id TEXT NOT NULL DEFAULT '',
-        status TEXT NOT NULL,
-        provider TEXT NOT NULL DEFAULT '',
-        model_name TEXT NOT NULL DEFAULT '',
-        input_json TEXT NOT NULL,
-        output_json TEXT NOT NULL,
-        error_text TEXT NOT NULL DEFAULT '',
-        meta_json TEXT NOT NULL DEFAULT '{}'
-      );
-    `);
-    db.run(`
-      CREATE INDEX IF NOT EXISTS idx_orchestration_debug_runs_created_at
-      ON orchestration_debug_runs (created_at DESC);
-    `);
-    db.run(`
-      CREATE TABLE IF NOT EXISTS task_progress_logs (
-        entry_id TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL,
-        plan_id TEXT NOT NULL DEFAULT '',
-        target_kind TEXT NOT NULL,
-        target_id TEXT NOT NULL,
-        action_type TEXT NOT NULL,
-        status TEXT NOT NULL,
-        actual_actor TEXT NOT NULL,
-        display_actor TEXT NOT NULL,
-        message_for_user TEXT NOT NULL DEFAULT '',
-        payload_json TEXT NOT NULL DEFAULT '{}',
-        source_run_id TEXT NOT NULL DEFAULT ''
-      );
-    `);
-    db.run(`
-      CREATE INDEX IF NOT EXISTS idx_task_progress_logs_target_created_at
-      ON task_progress_logs (target_kind, target_id, created_at DESC);
-    `);
-    db.run(`
-      CREATE TABLE IF NOT EXISTS plan_artifacts (
-        plan_id TEXT PRIMARY KEY,
-        created_at TEXT NOT NULL,
-        status TEXT NOT NULL,
-        reply_text TEXT NOT NULL DEFAULT '',
-        plan_json TEXT NOT NULL DEFAULT '{}',
-        source_run_id TEXT NOT NULL DEFAULT '',
-        approved_at TEXT NOT NULL DEFAULT ''
-      );
-    `);
-    db.run(`
-      CREATE INDEX IF NOT EXISTS idx_plan_artifacts_created_at
-      ON plan_artifacts (created_at DESC);
-    `);
+    initializeRepositoryTables(db);
     this.db = db;
     this.persistDb();
   }
@@ -561,271 +328,56 @@ class SqliteSettingsStore {
 
   async appendOrchestrationDebugRun(payload) {
     return this.withLock(async () => {
-      const normalized = normalizeDebugRunPayload(payload);
-      this.db.run(
-        `INSERT INTO orchestration_debug_runs (
-          run_id, created_at, stage, agent_role, agent_id, target_kind, target_id,
-          status, provider, model_name, input_json, output_json, error_text, meta_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          normalized.runId,
-          normalized.createdAt,
-          normalized.stage,
-          normalized.agentRole,
-          normalized.agentId,
-          normalized.targetKind,
-          normalized.targetId,
-          normalized.status,
-          normalized.provider,
-          normalized.modelName,
-          normalized.inputJson,
-          normalized.outputJson,
-          normalized.errorText,
-          normalized.metaJson,
-        ]
-      );
-      this.persistDb();
-      return {
-        runId: normalized.runId,
-        createdAt: normalized.createdAt,
-      };
+      return appendOrchestrationDebugRun(this.db, this.persistDb.bind(this), payload);
     });
   }
 
   async listOrchestrationDebugRuns(options = {}) {
     return this.withLock(async () => {
-      const limit = clampLimit(options.limit, 50);
-      const rows = queryRows(
-        this.db,
-        `SELECT run_id, created_at, stage, agent_role, agent_id, target_kind, target_id,
-                status, provider, model_name, input_json, output_json, error_text, meta_json
-           FROM orchestration_debug_runs
-          ORDER BY created_at DESC
-          LIMIT ?`,
-        [limit]
-      );
-      return rows.map((row) => ({
-        runId: normalizeString(row.run_id),
-        createdAt: normalizeString(row.created_at),
-        stage: normalizeString(row.stage),
-        agentRole: normalizeString(row.agent_role),
-        agentId: normalizeString(row.agent_id),
-        targetKind: normalizeString(row.target_kind),
-        targetId: normalizeString(row.target_id),
-        status: normalizeString(row.status),
-        provider: normalizeString(row.provider),
-        modelName: normalizeString(row.model_name),
-        input: safeJsonParse(row.input_json, {}),
-        output: safeJsonParse(row.output_json, {}),
-        errorText: normalizeString(row.error_text),
-        meta: safeJsonParse(row.meta_json, {}),
-      }));
+      return listOrchestrationDebugRuns(this.db, options);
     });
   }
 
   async appendTaskProgressLogEntry(payload) {
     return this.withLock(async () => {
-      const normalized = normalizeTaskProgressLogPayload(payload);
-      this.db.run(
-        `INSERT INTO task_progress_logs (
-          entry_id, created_at, plan_id, target_kind, target_id, action_type, status,
-          actual_actor, display_actor, message_for_user, payload_json, source_run_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          normalized.entryId,
-          normalized.createdAt,
-          normalized.planId,
-          normalized.targetKind,
-          normalized.targetId,
-          normalized.actionType,
-          normalized.status,
-          normalized.actualActor,
-          normalized.displayActor,
-          normalized.messageForUser,
-          normalized.payloadJson,
-          normalized.sourceRunId,
-        ]
-      );
-      this.persistDb();
-      return {
-        entryId: normalized.entryId,
-        createdAt: normalized.createdAt,
-      };
+      return appendTaskProgressLogEntry(this.db, this.persistDb.bind(this), payload);
     });
   }
 
   async listTaskProgressLogEntries(options = {}) {
     return this.withLock(async () => {
-      const limit = clampLimit(options.limit, 50);
-      const targetKind = normalizeString(options.targetKind);
-      const targetId = normalizeString(options.targetId);
-      const planId = normalizeString(options.planId);
-      const clauses = [];
-      const params = [];
-      if (targetKind) {
-        clauses.push("target_kind = ?");
-        params.push(targetKind);
-      }
-      if (targetId) {
-        clauses.push("target_id = ?");
-        params.push(targetId);
-      }
-      if (planId) {
-        clauses.push("plan_id = ?");
-        params.push(planId);
-      }
-      const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
-      const rows = queryRows(
-        this.db,
-        `SELECT entry_id, created_at, plan_id, target_kind, target_id, action_type, status,
-                actual_actor, display_actor, message_for_user, payload_json, source_run_id
-           FROM task_progress_logs
-           ${whereClause}
-          ORDER BY created_at DESC
-          LIMIT ?`,
-        [...params, limit]
-      );
-      return rows.map((row) => ({
-        entryId: normalizeString(row.entry_id),
-        createdAt: normalizeString(row.created_at),
-        planId: normalizeString(row.plan_id),
-        targetKind: normalizeString(row.target_kind),
-        targetId: normalizeString(row.target_id),
-        actionType: normalizeString(row.action_type),
-        status: normalizeString(row.status),
-        actualActor: normalizeString(row.actual_actor),
-        displayActor: normalizeString(row.display_actor),
-        messageForUser: normalizeString(row.message_for_user),
-        payload: safeJsonParse(row.payload_json, {}),
-        sourceRunId: normalizeString(row.source_run_id),
-      }));
+      return listTaskProgressLogEntries(this.db, options);
     });
   }
 
   async getLatestTaskProgressLogEntry(options = {}) {
-    const rows = await this.listTaskProgressLogEntries({
-      ...options,
-      limit: 1,
+    return this.withLock(async () => {
+      return getLatestTaskProgressLogEntry(this.db, options);
     });
-    return rows[0] || null;
   }
 
   async appendPlanArtifact(payload) {
     return this.withLock(async () => {
-      const normalized = normalizePlanArtifactPayload(payload);
-      this.db.run(
-        `INSERT INTO plan_artifacts (
-          plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          normalized.planId,
-          normalized.createdAt,
-          normalized.status,
-          normalized.replyText,
-          normalized.planJson,
-          normalized.sourceRunId,
-          normalized.approvedAt,
-        ]
-      );
-      this.persistDb();
-      return {
-        planId: normalized.planId,
-        createdAt: normalized.createdAt,
-        status: normalized.status,
-        replyText: normalized.replyText,
-        plan: safeJsonParse(normalized.planJson, {}),
-        sourceRunId: normalized.sourceRunId,
-        approvedAt: normalized.approvedAt,
-      };
+      return appendPlanArtifact(this.db, this.persistDb.bind(this), payload);
     });
   }
 
   async updatePlanArtifact(planId, patch = {}) {
     return this.withLock(async () => {
-      const normalizedPlanId = normalizeString(planId);
-      if (!normalizedPlanId) return null;
-      const rows = queryRows(
-        this.db,
-        `SELECT plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
-           FROM plan_artifacts
-          WHERE plan_id = ?
-          LIMIT 1`,
-        [normalizedPlanId]
-      );
-      const current = rows[0];
-      if (!current) return null;
-      const nextStatus = normalizeString(patch?.status) || normalizeString(current.status);
-      const nextReplyText = Object.prototype.hasOwnProperty.call(patch || {}, "replyText")
-        ? normalizeString(patch?.replyText)
-        : normalizeString(current.reply_text);
-      const nextPlanJson = Object.prototype.hasOwnProperty.call(patch || {}, "plan")
-        ? safeJsonStringify(patch?.plan ?? {}, "{}")
-        : String(current.plan_json || "{}");
-      const nextSourceRunId = Object.prototype.hasOwnProperty.call(patch || {}, "sourceRunId")
-        ? normalizeString(patch?.sourceRunId)
-        : normalizeString(current.source_run_id);
-      const nextApprovedAt = Object.prototype.hasOwnProperty.call(patch || {}, "approvedAt")
-        ? normalizeString(patch?.approvedAt)
-        : (nextStatus === "approved"
-          ? (normalizeString(current.approved_at) || new Date().toISOString())
-          : normalizeString(current.approved_at));
-      this.db.run(
-        `UPDATE plan_artifacts
-            SET status = ?, reply_text = ?, plan_json = ?, source_run_id = ?, approved_at = ?
-          WHERE plan_id = ?`,
-        [nextStatus, nextReplyText, nextPlanJson, nextSourceRunId, nextApprovedAt, normalizedPlanId]
-      );
-      this.persistDb();
-      return {
-        planId: normalizedPlanId,
-        createdAt: normalizeString(current.created_at),
-        status: nextStatus,
-        replyText: nextReplyText,
-        plan: safeJsonParse(nextPlanJson, {}),
-        sourceRunId: nextSourceRunId,
-        approvedAt: nextApprovedAt,
-      };
+      return updatePlanArtifact(this.db, this.persistDb.bind(this), planId, patch);
     });
   }
 
   async listPlanArtifacts(options = {}) {
     return this.withLock(async () => {
-      const limit = clampLimit(options.limit, 50);
-      const status = normalizeString(options.status);
-      const clauses = [];
-      const params = [];
-      if (status) {
-        clauses.push("status = ?");
-        params.push(status);
-      }
-      const whereClause = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
-      const rows = queryRows(
-        this.db,
-        `SELECT plan_id, created_at, status, reply_text, plan_json, source_run_id, approved_at
-           FROM plan_artifacts
-           ${whereClause}
-          ORDER BY created_at DESC
-          LIMIT ?`,
-        [...params, limit]
-      );
-      return rows.map((row) => ({
-        planId: normalizeString(row.plan_id),
-        createdAt: normalizeString(row.created_at),
-        status: normalizeString(row.status),
-        replyText: normalizeString(row.reply_text),
-        plan: safeJsonParse(row.plan_json, {}),
-        sourceRunId: normalizeString(row.source_run_id),
-        approvedAt: normalizeString(row.approved_at),
-      }));
+      return listPlanArtifacts(this.db, options);
     });
   }
 
   async getLatestPlanArtifact(options = {}) {
-    const rows = await this.listPlanArtifacts({
-      ...options,
-      limit: 1,
+    return this.withLock(async () => {
+      return getLatestPlanArtifact(this.db, options);
     });
-    return rows[0] || null;
   }
 
   async close() {
