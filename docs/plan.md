@@ -51,6 +51,8 @@
 - 20260311: [DR-20260311-settings-tab-skill-modal-split] skill modal helper と event wiring を `settings-tab-render.js` から分離して archive 済み
 - 20260311: [DR-20260311-settings-state-skill-market-split] skill market / ClawHub catalog helper を `settings-state.js` から分離して archive 済み
 - 20260311: [DR-20260311-workspace-agent-state-guide-runtime-split] `workspace-agent-state.js` から Guide/runtime/context helper を分離して archive 済み
+- 20260311: [DR-20260311-ui-core-markdown-split] `ui-core.js` から markdown / link helper を分離して archive 済み
+- 20260311: [DR-20260311-workspace-layout-board-split] `workspace-layout.board.js` を flow/runtime aggregator に分離して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -89,3 +91,5 @@
 - [x] 20260311: [DR-20260311-settings-store-repository-split]
 - [x] 20260311: [DR-20260311-settings-tab-skill-modal-split]
 - [x] 20260311: [DR-20260311-settings-state-skill-market-split]
+- [x] 20260311: [DR-20260311-ui-core-markdown-split]
+- [x] 20260311: [DR-20260311-workspace-layout-board-split]

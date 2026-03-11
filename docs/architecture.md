@@ -280,7 +280,11 @@ interface SkillCatalogPort {
 - `ui-text.js`
   - UI 文言辞書、message text、Guide UI prompt の固定定数を担当する。
 - `ui-core.js`
-  - i18n text、markdown render、low-level UI utility を担当する。
+  - i18n text と low-level UI utility を担当する。
+- `ui-markdown.js`
+  - markdown / HTML rendering helper を担当する。
+- `ui-link-utils.js`
+  - external link open helper と検索 keyword normalize helper を担当する。
 - `workspace-bridge-facade.js`
   - `WorkspaceAgentStateUi` と関連 browser bridge への thin facade wrapper を担当する。
 - `execution-runtime-routing.js`
@@ -344,7 +348,11 @@ interface SkillCatalogPort {
 - `tests/e2e/workspace-layout.guide.js`
   - Guide / progress query / plan generation 系の E2E を担当する。
 - `tests/e2e/workspace-layout.board.js`
-  - Task / Job / Gate / detail conversation 系の E2E を担当する。
+  - board 系 E2E の thin aggregator と `flow/runtime` register を担当する。
+- `tests/e2e/workspace-layout.board-flow.js`
+  - Task / Job / Gate / detail conversation / reroute 表示系の E2E を担当する。
+- `tests/e2e/workspace-layout.board-runtime.js`
+  - runtime payload / event log / gate binding 系の E2E を担当する。
 - `tests/e2e/workspace-layout.settings.js`
   - Settings tab 系の E2E を担当する。
 - `tests/e2e/workspace-layout.profiles.js`
