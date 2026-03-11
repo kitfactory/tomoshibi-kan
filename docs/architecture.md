@@ -351,8 +351,10 @@ interface SkillCatalogPort {
   - Settings タブの support/helper API、item-draft helper、resident sync helper を担当する。
 - `settings-tab-skill-modal.js`
   - Settings の skill market preview / modal rendering と search/install event wiring を担当する。
+- `settings-tab-controls.js`
+  - Settings タブの DOM controls binding、item add/remove、resident sync、save action wiring を担当する。
 - `settings-tab-render.js`
-  - Settings タブの描画本体と event wiring を担当する。
+  - Settings タブの描画本体を担当する。
 - `resident-panel.js`
   - 住人一覧、住人設定 modal、identity editor modal の描画と resident-facing UI helper を担当する。
 - `workspace-shell.js`
