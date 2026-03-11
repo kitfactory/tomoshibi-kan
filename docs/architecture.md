@@ -310,9 +310,13 @@ interface SkillCatalogPort {
 - `workspace-board-state.js`
   - Task/Job/Gate result normalization と board snapshot helper を担当する。
 - `workspace-runtime-config.js`
-  - resident runtime/provider/tool normalization と runtime selection helper を担当する。
+    - resident runtime/provider/tool normalization と runtime selection helper を担当する。
+- `workspace-agent-guide-runtime.js`
+    - Guide/runtime/context helper、resident skill/capability 解決、Guide context build fallback を担当する。
+- `workspace-agent-assignment.js`
+    - board sequence number、worker assignment profile、resident runtime execution config helper を担当する。
 - `workspace-agent-state.js`
-  - workspace profile/board/runtime-config helper を束ねる facade と Guide runtime/profile resolution helper を担当する。
+    - workspace profile/board/runtime-config facade と built-in resident identity sync helper を担当する。
 - `guide-progress-flow.js`
   - Guide の plan 承認、承認済み plan の重複防止、progress query の自然文生成ヘルパーを担当する。
 - `guide-context-mention.js`

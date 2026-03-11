@@ -50,6 +50,7 @@
 - 20260311: [DR-20260311-palpal-core-runtime-tool-loop-split] `palpal-core-runtime.js` を public API façade に縮小し、workspace tools / tool loop を別 module へ分離して archive 済み
 - 20260311: [DR-20260311-settings-tab-skill-modal-split] skill modal helper と event wiring を `settings-tab-render.js` から分離して archive 済み
 - 20260311: [DR-20260311-settings-state-skill-market-split] skill market / ClawHub catalog helper を `settings-state.js` から分離して archive 済み
+- 20260311: [DR-20260311-workspace-agent-state-guide-runtime-split] `workspace-agent-state.js` から Guide/runtime/context helper を分離して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -79,6 +80,7 @@
 - [x] 20260310: [DR-20260310-app-js-split-execution-runtime] [DR-20260310-workspace-agent-state-namespace-repair]
 - [x] 20260311: [DR-20260311-settings-tab-support-split]
 - [x] 20260311: [DR-20260311-workspace-agent-state-split]
+- [x] 20260311: [DR-20260311-workspace-agent-state-guide-runtime-split]
 - [x] 20260311: [DR-20260311-execution-runtime-split]
 - [x] 20260311: [DR-20260311-app-js-split-ui-core-and-bridge-facade]
 - [x] 20260311: [DR-20260311-palpal-core-runtime-provider-split]
