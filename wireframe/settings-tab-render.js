@@ -3,6 +3,10 @@ function settingsTabSupportApi() {
   return global.SettingsTabUi || {};
 }
 
+function settingsTabSkillModalApi() {
+  return global.SettingsTabSkillModalUi || {};
+}
+
 function renderSettingsTab() {
   const {
     selectableModelOptions,
@@ -208,6 +212,15 @@ function renderSettingsTab() {
   const skillInstallUnsupportedLabel = labels.skillInstallUnsupported || "Standard skills only";
   const skillRecommendTitleLabel = labels.skillRecommendTitle || "Recommended (Not Installed)";
   const skillRecommendEmptyLabel = labels.skillRecommendEmpty || "No recommended skills";
+  const skillDownloadLabel = labels.skillDownload || "Install";
+  const {
+    buildSkillMarketPreviewList,
+    buildSkillMarketModalResultsHtml,
+    bindSkillLinkHandlers,
+    bindSkillMarketInstallHandlers,
+    renderSkillMarketModalResults,
+    bindSkillMarketControls,
+  } = settingsTabSkillModalApi();
 
   const providerOptions = TOMOSHIBIKAN_CORE_PROVIDER_REGISTRY
     .map((provider) => {
@@ -278,123 +291,41 @@ function renderSettingsTab() {
         </li>`;
       })
       .join("");
-  const getUninstalledSkillMarketItems = () => {
-    const installedSkillIds = new Set(
-      settingsState.registeredSkills
-        .map((skillId) => normalizeSkillId(skillId))
-        .filter(Boolean)
-    );
-    return CLAWHUB_SKILL_REGISTRY
-      .filter((skill) => !installedSkillIds.has(normalizeSkillId(skill.id)));
+  const skillMarketContext = {
+    root,
+    locale,
+    settingsState,
+    renderSettingsTab,
+    labels: {
+      skillRecommendEmptyLabel,
+      skillSearchIdleLabel,
+      skillSearchLoadingLabel,
+      skillSearchEmptyLabel: labels.skillSearchEmpty || "No matching skills on ClawHub",
+      skillDownloadsLabel,
+      skillStarsLabel,
+      skillInstallsLabel,
+      skillRatingLabel,
+      skillOpenLinkLabel,
+      skillDownloadLabel,
+      skillInstallUnsupportedLabel,
+    },
+    helpers: {
+      escapeHtml,
+      normalizeText,
+      normalizeSkillId,
+      buildClawHubSkillUrl,
+      installRegisteredSkillWithFallback,
+      openExternalUrlWithFallback,
+      searchClawHubSkillsWithFallback,
+      normalizeSkillSearchFilters,
+      normalizeSkillMarketSortBy,
+      DEFAULT_SKILL_SEARCH_FILTERS,
+      STANDARD_SKILL_IDS,
+      CLAWHUB_SKILL_REGISTRY,
+      setMessage,
+    },
   };
-
-  const isInstalledStandardSkill = (skillId) => {
-    const normalized = normalizeSkillId(skillId);
-    if (!normalized) return false;
-    return settingsState.registeredSkills.includes(normalized);
-  };
-
-  const buildSkillMarketModalResultsHtml = () => {
-    if (!settingsState.skillSearchExecuted) {
-      return `<li id="settingsSkillModalIdle" class="text-xs text-base-content/60">${escapeHtml(skillSearchIdleLabel)}</li>`;
-    }
-    if (settingsState.skillSearchLoading) {
-      return `<li id="settingsSkillModalLoading" class="text-xs text-base-content/60">${escapeHtml(skillSearchLoadingLabel)}</li>`;
-    }
-    const sourceResults = Array.isArray(settingsState.skillSearchResults)
-      ? settingsState.skillSearchResults
-      : [];
-    const matches = sourceResults.filter((skill) => !isInstalledStandardSkill(skill?.id));
-    return matches.length === 0
-      ? `<li id="settingsSkillModalNoResults" class="text-xs text-base-content/60">${escapeHtml(labels.skillSearchEmpty || "No matching skills on ClawHub")}</li>`
-      : matches
-        .map((skill) => {
-          const normalizedSkillId = normalizeSkillId(skill.id) || normalizeText(skill.id);
-          const linkUrl = buildClawHubSkillUrl(normalizedSkillId);
-          const showSkillLink = !STANDARD_SKILL_IDS.includes(normalizedSkillId);
-          const ratingNumber = Number(skill.rating || 0);
-          const ratingDisplay = Number.isFinite(ratingNumber) && ratingNumber > 0
-            ? ratingNumber.toFixed(1)
-            : "-";
-          const starsNumber = Number(skill.stars || 0);
-          const starsDisplay = Number.isFinite(starsNumber) && starsNumber >= 0
-            ? starsNumber.toLocaleString(locale === "ja" ? "ja-JP" : "en-US")
-            : "-";
-          const downloadsNumber = Number(skill.downloads || 0);
-          const downloadsDisplay = Number.isFinite(downloadsNumber) && downloadsNumber >= 0
-            ? downloadsNumber.toLocaleString(locale === "ja" ? "ja-JP" : "en-US")
-            : "-";
-          const installsNumber = Number(skill.installs || 0);
-          const installsDisplay = Number.isFinite(installsNumber) && installsNumber >= 0
-            ? installsNumber.toLocaleString(locale === "ja" ? "ja-JP" : "en-US")
-            : "-";
-          return `<li class="settings-skill-modal-row">
-            <div class="settings-skill-modal-meta">
-              <div class="settings-skill-modal-title-row">
-                <span class="badge badge-secondary badge-sm">${escapeHtml(skill.source || "ClawHub")}</span>
-                <span class="font-semibold text-sm">${escapeHtml(skill.name)}</span>
-              </div>
-              <p class="text-xs text-base-content/70">${escapeHtml(skill.description || "-")}</p>
-              <div class="settings-skill-modal-tags">
-                <span class="badge badge-ghost badge-sm">${escapeHtml(skillDownloadsLabel)}: ${escapeHtml(downloadsDisplay)}</span>
-                <span class="badge badge-ghost badge-sm">${escapeHtml(skillStarsLabel)}: ${escapeHtml(starsDisplay)}</span>
-                <span class="badge badge-ghost badge-sm">${escapeHtml(skillInstallsLabel)}: ${escapeHtml(installsDisplay)}</span>
-                <span class="badge badge-ghost badge-sm">${escapeHtml(skillRatingLabel)}: ${escapeHtml(ratingDisplay)}</span>
-                <span class="badge badge-outline badge-sm">${escapeHtml(skill.packageName || `clawhub/${skill.id}`)}</span>
-              </div>
-            </div>
-            <div class="settings-row-actions settings-skill-modal-actions" data-skill-actions="${escapeHtml(normalizedSkillId)}">
-              ${showSkillLink ? `<a
-                class="btn btn-outline btn-sm"
-                href="${escapeHtml(linkUrl)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-skill-link-id="${escapeHtml(normalizedSkillId)}"
-              >${escapeHtml(skillOpenLinkLabel)}</a>` : ""}
-              ${normalizedSkillId
-    ? `<button class="btn btn-outline btn-sm" data-clawhub-download-skill="${escapeHtml(normalizedSkillId)}" type="button">${escapeHtml(labels.skillDownload || "Download")}</button>`
-    : `<button class="btn btn-outline btn-sm" type="button" disabled>${escapeHtml(skillInstallUnsupportedLabel)}</button>`}
-            </div>
-          </li>`;
-        })
-        .join("");
-  };
-  const skillMarketModalResults = buildSkillMarketModalResultsHtml();
-
-  const bindSkillMarketInstallHandlers = () => {
-    root.querySelectorAll("[data-clawhub-download-skill]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const skillId = normalizeSkillId(btn.getAttribute("data-clawhub-download-skill"));
-        const result = installRegisteredSkillWithFallback(skillId, settingsState.registeredSkills);
-        if (!result.ok) {
-          setMessage(result.errorCode || "MSG-PPH-1001");
-          return;
-        }
-        settingsState.registeredSkills = result.nextRegisteredSkillIds;
-        setMessage("MSG-PPH-0007");
-        renderSettingsTab();
-      });
-    });
-  };
-
-  const bindSkillLinkHandlers = () => {
-    root.querySelectorAll("[data-skill-link-id]").forEach((anchor) => {
-      anchor.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const href = normalizeText(anchor.getAttribute("href"));
-        void openExternalUrlWithFallback(href);
-      });
-    });
-  };
-
-  const renderSkillMarketModalResults = () => {
-    const listEl = document.getElementById("settingsSkillModalResults");
-    if (!listEl) return;
-    listEl.innerHTML = buildSkillMarketModalResultsHtml();
-    bindSkillLinkHandlers();
-    bindSkillMarketInstallHandlers();
-  };
+  const skillMarketModalResults = buildSkillMarketModalResultsHtml(skillMarketContext);
 
   const modelNameOptions = selectableModelOptions(settingsState.itemDraft.provider);
   const noModelOptionsForProviderLabel = isJa
@@ -457,26 +388,10 @@ function renderSettingsTab() {
   ]
     .map((option) => `<option value="${escapeHtml(option.value)}"${option.value === draftFilters.sortBy ? " selected" : ""}>${escapeHtml(option.label)}</option>`)
     .join("");
-  const uninstalledSkillItems = getUninstalledSkillMarketItems();
-  const skillMarketAvailableCount = uninstalledSkillItems.length;
-  const skillMarketPreviewList = uninstalledSkillItems.length === 0
-    ? `<li id="settingsSkillMarketPreviewEmpty" class="text-xs text-base-content/60">${escapeHtml(skillRecommendEmptyLabel)}</li>`
-    : uninstalledSkillItems
-      .map((skill) => {
-        const normalizedSkillId = normalizeSkillId(skill.id) || normalizeText(skill.id);
-        const description = normalizeText(skill.description || "");
-        return `<li class="settings-model-row">
-        <div class="settings-model-meta">
-          <span class="badge badge-secondary badge-sm">${escapeHtml(skill.source || "ClawHub")}</span>
-          <span class="badge badge-outline badge-sm">${escapeHtml(skill.name)}</span>
-          ${description ? `<span class="text-xs text-base-content/60">${escapeHtml(description)}</span>` : ""}
-        </div>
-        <div class="settings-row-actions" data-skill-actions="${escapeHtml(normalizedSkillId)}">
-          <button class="btn btn-outline btn-xs" data-clawhub-download-skill="${escapeHtml(normalizedSkillId)}" type="button">${escapeHtml(labels.skillDownload || "Install")}</button>
-        </div>
-      </li>`;
-      })
-      .join("");
+  const {
+    availableCount: skillMarketAvailableCount,
+    previewList: skillMarketPreviewList,
+  } = buildSkillMarketPreviewList(skillMarketContext);
   const handoffPolicy = normalizeContextHandoffPolicy(settingsState.contextHandoffPolicy);
   const guideControllerAssistEnabled = settingsState.guideControllerAssistEnabled === true;
   const handoffOptions = [
@@ -730,97 +645,20 @@ function renderSettingsTab() {
       settingsState.itemDraft.toolName = normalizeToolName(toolNameEl.value);
     });
   }
-  const runSkillMarketSearch = async () => {
-    settingsState.skillSearchQuery = String(settingsState.skillSearchDraft || "").trim();
-    settingsState.skillSearchFilters = normalizeSkillSearchFilters(settingsState.skillSearchFilterDraft);
-    settingsState.skillSearchExecuted = true;
-    settingsState.skillSearchLoading = true;
-    settingsState.skillSearchError = "";
-    settingsState.skillSearchResults = [];
-    const requestSeq = settingsState.skillSearchRequestSeq + 1;
-    settingsState.skillSearchRequestSeq = requestSeq;
-    renderSkillMarketModalResults();
-    const result = await searchClawHubSkillsWithFallback(
-      settingsState.skillSearchQuery,
-      settingsState.skillSearchFilters
-    );
-    if (settingsState.skillSearchRequestSeq !== requestSeq) return;
-    settingsState.skillSearchLoading = false;
-    settingsState.skillSearchResults = result.items;
-    renderSkillMarketModalResults();
-  };
-
-  const closeSkillMarketModal = () => {
-    settingsState.skillMarketModalOpen = false;
-    settingsState.skillSearchDraft = "";
-    settingsState.skillSearchQuery = "";
-    settingsState.skillSearchExecuted = false;
-    settingsState.skillSearchFilters = { ...DEFAULT_SKILL_SEARCH_FILTERS };
-    settingsState.skillSearchFilterDraft = { ...DEFAULT_SKILL_SEARCH_FILTERS };
-    settingsState.skillSearchResults = [];
-    settingsState.skillSearchLoading = false;
-    settingsState.skillSearchError = "";
-    settingsState.skillSearchRequestSeq += 1;
-    renderSettingsTab();
-  };
-  if (skillMarketOpenModalEl) {
-    skillMarketOpenModalEl.addEventListener("click", () => {
-      settingsState.skillSearchDraft = "";
-      settingsState.skillSearchQuery = "";
-      settingsState.skillSearchExecuted = false;
-      settingsState.skillSearchFilters = { ...DEFAULT_SKILL_SEARCH_FILTERS };
-      settingsState.skillSearchFilterDraft = { ...DEFAULT_SKILL_SEARCH_FILTERS };
-      settingsState.skillSearchResults = [];
-      settingsState.skillSearchLoading = false;
-      settingsState.skillSearchError = "";
-      settingsState.skillSearchRequestSeq += 1;
-      settingsState.skillMarketModalOpen = true;
-      renderSettingsTab();
-    });
-  }
-  if (skillModalKeywordEl) {
-    skillModalKeywordEl.addEventListener("input", () => {
-      settingsState.skillSearchDraft = skillModalKeywordEl.value;
-    });
-  }
-  if (skillModalSortEl) {
-    skillModalSortEl.addEventListener("change", () => {
-      settingsState.skillSearchFilterDraft = {
-        ...normalizeSkillSearchFilters(settingsState.skillSearchFilterDraft),
-        sortBy: normalizeSkillMarketSortBy(skillModalSortEl.value),
-      };
-    });
-  }
-  if (skillModalNonSuspiciousEl) {
-    skillModalNonSuspiciousEl.addEventListener("change", () => {
-      settingsState.skillSearchFilterDraft = {
-        ...normalizeSkillSearchFilters(settingsState.skillSearchFilterDraft),
-        nonSuspiciousOnly: skillModalNonSuspiciousEl.checked,
-      };
-    });
-  }
-  if (skillModalHighlightedOnlyEl) {
-    skillModalHighlightedOnlyEl.addEventListener("change", () => {
-      settingsState.skillSearchFilterDraft = {
-        ...normalizeSkillSearchFilters(settingsState.skillSearchFilterDraft),
-        highlightedOnly: skillModalHighlightedOnlyEl.checked,
-      };
-    });
-  }
-  if (skillModalSearchEl) {
-    skillModalSearchEl.addEventListener("click", () => {
-      void runSkillMarketSearch();
-    });
-  }
-  if (skillModalCloseEl) {
-    skillModalCloseEl.addEventListener("click", closeSkillMarketModal);
-  }
-  if (skillModalCloseTopEl) {
-    skillModalCloseTopEl.addEventListener("click", closeSkillMarketModal);
-  }
-  if (skillModalBackdropCloseEl) {
-    skillModalBackdropCloseEl.addEventListener("click", closeSkillMarketModal);
-  }
+  bindSkillMarketControls({
+    ...skillMarketContext,
+    elements: {
+      skillMarketOpenModalEl,
+      skillModalKeywordEl,
+      skillModalSortEl,
+      skillModalNonSuspiciousEl,
+      skillModalHighlightedOnlyEl,
+      skillModalSearchEl,
+      skillModalCloseEl,
+      skillModalCloseTopEl,
+      skillModalBackdropCloseEl,
+    },
+  });
   if (cancelAddModelEl) {
     cancelAddModelEl.addEventListener("click", () => {
       settingsState.itemAddOpen = false;
@@ -920,8 +758,8 @@ function renderSettingsTab() {
       renderSettingsTab();
     });
   });
-  bindSkillMarketInstallHandlers();
-  bindSkillLinkHandlers();
+  bindSkillMarketInstallHandlers(skillMarketContext);
+  bindSkillLinkHandlers(skillMarketContext);
 
   if (saveEl) {
     saveEl.addEventListener("click", async () => {

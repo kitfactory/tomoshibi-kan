@@ -302,7 +302,9 @@ interface SkillCatalogPort {
 - `runtime/palpal-core-runtime.js`
   - provider/CLI runtime の façade と Guide/Pal chat public API を担当する。
 - `settings-state.js`
-  - Settings の persistence bridge / local snapshot / skill market state / runtime bridge helper を担当する。
+  - Settings の persistence bridge / local snapshot / runtime bridge facade を担当する。
+- `settings-skill-market-state.js`
+  - skill market / ClawHub catalog / install-search helper を担当する。
 - `workspace-profile-state.js`
   - resident profile snapshot / built-in metadata / Guide-Gate selection helper を担当する。
 - `workspace-board-state.js`
@@ -322,7 +324,9 @@ interface SkillCatalogPort {
 - `settings-persistence.js`
   - Settings保存ペイロード整形と Browser検証用 localStorage fallback（API_KEY非保存）を担当する。
 - `settings-tab.js`
-  - Settings タブの support/helper API、item-draft helper、skill market modal helper、resident sync helper を担当する。
+  - Settings タブの support/helper API、item-draft helper、resident sync helper を担当する。
+- `settings-tab-skill-modal.js`
+  - Settings の skill market preview / modal rendering と search/install event wiring を担当する。
 - `settings-tab-render.js`
   - Settings タブの描画本体と event wiring を担当する。
 - `resident-panel.js`

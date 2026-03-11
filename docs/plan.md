@@ -48,6 +48,8 @@
 - 20260311: [DR-20260311-workspace-layout-spec-split] `workspace-layout.spec.js` を shared / guide / board / settings / profiles へ分離して archive 済み
 - 20260311: [DR-20260311-settings-store-repository-split] `settings-store.js` を app settings facade / shared helper / orchestration repository へ分離して archive 済み
 - 20260311: [DR-20260311-palpal-core-runtime-tool-loop-split] `palpal-core-runtime.js` を public API façade に縮小し、workspace tools / tool loop を別 module へ分離して archive 済み
+- 20260311: [DR-20260311-settings-tab-skill-modal-split] skill modal helper と event wiring を `settings-tab-render.js` から分離して archive 済み
+- 20260311: [DR-20260311-settings-state-skill-market-split] skill market / ClawHub catalog helper を `settings-state.js` から分離して archive 済み
 
 # archive index
 - [docs/plan_archive_2026_03.md](/abs/path/C:/Users/kitad/palpal-hive/docs/plan_archive_2026_03.md)
@@ -83,3 +85,5 @@
 - [x] 20260311: [DR-20260311-palpal-core-runtime-tool-loop-split]
 - [x] 20260311: [DR-20260311-workspace-layout-spec-split]
 - [x] 20260311: [DR-20260311-settings-store-repository-split]
+- [x] 20260311: [DR-20260311-settings-tab-skill-modal-split]
+- [x] 20260311: [DR-20260311-settings-state-skill-market-split]
