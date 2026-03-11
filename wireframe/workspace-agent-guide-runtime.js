@@ -648,16 +648,47 @@ async function buildGuideContextWithFallback(latestUserText) {
   };
 }
 
-const assignmentApi = scope.WorkspaceAgentAssignmentUi || {};
+function resolveAssignmentApi() {
+  return scope.WorkspaceAgentAssignmentUi || {};
+}
 
-const {
-  nextTaskSequenceNumber,
-  nextJobSequenceNumber,
-  resolveWorkerAssignmentProfiles,
-  resolveRegisteredModelForPal,
-  resolvePalRuntimeConfigForExecution,
-  resolveConfiguredSkillIdsForPal,
-} = assignmentApi;
+function nextTaskSequenceNumber() {
+  const assignmentApi = resolveAssignmentApi();
+  return typeof assignmentApi.nextTaskSequenceNumber === "function"
+    ? assignmentApi.nextTaskSequenceNumber()
+    : 1;
+}
+
+function nextJobSequenceNumber() {
+  const assignmentApi = resolveAssignmentApi();
+  return typeof assignmentApi.nextJobSequenceNumber === "function"
+    ? assignmentApi.nextJobSequenceNumber()
+    : 1;
+}
+
+async function resolveWorkerAssignmentProfiles(...args) {
+  const assignmentApi = resolveAssignmentApi();
+  if (typeof assignmentApi.resolveWorkerAssignmentProfiles !== "function") return [];
+  return assignmentApi.resolveWorkerAssignmentProfiles(...args);
+}
+
+function resolveRegisteredModelForPal(...args) {
+  const assignmentApi = resolveAssignmentApi();
+  if (typeof assignmentApi.resolveRegisteredModelForPal !== "function") return null;
+  return assignmentApi.resolveRegisteredModelForPal(...args);
+}
+
+function resolvePalRuntimeConfigForExecution(...args) {
+  const assignmentApi = resolveAssignmentApi();
+  if (typeof assignmentApi.resolvePalRuntimeConfigForExecution !== "function") return null;
+  return assignmentApi.resolvePalRuntimeConfigForExecution(...args);
+}
+
+async function resolveConfiguredSkillIdsForPal(...args) {
+  const assignmentApi = resolveAssignmentApi();
+  if (typeof assignmentApi.resolveConfiguredSkillIdsForPal !== "function") return [];
+  return assignmentApi.resolveConfiguredSkillIdsForPal(...args);
+}
 
 const api = {
   resolveGuideChatModelApi,
@@ -667,17 +698,22 @@ const api = {
   buildGuideModelRequiredPromptWithFallback,
   resolveGuideRegisteredModel,
   resolveGuideApiRuntimeConfig,
+  requestGuideModelReplyWithFallback,
   buildFallbackGuidePlanOutputInstruction,
   parseGuidePlanResponseWithFallback,
   palRoleLabel,
   coreModelOptionsByProvider,
   resolvePalContextBuilderApi,
   resolveAgentIdentityApi,
+  initializePalIdentityTemplates,
+  ensureBuiltInDebugPurposeIdentities,
+  syncBuiltInResidentIdentitiesToWorkspace,
   resolveAgentSkillResolverApi,
   resolveGuideTaskPlannerApi,
   resolveGuidePlanApi,
   resolveGuidePlanningIntentApi,
   resolveAgentRoutingApi,
+  resolveDebugIdentitySeedsApi,
   resolvePlanOrchestratorApi,
   resolveDebugRunsApi,
   guideMessageToContextMessage,

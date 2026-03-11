@@ -206,7 +206,7 @@ function registerBoardFlowTests(test, expect) {
       await page.fill("#guideInput", "はい");
       await page.click("#guideSend");
       await page.click('[data-tab="task"]');
-      await expect(page.locator('[data-task-row]')).toHaveCount(beforeTaskCount + 1);
+      await expect.poll(async () => page.locator('[data-task-row]').count()).toBe(beforeTaskCount + 1);
 
       await page.click('[data-action="detail"][data-task-id="TASK-004"]');
       await expect(page.locator("#detailConversationLog")).toBeVisible();

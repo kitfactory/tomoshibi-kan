@@ -279,8 +279,18 @@ interface SkillCatalogPort {
   - Guide/Worker/Gate の runtime payload 組み立て、handoff summary、gate response parse helper を担当する。
 - `ui-text.js`
   - UI 文言辞書、message text、Guide UI prompt の固定定数を担当する。
+- `ui-foundation.js`
+  - low-level UI helper（text normalize、safe stringify、window bridge、localStorage snapshot、model option list）を担当する。
+- `ui-runtime-registry.js`
+  - runtime defaults、provider/model registry、tool/skill registry、ClawHub registry を担当する。
+- `ui-prototype-seeds.js`
+  - prototype workspace の localStorage key、初期 seed、resident/profile 選択の既定値を担当する。
+- `ui-copy.js`
+  - `tUi / tDyn` による UI 文言 lookup helper を担当する。
+- `ui-event-log.js`
+  - prototype event helper `makeEvent()` を担当する。
 - `ui-core.js`
-  - i18n text と low-level UI utility を担当する。
+  - prototype workspace の mutable state と bootstrap 初期化を担当する。
 - `ui-markdown.js`
   - markdown / HTML rendering helper を担当する。
 - `ui-link-utils.js`
