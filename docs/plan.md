@@ -1,14 +1,13 @@
 # plan
 
-## current
-- none
-
+## Current
+- Delta ID: `SEED-20260312-channel-slack-foundation`
+  - Type: `FEATURE`
+  - Summary: `Add Channel settings and Slack foundation for Guide/管理人`
 ## review timing
 - none
 
 ## future
-- `SEED-20260312-channel-slack-foundation`
-  - [DR-20260312-channel-slack-foundation.md](C:/Users/kitad/palpal-hive/docs/delta/DR-20260312-channel-slack-foundation.md)
 - `SEED-20260312-guide-cron-triggered-task-execution`
   - [DR-20260312-guide-cron-triggered-task-execution.md](C:/Users/kitad/palpal-hive/docs/delta/DR-20260312-guide-cron-triggered-task-execution.md)
 
