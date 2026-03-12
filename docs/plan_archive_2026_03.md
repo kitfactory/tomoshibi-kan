@@ -163,6 +163,7 @@
 - i18n 斁E��めE`UI-PPH-xxxx` / `MSG-PPH-xxxx` で辞書刁E��し、未翻訳フォールバックを�E動検証
 
 # archive
+- [x] [DR-20260312-settings-tab-responsibility-split] Settings タブの workspace/progress/toast helper を support module へ分離し、settings-tab.js を facade 化した
 - [x] [DR-20260308-guide-short-turn-convergence-recovery] assist OFF の Guide で 3案の着目点明示・1案推薦・短い締めを resident trio 前提で強化し、2ターン目応答が提案寄りに改善したことを実モデルで確認した
 - [x] [DR-20260308-guide-resident-plan-stabilization] resident trio (`調べる人 / 作り手 / 書く人`) を基準に Guide の few-shot / assist / parser recovery を揃え、real-model で 3 task materialization (`pal-alpha / pal-beta / pal-delta`) を確認した
 - [x] [DR-20260308-resident-routing-real-observation] 実モデル resident routing を観測し、assist OFF では planning 到達が不安定である一方、assist ON + 強い明示では `plan_ready -> 1 task materialize -> pal-alpha dispatch` まで確認できることを記録した
