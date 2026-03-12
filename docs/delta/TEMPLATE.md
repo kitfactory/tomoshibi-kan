@@ -6,6 +6,7 @@
 - DR-YYYYMMDD-<short-name>
 
 ## Step 1: delta-request
+- Arrival Point:
 - In Scope:
 - Out of Scope:
 - Acceptance Criteria:
