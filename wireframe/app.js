@@ -223,6 +223,11 @@ const {
   updatePlanArtifactWithFallback,
 } = settingsTabUiApi();
 
+// Keep selected settings feedback helpers on window for legacy E2E hooks.
+if (typeof window !== "undefined") {
+  window.getLatestTaskProgressLogEntryWithFallback = getLatestTaskProgressLogEntryWithFallback;
+}
+
 const {
   openIdentityEditorModal,
   openPalConfigModal,

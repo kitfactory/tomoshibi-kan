@@ -551,7 +551,7 @@
 - [x] [DR-20260310-app-js-split-task-detail-panel] task detail panel 描画と状態更新 helper を `app.js` から分割した
 - [x] [DR-20260312-agents-review-guidance] AGENTS.md に「500行超のファイル編集時は軽い責務レビューを併走させる」運用を追加した
 - [x] [DR-20260312-settings-tab-render-section-split] `settings-tab-markup.js` を追加し、Settings shell markup を render orchestration から分離した
-
+- [x] [DR-20260312-workspace-agent-guide-runtime-split] `workspace-agent-guide-runtime.js` を `interop / context / facade` に分割し、Guide 系 targeted E2E を維持したまま責務境界を明確化した
 
 
 
