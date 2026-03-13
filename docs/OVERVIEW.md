@@ -42,6 +42,21 @@
   - reviewer / ownership が別になる
   - スコープ肥大で In Scope を保てない
 
+## Guide 収束の運用
+- Guide の会話品質評価では、短い固定ターン数への収束を最優先にしない。
+- `3ターン` や `5ターン` は強すぎる圧力になりやすく、無理やりな会話を招く。
+- ターン上限を verify 条件として明示する場合は、まず **15ターン以内** を採用する。
+- 要件の輪郭がまだ薄い段階では、相槌・視点提案・オープン質問を優先し、急いで `plan_ready` にしない。
+
+## Verify の重さ
+- verify は「毎回フルセット」ではなく、delta type と到達点に対して最小セットを選ぶ。
+- 既定の考え方:
+  - docs-only: validator 中心
+  - parser / pure logic: static + targeted unit
+  - UI: static + targeted E2E
+  - real-model observation: runner + validator
+- 同じ到達点の中で観測と微修正を繰り返す場合、毎回フル verify に戻らない。
+
 ---
 
 ## 更新の安全ルール（判断用）

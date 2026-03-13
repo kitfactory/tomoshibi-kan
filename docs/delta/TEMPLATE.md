@@ -10,6 +10,10 @@
 - In Scope:
 - Out of Scope:
 - Acceptance Criteria:
+- Verify Profile:
+  - docs-only / static+unit / static+targeted-E2E / real-model-observation など、目的に合う最小セットを書く
+- Naturalness Constraint:
+  - Guide 会話品質を扱う delta では、短い固定ターン数への収束を強制しない。上限が必要なら 15 ターン以内を既定目安にする。
 
 ## Step 2: delta-apply
 - changed files:
@@ -17,6 +21,8 @@
 - status: APPLIED / BLOCKED
 
 ## Step 3: delta-verify
+- Verify Weight:
+  - この delta に必要な最小 verify を選ぶ。毎回フルセットは回さない。
 - AC result table:
 - scope deviation:
 - overall: PASS / FAIL

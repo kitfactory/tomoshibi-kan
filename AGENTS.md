@@ -26,6 +26,11 @@
 - 受入条件を満たすかを検証する。
 - Out of Scope への変更があれば FAIL とし、後工程へ流さない。
 - plan↔delta↔archive の整合確認と長大コードの確認は `project-validator` skill を使う。
+- verify は **delta type と到達点に対して最小セット** を選ぶ。毎回フルセットを回さない。
+  - docs-only: validator 中心
+  - parser / pure logic: static + targeted unit
+  - UI: static + targeted E2E
+  - real-model observation: runner + validator
 
 ### Step 4: `delta archive`（確定）
 - verify が PASS の差分だけを履歴化してクローズする。
@@ -41,6 +46,16 @@
   - verify 観点が大きく変わる
   - reviewer / ownership が変わる
   - Out of Scope を増やさずに同一 delta へ収められない
+
+## Guide 会話収束の基準
+- Guide の会話は、`3ターン` や `5ターン` のような短い固定ターン数への収束を最優先にしない。
+- 人間が無理やりさを感じない自然なやり取りを優先し、必要なら時間をかけてよい。
+- 明示的な上限が必要な verify では、Guide の依頼化/plan 化は **15ターン以内** を目安とする。
+- 要件の輪郭がまだ 50% 未満の段階では、次を優先する。
+  - 相槌
+  - 1つの視点提案
+  - 1つのオープンな質問
+- 3案提示、推薦、最終依頼案は、依頼の輪郭が見えてから行う。
 
 ## 役割境界（Canonical Docs と Delta）
 - `concept/spec/architecture` 系スキルは **全体文書の正本整備**を担当する。
