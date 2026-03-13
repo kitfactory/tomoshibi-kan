@@ -16,7 +16,6 @@
 ### Step 1: `delta request`（定義）
 - ユーザー要件から **最小差分** を定義する（In Scope / Out of Scope / 受入条件）。
 - この時点で「今回やらないこと」を明文化し、巻き込みを防ぐ。
-- delta は **1つの統合された到達点** で切る。小さな修正単位で細かく割らず、同じ完成目的に属する観測・微修正・検証は同一 delta の中で扱う。
 
 ### Step 2: `delta apply`（適用）
 - request で定義した差分だけを実装する。
@@ -25,12 +24,7 @@
 ### Step 3: `delta verify`（検証）
 - 受入条件を満たすかを検証する。
 - Out of Scope への変更があれば FAIL とし、後工程へ流さない。
-- plan↔delta↔archive の整合確認と長大コードの確認は `project-validator` skill を使う。
-- verify は **delta type と到達点に対して最小セット** を選ぶ。毎回フルセットを回さない。
-  - docs-only: validator 中心
-  - parser / pure logic: static + targeted unit
-  - UI: static + targeted E2E
-  - real-model observation: runner + validator
+- plan↔delta↔archive の整合確認と長大コードの確認は `delta-project-validator` skill を使う。
 
 ### Step 4: `delta archive`（確定）
 - verify が PASS の差分だけを履歴化してクローズする。
@@ -41,26 +35,23 @@
 ### 逸脱防止ルール
 - すべての変更は AC に紐づける。紐づかない変更は削除または次の delta に分離する。
 - スコープ変更が必要になったら、現在の delta を止めて request を更新してから再開する。
-- delta を分割するのは、少なくとも次のどれかが変わる場合に限る。
-  - 到達点そのものが別である
-  - verify 観点が大きく変わる
-  - reviewer / ownership が変わる
-  - Out of Scope を増やさずに同一 delta へ収められない
 
-## Guide 会話収束の基準
+## Guide 会話運用の基準
+- Guide / 管理人は、短いターンで無理に task 要件を確定しない。まず聞くべきことを聞き、相手の意図・背景・迷いを受け止める。
 - Guide の会話は、`3ターン` や `5ターン` のような短い固定ターン数への収束を最優先にしない。
 - 人間が無理やりさを感じない自然なやり取りを優先し、必要なら時間をかけてよい。
 - 明示的な上限が必要な verify では、Guide の依頼化/plan 化は **15ターン以内** を目安とする。
-- 要件の輪郭がまだ 50% 未満の段階では、次を優先する。
+- 要件の輪郭がまだ 50% 未満の段階では、詰問調ではなく、次を優先する。
   - 相槌
   - 1つの視点提案
   - 1つのオープンな質問
-- 3案提示、推薦、最終依頼案は、依頼の輪郭が見えてから行う。
+- 3案提示、推薦、最終依頼案は、依頼の輪郭が見え、最後の形が固まり始めてから行う。
+- よい会話の基準は「早く task 化すること」ではなく、「管理人が十分に聞いたうえで、自然に依頼案を提案できること」とする。
 
 ## 役割境界（Canonical Docs と Delta）
 - `concept/spec/architecture` 系スキルは **全体文書の正本整備**を担当する。
 - ユーザー要件への対応は **delta 4ステップ**（request/apply/verify/archive）で実行する。
-- `spec-editor` / `architecture-editor` / `concept-editor` は delta を作成・実行しない。
+- `delta-spec-editor` / `delta-architecture-editor` / `delta-concept-editor` は delta を作成・実行しない。
 - Delta ID が無い要件実装は開始せず、先に `delta request` を作成する。
 - `docs/plan.md` の実装アイテム1件は `delta request` 1件の seed として扱う（原則 1:1）。
 - 実装アイテムが大きい場合は複数 delta へ分割してよい（1:N）。
@@ -97,17 +88,6 @@
 - Spec ID / Error ID の変更、互換性に影響する仕様変更
 - API / データモデルの形を変える設計変更
 - セキュリティ対応・重大バグ修正で挙動が変わるもの（提案は簡潔でよいが必須）
-
-## レビューの入れ方
-- 変更対象ファイルが大きい場合は、実装と同じ delta の中で軽い責務レビューを行う。
-- 目安は `project-validator` の `review` 対象（500 行超）とし、少なくとも次を確認する。
-  - そのファイルの目的が一文で説明できるか
-  - 依存方向が既存 architecture に逆流していないか
-  - 命名が責務を表しているか
-  - テストしにくい雑多な helper 置き場になっていないか
-- 自然な分割境界が見つかり、今回の delta の In Scope に収まるなら、その場で分割してよい。
-- 分割が大きくなりそうなら次の delta seed を `plan.md` に残し、今回の delta では過剰に広げない。
-- `project-validator` の所見は「即時分割が必要か」「次回 review で十分か」を判断する材料として使う。
 
 ## 言語・コメント
 - AGENTS.md が日本語の場合、`docs/**` は日本語で作成する
